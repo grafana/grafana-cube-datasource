@@ -33,3 +33,21 @@ datasources:
       database: 'jaffle_shop'
     secureJsonData:
       password: 'password'
+  - name: 'Cube via SQL API'
+    type: 'postgres'
+    access: proxy
+    isDefault: false
+    orgId: 1
+    version: 1
+    editable: true
+    uid: 'cube-sql-api-datasource'
+    url: 'cube:15432'
+    database: 'test'
+    user: 'username'
+    jsonData:
+      sslmode: 'disable'
+      postgresVersion: 1000
+      timescaledb: false
+      database: 'test'
+    secureJsonData:
+      password: 'password'
