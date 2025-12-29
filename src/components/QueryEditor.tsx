@@ -348,6 +348,7 @@ export function QueryEditor({ query, onChange, onRunQuery, datasource }: Props) 
           onChange={onLimitChange}
           placeholder="Enter row limit..."
           min={1}
+          width={50}
         />
       </InlineField>
 
