@@ -92,8 +92,8 @@ describe('QueryEditor', () => {
     render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
     // Should show loading state initially
-    expect(screen.getByText('Loading dimensions...')).toBeInTheDocument();
-    expect(screen.getByText('Loading measures...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Loading dimensions...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Loading measures...')).toBeInTheDocument();
 
     // Resolve the metadata
     await act(async () => {
@@ -111,8 +111,8 @@ describe('QueryEditor', () => {
 
     // Should show normal state after metadata loads
     await waitFor(() => {
-      expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
-      expect(screen.getByText('Select measures...')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Select dimensions...')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Select measures...')).toBeInTheDocument();
     });
   });
 
@@ -134,8 +134,8 @@ describe('QueryEditor', () => {
     render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
-      expect(screen.getByText('Select measures...')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Select dimensions...')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Select measures...')).toBeInTheDocument();
     });
 
     expect(datasource.getMetadata).toHaveBeenCalledTimes(1);
@@ -151,7 +151,7 @@ describe('QueryEditor', () => {
     render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Select dimensions...')).toBeInTheDocument();
     });
 
     expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch metadata:', expect.any(Error));
@@ -204,7 +204,7 @@ describe('QueryEditor', () => {
     render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
     await waitFor(() => {
-      expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Select dimensions...')).toBeInTheDocument();
     });
 
     // Note: Testing MultiSelect interactions directly is complex with react-select
@@ -541,9 +541,8 @@ describe('QueryEditor', () => {
       });
 
       // Parse the query to verify the filters
-      const callArg = (datasource.getResource as jest.Mock).mock.calls.find(
-        (call: unknown[]) => call[0] === 'sql'
-      )?.[1]?.query;
+      const callArg = (datasource.getResource as jest.Mock).mock.calls.find((call: unknown[]) => call[0] === 'sql')?.[1]
+        ?.query;
       const parsedQuery = JSON.parse(callArg);
 
       expect(parsedQuery.filters).toEqual([
@@ -593,9 +592,8 @@ describe('QueryEditor', () => {
       });
 
       // Parse the query to verify the time dimension
-      const callArg = (datasource.getResource as jest.Mock).mock.calls.find(
-        (call: unknown[]) => call[0] === 'sql'
-      )?.[1]?.query;
+      const callArg = (datasource.getResource as jest.Mock).mock.calls.find((call: unknown[]) => call[0] === 'sql')?.[1]
+        ?.query;
       const parsedQuery = JSON.parse(callArg);
 
       expect(parsedQuery.timeDimensions).toHaveLength(1);
@@ -636,9 +634,8 @@ describe('QueryEditor', () => {
       });
 
       // Verify the panel's time dimension is used, not the dashboard variable
-      const callArg = (datasource.getResource as jest.Mock).mock.calls.find(
-        (call: unknown[]) => call[0] === 'sql'
-      )?.[1]?.query;
+      const callArg = (datasource.getResource as jest.Mock).mock.calls.find((call: unknown[]) => call[0] === 'sql')?.[1]
+        ?.query;
       const parsedQuery = JSON.parse(callArg);
 
       expect(parsedQuery.timeDimensions).toHaveLength(1);
@@ -670,9 +667,8 @@ describe('QueryEditor', () => {
       });
 
       // Parse the query to verify both filters are included
-      const callArg = (datasource.getResource as jest.Mock).mock.calls.find(
-        (call: unknown[]) => call[0] === 'sql'
-      )?.[1]?.query;
+      const callArg = (datasource.getResource as jest.Mock).mock.calls.find((call: unknown[]) => call[0] === 'sql')?.[1]
+        ?.query;
       const parsedQuery = JSON.parse(callArg);
 
       expect(parsedQuery.filters).toHaveLength(2);
