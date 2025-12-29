@@ -322,6 +322,8 @@ export function QueryEditor({ query, onChange, onRunQuery, datasource }: Props) 
           onChange={onDimensionsChange}
           loading={metadataLoading}
           placeholder={metadataLoading ? 'Loading dimensions...' : 'Select dimensions...'}
+          width="auto"
+          minWidth={50}
         />
       </InlineField>
 
@@ -333,6 +335,8 @@ export function QueryEditor({ query, onChange, onRunQuery, datasource }: Props) 
           onChange={onMeasuresChange}
           loading={metadataLoading}
           placeholder={metadataLoading ? 'Loading measures...' : 'Select measures...'}
+          width="auto"
+          minWidth={50}
         />
       </InlineField>
 
