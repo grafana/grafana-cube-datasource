@@ -5,8 +5,8 @@ test('smoke: should render query editor', async ({ panelEditPage, readProvisione
   await panelEditPage.datasource.set(ds.name);
 
   // Check that the Dimensions and Measures MultiSelect components are accessible and visible
-  await expect(panelEditPage.getQueryEditorRow('A').getByLabel('Dimensions')).toBeVisible();
-  await expect(panelEditPage.getQueryEditorRow('A').getByLabel('Measures')).toBeVisible();
+  await expect(panelEditPage.getQueryEditorRow('A').getByRole('combobox', { name: 'Select dimensions...' })).toBeVisible();
+  await expect(panelEditPage.getQueryEditorRow('A').getByRole('combobox', { name: 'Select measures...' })).toBeVisible();
 });
 
 test.skip('should trigger new query when Constant field is changed', async ({
@@ -27,7 +27,7 @@ test('should show SQL preview when measures are selected', async ({
   await panelEditPage.datasource.set(ds.name);
 
   // Wait for metadata to load by checking that the Measures component is visible
-  const measuresSelect = panelEditPage.getQueryEditorRow('A').getByLabel('Measures');
+  const measuresSelect = panelEditPage.getQueryEditorRow('A').getByRole('combobox', { name: 'Select measures...' });
   await expect(measuresSelect).toBeVisible({ timeout: 10000 });
 
   // Click on the Measures MultiSelect to open it
@@ -53,7 +53,7 @@ test('should not show SQL preview when no measures are selected', async ({
   await panelEditPage.datasource.set(ds.name);
 
   // Wait for the component to load by checking that the Measures component is visible
-  await expect(panelEditPage.getQueryEditorRow('A').getByLabel('Measures')).toBeVisible({ timeout: 10000 });
+  await expect(panelEditPage.getQueryEditorRow('A').getByRole('combobox', { name: 'Select measures...' })).toBeVisible({ timeout: 10000 });
 
   // Wait a moment to ensure no SQL preview appears when nothing is selected
   await new Promise((resolve) => setTimeout(resolve, 2000));
