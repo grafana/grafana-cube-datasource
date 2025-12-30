@@ -11,7 +11,7 @@ test.describe('SQLPreview Explore Integration', () => {
     await panelEditPage.datasource.set(ds.name);
 
     // Wait for metadata to load by checking that the Measures component is visible
-    const measuresSelect = panelEditPage.getQueryEditorRow('A').getByLabel('Measures');
+    const measuresSelect = panelEditPage.getQueryEditorRow('A').getByRole('combobox', { name: 'Select measures...' });
     await expect(measuresSelect).toBeVisible({ timeout: 10000 });
 
     // Select a measure to generate SQL
@@ -101,7 +101,9 @@ test.describe('SQLPreview Explore Integration', () => {
     await panelEditPage.datasource.set(ds.name);
 
     // Wait for the component to load
-    await expect(panelEditPage.getQueryEditorRow('A').getByLabel('Measures')).toBeVisible({ timeout: 10000 });
+    await expect(
+      panelEditPage.getQueryEditorRow('A').getByRole('combobox', { name: 'Select measures...' })
+    ).toBeVisible({ timeout: 10000 });
 
     // When no measures are selected, there should be no SQL preview
     await expect(panelEditPage.getQueryEditorRow('A').locator('[aria-label="Generated SQL query"]')).not.toBeVisible();
@@ -122,7 +124,7 @@ test.describe('SQLPreview Explore Integration', () => {
     await panelEditPage.datasource.set(ds.name);
 
     // Wait for metadata to load
-    const measuresSelect = panelEditPage.getQueryEditorRow('A').getByLabel('Measures');
+    const measuresSelect = panelEditPage.getQueryEditorRow('A').getByRole('combobox', { name: 'Select measures...' });
     await expect(measuresSelect).toBeVisible({ timeout: 10000 });
 
     // Select multiple measures and dimensions to create a more complex query
@@ -131,7 +133,9 @@ test.describe('SQLPreview Explore Integration', () => {
     await firstMeasureOption.click();
 
     // Add a dimension as well
-    const dimensionsSelect = panelEditPage.getQueryEditorRow('A').getByLabel('Dimensions');
+    const dimensionsSelect = panelEditPage
+      .getQueryEditorRow('A')
+      .getByRole('combobox', { name: 'Select dimensions...' });
     await dimensionsSelect.click();
     const firstDimensionOption = page.locator('[role="option"]').first();
     await firstDimensionOption.click();
