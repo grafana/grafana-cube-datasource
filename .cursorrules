@@ -44,3 +44,38 @@ git reset --hard base-branch && git cherry-pick commit1 commit2
 ```bash
 git rebase -i base-branch  # Blocks waiting for human input
 ```
+
+## GitHub CLI
+
+**When updating GitHub PR descriptions, use the REST API instead of `gh pr edit`.**
+
+- The GraphQL-based `gh pr edit` command fails with "Projects (classic) is being deprecated" errors on some repositories
+- Use the REST API directly for reliable PR updates
+
+✅ **Correct:**
+```bash
+gh api repos/OWNER/REPO/pulls/NUMBER -X PATCH -f body='...'
+```
+
+❌ **Incorrect:**
+```bash
+gh pr edit NUMBER --body '...'
+```
+
+## Playwright Testing
+
+**Use non-interactive reporter when running Playwright tests.**
+
+- The default reporter serves an interactive HTML report that blocks with "Press Ctrl+C to quit"
+- Use `--reporter=list` for clean, non-interactive output
+- This is especially important in "Run Everything" Agent mode
+
+✅ **Correct:**
+```bash
+npx playwright test --reporter=list
+```
+
+❌ **Incorrect:**
+```bash
+npx playwright test  # Blocks waiting for human input
+```
