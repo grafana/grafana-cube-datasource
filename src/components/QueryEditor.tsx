@@ -1,14 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  InlineField,
-  Input,
-  Combobox,
-  IconButton,
-  Tooltip,
-  useStyles2,
-  MultiCombobox,
-  ComboboxOption,
-} from '@grafana/ui';
+import { InlineField, MultiSelect, Input, Combobox, IconButton, Tooltip, useStyles2 } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { css } from '@emotion/css';
@@ -98,8 +89,8 @@ export function QueryEditor({ query, onChange, onRunQuery, datasource }: Props) 
   const styles = useStyles2(getStyles);
 
   // Dimension and measure metadata state
-  const [dimensionOptions, setDimensionOptions] = useState<Array<ComboboxOption<string>>>([]);
-  const [measureOptions, setMeasureOptions] = useState<Array<ComboboxOption<string>>>([]);
+  const [dimensionOptions, setDimensionOptions] = useState<Array<SelectableValue<string>>>([]);
+  const [measureOptions, setMeasureOptions] = useState<Array<SelectableValue<string>>>([]);
   const [metadataLoading, setMetadataLoading] = useState<boolean>(true);
 
   // SQL compilation state
@@ -315,30 +306,26 @@ export function QueryEditor({ query, onChange, onRunQuery, datasource }: Props) 
   return (
     <>
       <InlineField label="Dimensions" labelWidth={16} tooltip="Select the dimensions to group your data by">
-        <MultiCombobox
+        <MultiSelect
           aria-label="Dimensions"
           options={dimensionOptions}
           value={selectedDimensions}
           onChange={onDimensionsChange}
-          loading={metadataLoading}
           placeholder={metadataLoading ? 'Loading dimensions...' : 'Select dimensions...'}
-          width="auto"
-          minWidth={50}
-          maxWidth={150}
+          width={100}
+          isLoading={metadataLoading}
         />
       </InlineField>
 
       <InlineField label="Measures" labelWidth={16} tooltip="Select the measures to aggregate">
-        <MultiCombobox
+        <MultiSelect
           aria-label="Measures"
           options={measureOptions}
           value={selectedMeasures}
           onChange={onMeasuresChange}
-          loading={metadataLoading}
           placeholder={metadataLoading ? 'Loading measures...' : 'Select measures...'}
-          width="auto"
-          minWidth={50}
-          maxWidth={150}
+          width={100}
+          isLoading={metadataLoading}
         />
       </InlineField>
 
@@ -349,8 +336,8 @@ export function QueryEditor({ query, onChange, onRunQuery, datasource }: Props) 
           value={currentLimit}
           onChange={onLimitChange}
           placeholder="Enter row limit..."
+          width={30}
           min={1}
-          width={50}
         />
       </InlineField>
 
