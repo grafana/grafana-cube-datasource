@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, useTheme2 } from '@grafana/ui';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-sql';
-import { useDatasource } from '../hooks/useDatasource';
+import { useDatasourceQuery } from 'queries';
 
 interface SQLPreviewProps {
   sql: string;
@@ -16,7 +16,7 @@ export function SQLPreview({ sql, exploreSqlDatasourceUid }: SQLPreviewProps) {
   const theme = useTheme2();
   const styles = getStyles(theme);
 
-  const { datasource: targetDatasource } = useDatasource(exploreSqlDatasourceUid);
+  const { data: targetDatasource } = useDatasourceQuery(exploreSqlDatasourceUid);
 
   if (!sql) {
     return null;

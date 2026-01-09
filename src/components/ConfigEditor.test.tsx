@@ -1,5 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
+import { renderWithClient } from 'testUtils';
 import { ConfigEditor } from './ConfigEditor';
 import { MyDataSourceOptions, MySecureJsonData } from '../types';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
@@ -44,7 +45,7 @@ describe('ConfigEditor', () => {
   describe('Cube API URL field', () => {
     it('should render Cube API URL input field', () => {
       const props = createMockEditorProps();
-      render(<ConfigEditor {...props} />);
+      renderWithClient(<ConfigEditor {...props} />);
 
       expect(screen.getByLabelText('Cube API URL')).toBeInTheDocument();
     });
@@ -59,7 +60,7 @@ describe('ConfigEditor', () => {
           },
         },
       });
-      render(<ConfigEditor {...props} />);
+      renderWithClient(<ConfigEditor {...props} />);
 
       const urlInput = screen.getByLabelText('Cube API URL') as HTMLInputElement;
       expect(urlInput.value).toBe('https://my-cube-api.com');
@@ -67,7 +68,7 @@ describe('ConfigEditor', () => {
 
     it('should call onOptionsChange when URL is modified', () => {
       const props = createMockEditorProps();
-      render(<ConfigEditor {...props} />);
+      renderWithClient(<ConfigEditor {...props} />);
 
       const urlInput = screen.getByLabelText('Cube API URL');
       fireEvent.change(urlInput, { target: { value: 'http://new-url:4000' } });
@@ -85,7 +86,7 @@ describe('ConfigEditor', () => {
   describe('Deployment type selection', () => {
     it('should render deployment type radio buttons', () => {
       const props = createMockEditorProps();
-      render(<ConfigEditor {...props} />);
+      renderWithClient(<ConfigEditor {...props} />);
 
       expect(screen.getByText('Cube Cloud (API Key)')).toBeInTheDocument();
       expect(screen.getByText('Self-hosted (API Secret)')).toBeInTheDocument();
@@ -102,7 +103,7 @@ describe('ConfigEditor', () => {
           },
         },
       });
-      render(<ConfigEditor {...props} />);
+      renderWithClient(<ConfigEditor {...props} />);
 
       // Should not show any auth-specific fields or warnings when no deployment type is selected
       expect(screen.queryByLabelText('API Key')).not.toBeInTheDocument();
@@ -114,7 +115,7 @@ describe('ConfigEditor', () => {
 
     it('should call onOptionsChange when deployment type changes', () => {
       const props = createMockEditorProps();
-      render(<ConfigEditor {...props} />);
+      renderWithClient(<ConfigEditor {...props} />);
 
       const cloudButton = screen.getByText('Cube Cloud (API Key)');
       fireEvent.click(cloudButton);
@@ -140,7 +141,7 @@ describe('ConfigEditor', () => {
           },
         },
       });
-      render(<ConfigEditor {...props} />);
+      renderWithClient(<ConfigEditor {...props} />);
 
       expect(screen.getByLabelText('API Key')).toBeInTheDocument();
     });
@@ -155,7 +156,7 @@ describe('ConfigEditor', () => {
           },
         },
       });
-      render(<ConfigEditor {...props} />);
+      renderWithClient(<ConfigEditor {...props} />);
 
       expect(screen.queryByLabelText('API Key')).not.toBeInTheDocument();
     });
@@ -174,7 +175,7 @@ describe('ConfigEditor', () => {
           },
         },
       });
-      render(<ConfigEditor {...props} />);
+      renderWithClient(<ConfigEditor {...props} />);
 
       // SecretInput component shows "configured" when isConfigured is true
       const apiKeyInput = screen.getByPlaceholderText('Enter your Cube Cloud API key') as HTMLInputElement;
@@ -192,7 +193,7 @@ describe('ConfigEditor', () => {
           },
         },
       });
-      render(<ConfigEditor {...props} />);
+      renderWithClient(<ConfigEditor {...props} />);
 
       const apiKeyInput = screen.getByPlaceholderText('Enter your Cube Cloud API key');
       fireEvent.change(apiKeyInput, { target: { value: 'my-api-key-123' } });
@@ -219,7 +220,7 @@ describe('ConfigEditor', () => {
           },
         },
       });
-      render(<ConfigEditor {...props} />);
+      renderWithClient(<ConfigEditor {...props} />);
 
       const resetButton = screen.getByRole('button', { name: /reset/i });
       fireEvent.click(resetButton);
@@ -249,7 +250,7 @@ describe('ConfigEditor', () => {
           },
         },
       });
-      render(<ConfigEditor {...props} />);
+      renderWithClient(<ConfigEditor {...props} />);
 
       expect(screen.getByLabelText('API Secret')).toBeInTheDocument();
     });
@@ -264,7 +265,7 @@ describe('ConfigEditor', () => {
           },
         },
       });
-      render(<ConfigEditor {...props} />);
+      renderWithClient(<ConfigEditor {...props} />);
 
       expect(screen.queryByLabelText('API Secret')).not.toBeInTheDocument();
     });
@@ -283,7 +284,7 @@ describe('ConfigEditor', () => {
           },
         },
       });
-      render(<ConfigEditor {...props} />);
+      renderWithClient(<ConfigEditor {...props} />);
 
       // SecretInput component shows "configured" when isConfigured is true
       const apiSecretInput = screen.getByPlaceholderText('Enter your CUBEJS_API_SECRET') as HTMLInputElement;
@@ -301,7 +302,7 @@ describe('ConfigEditor', () => {
           },
         },
       });
-      render(<ConfigEditor {...props} />);
+      renderWithClient(<ConfigEditor {...props} />);
 
       const apiSecretInput = screen.getByPlaceholderText('Enter your CUBEJS_API_SECRET');
       fireEvent.change(apiSecretInput, { target: { value: 'my-api-secret-456' } });
@@ -328,7 +329,7 @@ describe('ConfigEditor', () => {
           },
         },
       });
-      render(<ConfigEditor {...props} />);
+      renderWithClient(<ConfigEditor {...props} />);
 
       const resetButton = screen.getByRole('button', { name: /reset/i });
       fireEvent.click(resetButton);
@@ -358,7 +359,7 @@ describe('ConfigEditor', () => {
           },
         },
       });
-      render(<ConfigEditor {...props} />);
+      renderWithClient(<ConfigEditor {...props} />);
 
       expect(
         screen.getByText('No authentication will be sent. Only use this with CUBEJS_DEV_MODE=true')
@@ -375,7 +376,7 @@ describe('ConfigEditor', () => {
           },
         },
       });
-      render(<ConfigEditor {...props} />);
+      renderWithClient(<ConfigEditor {...props} />);
 
       expect(screen.queryByLabelText('API Key')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('API Secret')).not.toBeInTheDocument();
@@ -393,7 +394,7 @@ describe('ConfigEditor', () => {
           },
         },
       });
-      const { rerender } = render(<ConfigEditor {...props} />);
+      const { rerender } = renderWithClient(<ConfigEditor {...props} />);
 
       // Initially shows API Key
       expect(screen.getByLabelText('API Key')).toBeInTheDocument();
@@ -427,7 +428,7 @@ describe('ConfigEditor', () => {
           },
         },
       });
-      const { rerender } = render(<ConfigEditor {...props} />);
+      const { rerender } = renderWithClient(<ConfigEditor {...props} />);
 
       // Initially shows API Secret
       expect(screen.getByLabelText('API Secret')).toBeInTheDocument();

@@ -2,7 +2,7 @@ import React, { ChangeEvent, useMemo } from 'react';
 import { InlineField, Input, SecretInput, RadioButtonGroup, Alert, Combobox, ComboboxOption } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { MyDataSourceOptions, MySecureJsonData } from '../types';
-import { useSqlDatasources } from '../hooks/useSqlDatasources';
+import { useSqlDatasourcesQuery } from 'queries';
 
 // Constants
 const FIELD_WIDTHS = {
@@ -14,7 +14,7 @@ interface ConfigEditorProps extends DataSourcePluginOptionsEditorProps<MyDataSou
 
 export function ConfigEditor({ onOptionsChange, options }: ConfigEditorProps) {
   const { jsonData, secureJsonFields, secureJsonData } = options;
-  const { sqlDatasources, loading: loadingSqlDatasources } = useSqlDatasources();
+  const { data: sqlDatasources, isLoading, isError } = useSqlDatasourcesQuery();
 
   // No default - user must explicitly select deployment type
   const deploymentType = jsonData.deploymentType;
@@ -61,6 +61,7 @@ export function ConfigEditor({ onOptionsChange, options }: ConfigEditorProps) {
 
   return (
     <>
+      {isError && <Alert severity="error" title="Error loading datasources" />}
       <InlineField
         labelWidth={FIELD_WIDTHS.label}
         label="Cube API URL"
@@ -143,12 +144,10 @@ export function ConfigEditor({ onOptionsChange, options }: ConfigEditorProps) {
         <Combobox
           options={sqlDatasourceOptions}
           value={jsonData.exploreSqlDatasourceUid}
-          placeholder={loadingSqlDatasources ? 'Loading datasources...' : 'Select SQL datasource'}
-          onChange={(option: ComboboxOption<string> | null) =>
-            updateJsonData('exploreSqlDatasourceUid', option?.value)
-          }
+          placeholder={isLoading ? 'Loading datasources...' : 'Select SQL datasource'}
+          onChange={(option: ComboboxOption<string> | null) => updateJsonData('exploreSqlDatasourceUid', option?.value)}
           width={FIELD_WIDTHS.input}
-          loading={loadingSqlDatasources}
+          loading={isLoading}
         />
       </InlineField>
     </>
