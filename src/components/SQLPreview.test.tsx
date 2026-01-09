@@ -7,43 +7,44 @@ jest.mock('prismjs', () => ({
 // Mock prism-sql to avoid it trying to extend Prism
 jest.mock('prismjs/components/prism-sql', () => ({}));
 
-// Mock the useDatasource hook
-jest.mock('../hooks/useDatasource', () => ({
-  useDatasource: jest.fn(),
+// Mock the useDatasourceQuery hook
+jest.mock('queries', () => ({
+  useDatasourceQuery: jest.fn(),
 }));
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import { renderWithClient } from 'testUtils';
 import { SQLPreview } from './SQLPreview';
-import { useDatasource } from '../hooks/useDatasource';
+import { useDatasourceQuery } from 'queries';
 
-const mockUseDatasource = useDatasource as jest.Mock;
+const mockUseDatasourceQuery = useDatasourceQuery as jest.Mock;
 
 describe('SQLPreview', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseDatasource.mockReturnValue({
-      datasource: null,
+    mockUseDatasourceQuery.mockReturnValue({
+      data: null,
       isLoading: false,
       error: null,
     });
   });
 
   it('should not render when sql is empty', () => {
-    const { container } = render(<SQLPreview sql="" />);
+    const { container } = renderWithClient(<SQLPreview sql="" />);
     expect(container.firstChild).toBeNull();
   });
 
   it('should render SQL preview with syntax highlighting', () => {
     const sql = 'SELECT * FROM orders WHERE status = "completed"';
 
-    render(<SQLPreview sql={sql} />);
+    renderWithClient(<SQLPreview sql={sql} />);
 
     expect(screen.getByLabelText('Generated SQL query')).toHaveTextContent(sql);
   });
 
   it('should render Edit SQL in Explore button', () => {
-    render(<SQLPreview sql="SELECT * FROM orders" />);
+    renderWithClient(<SQLPreview sql="SELECT * FROM orders" />);
 
     const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
     expect(button).toBeInTheDocument();
@@ -51,13 +52,13 @@ describe('SQLPreview', () => {
 
   describe('Explore URL construction', () => {
     it('should construct Explore URL without datasource when none configured', () => {
-      mockUseDatasource.mockReturnValue({
-        datasource: null,
+      mockUseDatasourceQuery.mockReturnValue({
+        data: null,
         isLoading: false,
         error: null,
       });
 
-      render(<SQLPreview sql="SELECT * FROM orders" />);
+      renderWithClient(<SQLPreview sql="SELECT * FROM orders" />);
 
       const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
       const href = button.getAttribute('href');
@@ -79,13 +80,13 @@ describe('SQLPreview', () => {
     });
 
     it('should construct Explore URL with datasource when configured', () => {
-      mockUseDatasource.mockReturnValue({
-        datasource: { type: 'postgres', uid: 'pg-prod', name: 'PostgreSQL Prod' },
+      mockUseDatasourceQuery.mockReturnValue({
+        data: { type: 'postgres', uid: 'pg-prod', name: 'PostgreSQL Prod' },
         isLoading: false,
         error: null,
       });
 
-      render(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid="pg-prod" />);
+      renderWithClient(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid="pg-prod" />);
 
       const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
       const href = button.getAttribute('href');
@@ -111,13 +112,13 @@ describe('SQLPreview', () => {
     });
 
     it('should include correct query format for Explore', () => {
-      mockUseDatasource.mockReturnValue({
-        datasource: { type: 'mysql', uid: 'mysql-1' },
+      mockUseDatasourceQuery.mockReturnValue({
+        data: { type: 'mysql', uid: 'mysql-1' },
         isLoading: false,
         error: null,
       });
 
-      render(<SQLPreview sql="SELECT COUNT(*) FROM users" exploreSqlDatasourceUid="mysql-1" />);
+      renderWithClient(<SQLPreview sql="SELECT COUNT(*) FROM users" exploreSqlDatasourceUid="mysql-1" />);
 
       const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
       const href = button.getAttribute('href');
@@ -151,13 +152,13 @@ describe('SQLPreview', () => {
       ];
 
       testCases.forEach(({ type, uid }) => {
-        mockUseDatasource.mockReturnValue({
-          datasource: { type, uid },
+        mockUseDatasourceQuery.mockReturnValue({
+          data: { type, uid },
           isLoading: false,
           error: null,
         });
 
-        const { unmount } = render(<SQLPreview sql="SELECT 1" exploreSqlDatasourceUid={uid} />);
+        const { unmount } = renderWithClient(<SQLPreview sql="SELECT 1" exploreSqlDatasourceUid={uid} />);
 
         const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
         const href = button.getAttribute('href');
@@ -173,14 +174,14 @@ describe('SQLPreview', () => {
   });
 
   it('should call useDatasource with the provided UID', () => {
-    render(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid="my-ds-uid" />);
+    renderWithClient(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid="my-ds-uid" />);
 
-    expect(mockUseDatasource).toHaveBeenCalledWith('my-ds-uid');
+    expect(mockUseDatasourceQuery).toHaveBeenCalledWith('my-ds-uid');
   });
 
   it('should call useDatasource with undefined when no UID provided', () => {
-    render(<SQLPreview sql="SELECT * FROM orders" />);
+    renderWithClient(<SQLPreview sql="SELECT * FROM orders" />);
 
-    expect(mockUseDatasource).toHaveBeenCalledWith(undefined);
+    expect(mockUseDatasourceQuery).toHaveBeenCalledWith(undefined);
   });
 });

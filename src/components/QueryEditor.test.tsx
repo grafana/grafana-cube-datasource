@@ -1,10 +1,11 @@
 import React, { act } from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { screen, waitFor, fireEvent } from '@testing-library/react';
 import { QueryEditor } from './QueryEditor';
 import { DataSource } from '../datasource';
 import { MyQuery, MyDataSourceOptions } from '../types';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
+import { renderWithClient } from 'testUtils';
 
 // Mock the SQLPreview component
 jest.mock('./SQLPreview', () => ({
@@ -89,7 +90,9 @@ describe('QueryEditor', () => {
 
     const query = createMockQuery();
 
-    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+    renderWithClient(
+      <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+    );
 
     // Should show loading state initially
     expect(screen.getByText('Loading dimensions...')).toBeInTheDocument();
@@ -131,7 +134,9 @@ describe('QueryEditor', () => {
     const datasource = createMockDataSource(mockMetadata);
     const query = createMockQuery();
 
-    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+    renderWithClient(
+      <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
@@ -146,16 +151,15 @@ describe('QueryEditor', () => {
     datasource.getMetadata = jest.fn().mockRejectedValue(new Error('API Error'));
 
     const query = createMockQuery();
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
-    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+    renderWithClient(
+      <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
+      expect(screen.getByText('Error fetching metadata')).toBeInTheDocument();
     });
-
-    expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch metadata:', expect.any(Error));
-    consoleSpy.mockRestore();
   });
 
   it('should parse existing query and select appropriate options', async () => {
@@ -173,7 +177,7 @@ describe('QueryEditor', () => {
       measures: ['orders.count'],
     });
 
-    render(
+    renderWithClient(
       <QueryEditor query={existingQuery} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
     );
 
@@ -201,7 +205,9 @@ describe('QueryEditor', () => {
     const datasource = createMockDataSource(mockMetadata);
     const query = createMockQuery();
 
-    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+    renderWithClient(
+      <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+    );
 
     await waitFor(() => {
       expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
@@ -238,7 +244,9 @@ describe('QueryEditor', () => {
       measures: ['orders.count'],
     });
 
-    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+    renderWithClient(
+      <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+    );
 
     await waitFor(() => {
       expect(screen.getByTestId('sql-preview')).toHaveTextContent(
@@ -269,7 +277,9 @@ describe('QueryEditor', () => {
       measures: ['orders.count'],
     });
 
-    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+    renderWithClient(
+      <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+    );
 
     // Should show compiling state
     await waitFor(() => {
@@ -292,7 +302,9 @@ describe('QueryEditor', () => {
       const datasource = createMockDataSource();
       const query = createMockQuery();
 
-      render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+      renderWithClient(
+        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+      );
 
       await waitFor(() => {
         expect(screen.getByLabelText('Row Limit')).toBeInTheDocument();
@@ -312,7 +324,7 @@ describe('QueryEditor', () => {
         limit: 100,
       });
 
-      render(
+      renderWithClient(
         <QueryEditor
           query={queryWithLimit}
           onChange={mockOnChange}
@@ -334,7 +346,7 @@ describe('QueryEditor', () => {
         measures: ['orders.count'],
       });
 
-      render(
+      renderWithClient(
         <QueryEditor
           query={queryWithoutLimit}
           onChange={mockOnChange}
@@ -356,7 +368,9 @@ describe('QueryEditor', () => {
         measures: ['orders.count'],
       });
 
-      render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+      renderWithClient(
+        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+      );
 
       await waitFor(() => {
         expect(screen.getByLabelText('Row Limit')).toBeInTheDocument();
@@ -383,7 +397,7 @@ describe('QueryEditor', () => {
         limit: 100,
       });
 
-      render(
+      renderWithClient(
         <QueryEditor
           query={queryWithLimit}
           onChange={mockOnChange}
@@ -416,7 +430,9 @@ describe('QueryEditor', () => {
         measures: ['orders.count'],
       });
 
-      render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+      renderWithClient(
+        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+      );
 
       await waitFor(() => {
         expect(screen.getByLabelText('Row Limit')).toBeInTheDocument();
@@ -450,7 +466,7 @@ describe('QueryEditor', () => {
         limit: 25,
       });
 
-      render(
+      renderWithClient(
         <QueryEditor
           query={queryWithLimit}
           onChange={mockOnChange}
@@ -486,7 +502,7 @@ describe('QueryEditor', () => {
         order: { 'orders.count': 'desc' },
       });
 
-      render(
+      renderWithClient(
         <QueryEditor
           query={queryWithOrder}
           onChange={mockOnChange}
@@ -532,7 +548,9 @@ describe('QueryEditor', () => {
         measures: ['orders.count'],
       });
 
-      render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+      renderWithClient(
+        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+      );
 
       await waitFor(() => {
         expect(datasource.getResource).toHaveBeenCalledWith('sql', {
@@ -541,9 +559,8 @@ describe('QueryEditor', () => {
       });
 
       // Parse the query to verify the filters
-      const callArg = (datasource.getResource as jest.Mock).mock.calls.find(
-        (call: unknown[]) => call[0] === 'sql'
-      )?.[1]?.query;
+      const callArg = (datasource.getResource as jest.Mock).mock.calls.find((call: unknown[]) => call[0] === 'sql')?.[1]
+        ?.query;
       const parsedQuery = JSON.parse(callArg);
 
       expect(parsedQuery.filters).toEqual([
@@ -584,7 +601,9 @@ describe('QueryEditor', () => {
         // No timeDimensions in query - should use $cubeTimeDimension
       });
 
-      render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+      renderWithClient(
+        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+      );
 
       await waitFor(() => {
         expect(datasource.getResource).toHaveBeenCalledWith('sql', {
@@ -593,9 +612,8 @@ describe('QueryEditor', () => {
       });
 
       // Parse the query to verify the time dimension
-      const callArg = (datasource.getResource as jest.Mock).mock.calls.find(
-        (call: unknown[]) => call[0] === 'sql'
-      )?.[1]?.query;
+      const callArg = (datasource.getResource as jest.Mock).mock.calls.find((call: unknown[]) => call[0] === 'sql')?.[1]
+        ?.query;
       const parsedQuery = JSON.parse(callArg);
 
       expect(parsedQuery.timeDimensions).toHaveLength(1);
@@ -629,16 +647,17 @@ describe('QueryEditor', () => {
         timeDimensions: [{ dimension: 'orders.updated_at', granularity: 'day' }],
       });
 
-      render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+      renderWithClient(
+        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+      );
 
       await waitFor(() => {
         expect(datasource.getResource).toHaveBeenCalled();
       });
 
       // Verify the panel's time dimension is used, not the dashboard variable
-      const callArg = (datasource.getResource as jest.Mock).mock.calls.find(
-        (call: unknown[]) => call[0] === 'sql'
-      )?.[1]?.query;
+      const callArg = (datasource.getResource as jest.Mock).mock.calls.find((call: unknown[]) => call[0] === 'sql')?.[1]
+        ?.query;
       const parsedQuery = JSON.parse(callArg);
 
       expect(parsedQuery.timeDimensions).toHaveLength(1);
@@ -663,16 +682,17 @@ describe('QueryEditor', () => {
         filters: [{ member: 'orders.status', operator: 'equals', values: ['active'] }],
       });
 
-      render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+      renderWithClient(
+        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+      );
 
       await waitFor(() => {
         expect(datasource.getResource).toHaveBeenCalled();
       });
 
       // Parse the query to verify both filters are included
-      const callArg = (datasource.getResource as jest.Mock).mock.calls.find(
-        (call: unknown[]) => call[0] === 'sql'
-      )?.[1]?.query;
+      const callArg = (datasource.getResource as jest.Mock).mock.calls.find((call: unknown[]) => call[0] === 'sql')?.[1]
+        ?.query;
       const parsedQuery = JSON.parse(callArg);
 
       expect(parsedQuery.filters).toHaveLength(2);

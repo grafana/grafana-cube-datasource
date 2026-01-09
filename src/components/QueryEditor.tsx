@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { InlineField, MultiSelect, Input, Combobox, IconButton, Tooltip, useStyles2 } from '@grafana/ui';
+import React, { useMemo } from 'react';
+import { InlineField, Input, Combobox, IconButton, Tooltip, useStyles2, Alert, MultiSelect } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { css } from '@emotion/css';
 import { DataSource } from '../datasource';
 import { CubeFilter, MyDataSourceOptions, MyQuery } from '../types';
 import { SQLPreview } from './SQLPreview';
+import { useMetadataQuery, useCompiledSqlQuery } from 'queries';
 
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
@@ -88,34 +89,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
 export function QueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
   const styles = useStyles2(getStyles);
 
-  // Dimension and measure metadata state
-  const [dimensionOptions, setDimensionOptions] = useState<Array<SelectableValue<string>>>([]);
-  const [measureOptions, setMeasureOptions] = useState<Array<SelectableValue<string>>>([]);
-  const [metadataLoading, setMetadataLoading] = useState<boolean>(true);
-
-  // SQL compilation state
-  const [compiledSQL, setCompiledSQL] = useState<string>('');
-  const [sqlCompiling, setSqlCompiling] = useState<boolean>(false);
-
-  // Fetch metadata on component mount
-  useEffect(() => {
-    const fetchMetadata = async () => {
-      try {
-        setMetadataLoading(true);
-        const metadata = await datasource.getMetadata();
-        setDimensionOptions(metadata.dimensions || []);
-        setMeasureOptions(metadata.measures || []);
-      } catch (error) {
-        console.error('Failed to fetch metadata:', error);
-        setDimensionOptions([]);
-        setMeasureOptions([]);
-      } finally {
-        setMetadataLoading(false);
-      }
-    };
-
-    fetchMetadata();
-  }, [datasource]);
+  // Fetch metadata using React Query (cached, deduplicated)
+  const { data: metadata, isLoading: metadataLoading, isError: metadataIsError } = useMetadataQuery({ datasource });
+  const { dimensions: dimensionOptions, measures: measureOptions } = metadata;
 
   // Get selected values from query
   const selectedDimensions = dimensionOptions.filter((opt) => opt.value && query.dimensions?.includes(opt.value));
@@ -273,38 +249,15 @@ export function QueryEditor({ query, onChange, onRunQuery, datasource }: Props) 
     return JSON.stringify(cubeQuery);
   }, [query.dimensions, query.measures, query.timeDimensions, query.limit, query.filters, query.order, datasource]);
 
-  // Fetch compiled SQL when query changes
-  useEffect(() => {
-    const fetchCompiledSQL = async () => {
-      if (!cubeQueryJson) {
-        setCompiledSQL('');
-        return;
-      }
-
-      try {
-        setSqlCompiling(true);
-        // Call our backend to get compiled SQL from Cube
-        const response = await datasource.getResource('sql', { query: cubeQueryJson });
-
-        if (response.sql) {
-          setCompiledSQL(response.sql);
-        } else {
-          setCompiledSQL('-- No SQL returned from Cube API');
-        }
-      } catch (error) {
-        console.error('Failed to fetch compiled SQL:', error);
-        // API error - clear the SQL preview
-        setCompiledSQL('');
-      } finally {
-        setSqlCompiling(false);
-      }
-    };
-
-    fetchCompiledSQL();
-  }, [cubeQueryJson, datasource]);
+  // Fetch compiled SQL using React Query (cached by queryJson)
+  const { data: compiledSQL, isLoading: sqlCompiling } = useCompiledSqlQuery({
+    datasource,
+    queryJson: cubeQueryJson,
+  });
 
   return (
     <>
+      {metadataIsError && <Alert title="Error fetching metadata" severity="error" />}
       <InlineField label="Dimensions" labelWidth={16} tooltip="Select the dimensions to group your data by">
         <MultiSelect
           aria-label="Dimensions"
