@@ -15,7 +15,7 @@ services:
       - cube
 
   cube:
-    image: cubejs/cube:latest@sha256:010d7bc302477e2bb10b837c05a888eb6693fd4307f3cd55609068ec900c0755
+    image: cubejs/cube:latest@sha256:bcf2f3c5183a36a15b9c7fbe0ed21e50aa0caeabb81ff26b5189f619a29cd11f
     ports:
       - 4000:4000
       - 15432:15432
