@@ -16,7 +16,7 @@ export function SQLPreview({ sql, exploreSqlDatasourceUid }: SQLPreviewProps) {
   const theme = useTheme2();
   const styles = getStyles(theme);
 
-  const { data: targetDatasource } = useDatasourceQuery(exploreSqlDatasourceUid);
+  const { data: targetDatasource, isPending } = useDatasourceQuery(exploreSqlDatasourceUid);
 
   if (!sql) {
     return null;
@@ -71,11 +71,19 @@ export function SQLPreview({ sql, exploreSqlDatasourceUid }: SQLPreviewProps) {
             aria-label="Generated SQL query"
             dangerouslySetInnerHTML={{ __html: highlighted }}
           />
-          <div className={styles.buttonContainer}>
-            <LinkButton variant="secondary" size="sm" icon="compass" href={exploreUrl}>
-              Edit SQL in Explore
-            </LinkButton>
-          </div>
+          {exploreSqlDatasourceUid && (
+            <div className={styles.buttonContainer}>
+              <LinkButton
+                variant="secondary"
+                size="sm"
+                icon={isPending ? 'spinner' : 'compass'}
+                href={exploreUrl}
+                disabled={isPending}
+              >
+                Edit SQL in Explore
+              </LinkButton>
+            </div>
+          )}
         </div>
       </EditorFieldGroup>
     </EditorRow>

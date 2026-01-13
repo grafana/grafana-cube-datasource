@@ -20,12 +20,14 @@ import { useDatasourceQuery } from 'queries';
 
 const mockUseDatasourceQuery = useDatasourceQuery as jest.Mock;
 
+const DEFAULT_DS_ID = 'pg-1';
+
 describe('SQLPreview', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseDatasourceQuery.mockReturnValue({
       data: null,
-      isLoading: false,
+      isPending: false,
       error: null,
     });
   });
@@ -44,7 +46,7 @@ describe('SQLPreview', () => {
   });
 
   it('should render Edit SQL in Explore button', () => {
-    renderWithClient(<SQLPreview sql="SELECT * FROM orders" />);
+    renderWithClient(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid={DEFAULT_DS_ID} />);
 
     const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
     expect(button).toBeInTheDocument();
@@ -54,11 +56,11 @@ describe('SQLPreview', () => {
     it('should construct Explore URL without datasource when none configured', () => {
       mockUseDatasourceQuery.mockReturnValue({
         data: null,
-        isLoading: false,
+        isPending: false,
         error: null,
       });
 
-      renderWithClient(<SQLPreview sql="SELECT * FROM orders" />);
+      renderWithClient(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid={DEFAULT_DS_ID} />);
 
       const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
       const href = button.getAttribute('href');
@@ -82,11 +84,11 @@ describe('SQLPreview', () => {
     it('should construct Explore URL with datasource when configured', () => {
       mockUseDatasourceQuery.mockReturnValue({
         data: { type: 'postgres', uid: 'pg-prod', name: 'PostgreSQL Prod' },
-        isLoading: false,
+        isPending: false,
         error: null,
       });
 
-      renderWithClient(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid="pg-prod" />);
+      renderWithClient(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid={DEFAULT_DS_ID} />);
 
       const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
       const href = button.getAttribute('href');
@@ -114,7 +116,7 @@ describe('SQLPreview', () => {
     it('should include correct query format for Explore', () => {
       mockUseDatasourceQuery.mockReturnValue({
         data: { type: 'mysql', uid: 'mysql-1' },
-        isLoading: false,
+        isPending: false,
         error: null,
       });
 
@@ -154,7 +156,7 @@ describe('SQLPreview', () => {
       testCases.forEach(({ type, uid }) => {
         mockUseDatasourceQuery.mockReturnValue({
           data: { type, uid },
-          isLoading: false,
+          isPending: false,
           error: null,
         });
 
@@ -183,5 +185,49 @@ describe('SQLPreview', () => {
     renderWithClient(<SQLPreview sql="SELECT * FROM orders" />);
 
     expect(mockUseDatasourceQuery).toHaveBeenCalledWith(undefined);
+  });
+
+  describe('Loading state', () => {
+    it('should disable the button and show spinner when datasource is loading', () => {
+      mockUseDatasourceQuery.mockReturnValue({
+        data: null,
+        isPending: true,
+        error: null,
+      });
+
+      renderWithClient(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid="pg-prod" />);
+
+      // Button text stays the same, but button is disabled with spinner icon
+      const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
+      expect(button).toBeInTheDocument();
+      expect(button).toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('should show normal button after loading completes', () => {
+      mockUseDatasourceQuery.mockReturnValue({
+        data: { type: 'postgres', uid: 'pg-prod', name: 'PostgreSQL Prod' },
+        isPending: false,
+        error: null,
+      });
+
+      renderWithClient(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid="pg-prod" />);
+
+      const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
+      expect(button).toBeInTheDocument();
+      expect(button).not.toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('should not show the button when no datasource is configured', () => {
+      mockUseDatasourceQuery.mockReturnValue({
+        data: null,
+        isPending: false,
+        error: null,
+      });
+
+      renderWithClient(<SQLPreview sql="SELECT * FROM orders" />);
+
+      const button = screen.queryByRole('link', { name: /Edit SQL in Explore/i });
+      expect(button).not.toBeInTheDocument();
+    });
   });
 });
