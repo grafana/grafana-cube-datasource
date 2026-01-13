@@ -1,31 +1,25 @@
-import { useQuery } from '@tanstack/react-query';
-import { ComboboxOption } from '@grafana/ui';
+import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DataSource } from 'datasource';
 import { fetchSqlDatasources } from './services/datasourceApi';
 
-interface MetadataResponse {
-  dimensions: Array<ComboboxOption<string>>;
-  measures: Array<ComboboxOption<string>>;
+export interface MetadataOption {
+  label: string;
+  value: string;
+  type: string;
 }
 
-const EMPTY_METADATA: MetadataResponse = {
-  dimensions: [],
-  measures: [],
-};
+export interface MetadataResponse {
+  dimensions: MetadataOption[];
+  measures: MetadataOption[];
+}
 
-export const useMetadataQuery = ({ datasource }: { datasource: DataSource }) => {
-  const result = useQuery({
+export const useMetadataQuery = ({ datasource }: { datasource: DataSource }): UseQueryResult<MetadataResponse> => {
+  return useQuery({
     queryKey: ['metadata', datasource.uid],
-    queryFn: (): Promise<MetadataResponse> => datasource.getMetadata(),
+    queryFn: () => datasource.getMetadata(),
   });
-
-  return {
-    ...result,
-    // Provide stable empty arrays when loading/error to avoid undefined destructuring
-    data: result.data ?? EMPTY_METADATA,
-  };
 };
 
 // Datasource info (used for SQL preview to construct Explore links)
@@ -74,17 +68,16 @@ interface CompiledSqlResponse {
   sql?: string;
 }
 
-export const useCompiledSqlQuery = ({ datasource, queryJson }: { datasource: DataSource; queryJson: string }) => {
-  const result = useQuery({
-    queryKey: ['compiledSql', datasource.uid, queryJson],
-    queryFn: (): Promise<CompiledSqlResponse> => datasource.getResource('sql', { query: queryJson }),
-    // Only fetch when we have a valid query JSON
-    enabled: !!queryJson,
+export const useCompiledSqlQuery = ({
+  datasource,
+  cubeQueryJson,
+}: {
+  datasource: DataSource;
+  cubeQueryJson: string;
+}): UseQueryResult<CompiledSqlResponse> => {
+  return useQuery({
+    queryKey: ['compiledSql', datasource.uid, cubeQueryJson],
+    queryFn: () => datasource.getResource('sql', { query: cubeQueryJson }),
+    enabled: Boolean(cubeQueryJson),
   });
-
-  return {
-    ...result,
-    // Extract SQL with fallback`
-    data: result.data?.sql ?? '',
-  };
 };
