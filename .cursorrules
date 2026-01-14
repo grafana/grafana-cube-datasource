@@ -20,6 +20,15 @@
   - `GIT_SEQUENCE_EDITOR` environment variable for automated rebase editing
 - Prefer non-interactive flags and automated approaches
 
+## Commit Strategy
+
+**Prefer atomic commits over amending.**
+
+- Create separate commits for each logical change (e.g., add test, fix bug, refactor)
+- Only amend or fixup when explicitly asked by the user
+- After completing a commit, new work should go in a new commit
+- This preserves the progression of work and makes code review easier
+
 ## Examples
 
 ✅ **Correct dependency versions:**
