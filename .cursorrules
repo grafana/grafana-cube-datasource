@@ -88,3 +88,11 @@ npx playwright test --reporter=list
 ```bash
 npx playwright test  # Blocks waiting for human input
 ```
+
+## Testing
+
+**Write minimal tests that are just sufficient to verify behaviour.**
+
+- Use the least amount of test data required to reproduce or illustrate the issue
+- Prefer fewer assertions that directly verify the expected behaviour
+- Avoid verbose setup when a simpler configuration would suffice
