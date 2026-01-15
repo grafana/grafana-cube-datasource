@@ -527,6 +527,54 @@ describe('QueryEditor', () => {
     });
   });
 
+  describe('Selection Order Preservation', () => {
+    it('should preserve user selection order for dimensions, not metadata order', async () => {
+      // Metadata order: last_name, discount. User selects: discount, last_name (reversed)
+      const mockMetadata = {
+        dimensions: [
+          { label: 'orders.last_name', value: 'orders.last_name' },
+          { label: 'orders.discount', value: 'orders.discount' },
+        ],
+        measures: [],
+      };
+      const datasource = createMockDataSource(mockMetadata);
+      const query = createMockQuery({ dimensions: ['orders.discount', 'orders.last_name'] });
+
+      renderWithClient(
+        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+      );
+
+      await waitFor(() => expect(screen.getByText('orders.discount')).toBeInTheDocument());
+
+      const container = screen.getByLabelText('Dimensions').closest('[class*="grafana-select"]')?.parentElement;
+      const html = container?.innerHTML || '';
+      expect(html.indexOf('orders.discount')).toBeLessThan(html.indexOf('orders.last_name'));
+    });
+
+    it('should preserve user selection order for measures, not metadata order', async () => {
+      // Metadata order: amount, total. User selects: total, amount (reversed)
+      const mockMetadata = {
+        dimensions: [],
+        measures: [
+          { label: 'orders.amount', value: 'orders.amount' },
+          { label: 'orders.total', value: 'orders.total' },
+        ],
+      };
+      const datasource = createMockDataSource(mockMetadata);
+      const query = createMockQuery({ measures: ['orders.total', 'orders.amount'] });
+
+      renderWithClient(
+        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+      );
+
+      await waitFor(() => expect(screen.getByText('orders.total')).toBeInTheDocument());
+
+      const container = screen.getByLabelText('Measures').closest('[class*="grafana-select"]')?.parentElement;
+      const html = container?.innerHTML || '';
+      expect(html.indexOf('orders.total')).toBeLessThan(html.indexOf('orders.amount'));
+    });
+  });
+
   describe('SQL Preview with AdHoc Filters and Dashboard Variables', () => {
     it('should include AdHoc filters in SQL compilation request', async () => {
       // Setup mock to return AdHoc filters
