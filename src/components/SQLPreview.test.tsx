@@ -14,7 +14,7 @@ jest.mock('queries', () => ({
 
 import React from 'react';
 import { screen } from '@testing-library/react';
-import { renderWithClient } from 'testUtils';
+import { setup } from 'testUtils';
 import { SQLPreview } from './SQLPreview';
 import { useDatasourceQuery } from 'queries';
 
@@ -33,20 +33,20 @@ describe('SQLPreview', () => {
   });
 
   it('should not render when sql is empty', () => {
-    const { container } = renderWithClient(<SQLPreview sql="" />);
+    const { container } = setup(<SQLPreview sql="" />);
     expect(container.firstChild).toBeNull();
   });
 
   it('should render SQL preview with syntax highlighting', () => {
     const sql = 'SELECT * FROM orders WHERE status = "completed"';
 
-    renderWithClient(<SQLPreview sql={sql} />);
+    setup(<SQLPreview sql={sql} />);
 
     expect(screen.getByLabelText('Generated SQL query')).toHaveTextContent(sql);
   });
 
   it('should render Edit SQL in Explore button', () => {
-    renderWithClient(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid={DEFAULT_DS_ID} />);
+    setup(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid={DEFAULT_DS_ID} />);
 
     const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
     expect(button).toBeInTheDocument();
@@ -60,7 +60,7 @@ describe('SQLPreview', () => {
         error: null,
       });
 
-      renderWithClient(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid={DEFAULT_DS_ID} />);
+      setup(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid={DEFAULT_DS_ID} />);
 
       const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
       const href = button.getAttribute('href');
@@ -88,7 +88,7 @@ describe('SQLPreview', () => {
         error: null,
       });
 
-      renderWithClient(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid={DEFAULT_DS_ID} />);
+      setup(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid={DEFAULT_DS_ID} />);
 
       const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
       const href = button.getAttribute('href');
@@ -120,7 +120,7 @@ describe('SQLPreview', () => {
         error: null,
       });
 
-      renderWithClient(<SQLPreview sql="SELECT COUNT(*) FROM users" exploreSqlDatasourceUid="mysql-1" />);
+      setup(<SQLPreview sql="SELECT COUNT(*) FROM users" exploreSqlDatasourceUid="mysql-1" />);
 
       const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
       const href = button.getAttribute('href');
@@ -160,7 +160,7 @@ describe('SQLPreview', () => {
           error: null,
         });
 
-        const { unmount } = renderWithClient(<SQLPreview sql="SELECT 1" exploreSqlDatasourceUid={uid} />);
+        const { unmount } = setup(<SQLPreview sql="SELECT 1" exploreSqlDatasourceUid={uid} />);
 
         const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
         const href = button.getAttribute('href');
@@ -176,13 +176,13 @@ describe('SQLPreview', () => {
   });
 
   it('should call useDatasource with the provided UID', () => {
-    renderWithClient(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid="my-ds-uid" />);
+    setup(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid="my-ds-uid" />);
 
     expect(mockUseDatasourceQuery).toHaveBeenCalledWith('my-ds-uid');
   });
 
   it('should call useDatasource with undefined when no UID provided', () => {
-    renderWithClient(<SQLPreview sql="SELECT * FROM orders" />);
+    setup(<SQLPreview sql="SELECT * FROM orders" />);
 
     expect(mockUseDatasourceQuery).toHaveBeenCalledWith(undefined);
   });
@@ -195,7 +195,7 @@ describe('SQLPreview', () => {
         error: null,
       });
 
-      renderWithClient(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid="pg-prod" />);
+      setup(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid="pg-prod" />);
 
       // Button text stays the same, but button is disabled with spinner icon
       const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
@@ -210,7 +210,7 @@ describe('SQLPreview', () => {
         error: null,
       });
 
-      renderWithClient(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid="pg-prod" />);
+      setup(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid="pg-prod" />);
 
       const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
       expect(button).toBeInTheDocument();
@@ -224,7 +224,7 @@ describe('SQLPreview', () => {
         error: null,
       });
 
-      renderWithClient(<SQLPreview sql="SELECT * FROM orders" />);
+      setup(<SQLPreview sql="SELECT * FROM orders" />);
 
       const button = screen.queryByRole('link', { name: /Edit SQL in Explore/i });
       expect(button).not.toBeInTheDocument();
