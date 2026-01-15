@@ -325,6 +325,183 @@ func TestQueryDataWithMultipleDimensions(t *testing.T) {
 	}
 }
 
+func TestQueryDataWithAllNullColumn(t *testing.T) {
+	// Test that columns with all null values are still included in the DataFrame
+	// Table-driven test covers all Cube types: string, number, time, boolean
+
+	testCases := []struct {
+		name           string
+		cubeType       string
+		expectedGoType string
+	}{
+		{"string type", "string", "*string"},
+		{"number type", "number", "*float64"},
+		{"time type", "time", "*time.Time"},
+		{"boolean type", "boolean", "*bool"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Return mock Cube API response where one dimension has all null values
+				// When Cube returns all nulls for a column, the key is omitted from the data rows
+				response := CubeAPIResponse{
+					Data: []map[string]interface{}{
+						{"orders.name": "Alice"},
+						{"orders.name": "Bob"},
+					},
+					Annotation: CubeAnnotation{
+						Measures: map[string]CubeFieldInfo{},
+						Dimensions: map[string]CubeFieldInfo{
+							"orders.name": {
+								Title:      "Name",
+								ShortTitle: "Name",
+								Type:       "string",
+							},
+							"orders.null_field": {
+								Title:      "Null Field",
+								ShortTitle: "Null",
+								Type:       tc.cubeType,
+							},
+						},
+						Segments:       map[string]CubeFieldInfo{},
+						TimeDimensions: map[string]CubeFieldInfo{},
+					},
+				}
+
+				w.Header().Set("Content-Type", "application/json")
+				if err := json.NewEncoder(w).Encode(response); err != nil {
+					t.Errorf("Failed to encode response: %v", err)
+				}
+			}))
+			defer server.Close()
+
+			ds := Datasource{BaseURL: server.URL}
+
+			query := map[string]interface{}{
+				"refId":      "A",
+				"dimensions": []string{"orders.name", "orders.null_field"},
+			}
+
+			queryJSON, _ := json.Marshal(query)
+
+			resp, err := ds.QueryData(
+				context.Background(),
+				&backend.QueryDataRequest{
+					PluginContext: backend.PluginContext{
+						DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+							JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+						},
+					},
+					Queries: []backend.DataQuery{
+						{RefID: "A", JSON: queryJSON},
+					},
+				},
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if len(resp.Responses) != 1 {
+				t.Fatal("QueryData must return a response")
+			}
+
+			frame := resp.Responses["A"].Frames[0]
+
+			// Null column should be included (not omitted)
+			if len(frame.Fields) != 2 {
+				t.Fatalf("Expected 2 columns (including null column), got %d", len(frame.Fields))
+			}
+
+			// Null column should have the correct type
+			actualType := reflect.TypeOf(frame.Fields[1].At(0)).String()
+			if actualType != tc.expectedGoType {
+				t.Fatalf("Expected null column type %s, got %s", tc.expectedGoType, actualType)
+			}
+		})
+	}
+}
+
+func TestQueryDataWithAllColumnsNull(t *testing.T) {
+	// Test edge case: when ALL columns have all null values, the Cube API returns
+	// empty objects like [{}, {}]. The frame should still have the correct row count.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Return mock Cube API response where ALL columns have null values
+		// When all values are null, Cube returns empty objects for each row
+		response := CubeAPIResponse{
+			Data: []map[string]interface{}{
+				{}, // Row 1: all nulls
+				{}, // Row 2: all nulls
+			},
+			Annotation: CubeAnnotation{
+				Measures: map[string]CubeFieldInfo{},
+				Dimensions: map[string]CubeFieldInfo{
+					"orders.name": {
+						Title:      "Name",
+						ShortTitle: "Name",
+						Type:       "string",
+					},
+				},
+				Segments:       map[string]CubeFieldInfo{},
+				TimeDimensions: map[string]CubeFieldInfo{},
+			},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Errorf("Failed to encode response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL}
+
+	query := map[string]interface{}{
+		"refId":      "A",
+		"dimensions": []string{"orders.name"},
+	}
+	queryJSON, _ := json.Marshal(query)
+
+	resp, err := ds.QueryData(
+		context.Background(),
+		&backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				},
+			},
+			Queries: []backend.DataQuery{
+				{RefID: "A", JSON: queryJSON},
+			},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	frame := resp.Responses["A"].Frames[0]
+	if frame.Fields[0].Len() != 2 {
+		t.Fatalf("Expected 2 rows (matching data rows), got %d", frame.Fields[0].Len())
+	}
+}
+
+func TestCreateNullFieldWithTimeDimension(t *testing.T) {
+	// When type info is in TimeDimensions (not Dimensions), createNullField
+	// should still find it and create the correct field type.
+	ds := Datasource{}
+	annotation := CubeAnnotation{
+		TimeDimensions: map[string]CubeFieldInfo{
+			"orders.created_at": {Type: "time"},
+		},
+	}
+
+	rowCount := 1 // arbitrary, not relevant to this test
+	field := ds.createNullField("orders.created_at", rowCount, annotation)
+	if reflect.TypeOf(field.At(0)).String() != "*time.Time" {
+		t.Fatalf("Expected '*time.Time', got '%s'", reflect.TypeOf(field.At(0)).String())
+	}
+}
+
 func TestHandleSQLCompilation(t *testing.T) {
 	// Create a mock server that returns SQL compilation response
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1025,7 +1202,6 @@ func TestQueryDataWithInvalidURL(t *testing.T) {
 			},
 		},
 	)
-
 	// Should return error response, not a Go error
 	if err != nil {
 		t.Fatalf("Expected no Go error, got: %v", err)
@@ -2964,7 +3140,6 @@ func TestCheckHealth(t *testing.T) {
 			}
 
 			res, err := ds.CheckHealth(context.Background(), req)
-
 			if err != nil {
 				t.Fatalf("CheckHealth returned unexpected error: %v", err)
 			}
@@ -2993,7 +3168,6 @@ func TestCheckHealthConnectionFailure(t *testing.T) {
 	}
 
 	res, err := ds.CheckHealth(context.Background(), req)
-
 	if err != nil {
 		t.Fatalf("CheckHealth returned unexpected error: %v", err)
 	}
