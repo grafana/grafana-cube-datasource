@@ -396,7 +396,8 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 	}
 
 	// Reorder fields according to query specification (dimensions first, then measures)
-	frame = d.reorderFrameFields(frame, cubeQuery)
+	// Also adds missing fields (e.g., columns with all null values) as nullable fields
+	frame = d.reorderFrameFields(frame, cubeQuery, apiResponse.Annotation, len(apiResponse.Data))
 
 	// Mark dimension fields as filterable to enable AdHoc filter buttons
 	d.markFieldsAsFilterable(frame, cubeQuery)
@@ -483,8 +484,10 @@ func (d *Datasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRe
 	}, nil
 }
 
-// reorderFrameFields reorders the fields of a DataFrame according to the query specification
-func (d *Datasource) reorderFrameFields(frame *data.Frame, query CubeQuery) *data.Frame {
+// reorderFrameFields reorders the fields of a DataFrame according to the query specification.
+// It also adds missing fields (e.g., columns with all null values) as nullable fields.
+// The dataRowCount parameter is needed when all columns have null values (frame has no fields).
+func (d *Datasource) reorderFrameFields(frame *data.Frame, query CubeQuery, annotation CubeAnnotation, dataRowCount int) *data.Frame {
 	// Create a new frame with the reordered fields
 	newFrame := data.NewFrame(frame.Name)
 
@@ -496,20 +499,66 @@ func (d *Datasource) reorderFrameFields(frame *data.Frame, query CubeQuery) *dat
 		fieldPositions[field.Name] = i
 	}
 
+	// Determine row count from existing frame (needed for creating null-filled fields)
+	// Fall back to dataRowCount when frame has no fields (all columns have null values)
+	rowCount := dataRowCount
+	if len(frame.Fields) > 0 {
+		rowCount = frame.Fields[0].Len()
+	}
+
 	// Reorder the fields according to the query specification
+	// If a field doesn't exist (all null values), create it as a nullable field
 	for _, fieldName := range query.Dimensions {
 		if pos, exists := fieldPositions[fieldName]; exists {
 			newFrame.Fields = append(newFrame.Fields, frame.Fields[pos])
+		} else {
+			// Field missing (all null values) - create a nullable field
+			newFrame.Fields = append(newFrame.Fields, d.createNullField(fieldName, rowCount, annotation))
 		}
 	}
 
 	for _, fieldName := range query.Measures {
 		if pos, exists := fieldPositions[fieldName]; exists {
 			newFrame.Fields = append(newFrame.Fields, frame.Fields[pos])
+		} else {
+			// Field missing (all null values) - create a nullable field
+			newFrame.Fields = append(newFrame.Fields, d.createNullField(fieldName, rowCount, annotation))
 		}
 	}
 
 	return newFrame
+}
+
+// createNullField creates a nullable field with nil values for columns that were omitted
+// from the Cube API response (because all values were null).
+func (d *Datasource) createNullField(fieldName string, rowCount int, annotation CubeAnnotation) *data.Field {
+	// Determine the field type from annotation
+	// Check all annotation maps: Dimensions, Measures, and TimeDimensions
+	fieldType := "string" // default
+	if info, ok := annotation.Dimensions[fieldName]; ok {
+		fieldType = info.Type
+	} else if info, ok := annotation.Measures[fieldName]; ok {
+		fieldType = info.Type
+	} else if info, ok := annotation.TimeDimensions[fieldName]; ok {
+		fieldType = info.Type
+	}
+
+	// Create a nullable field with nil values based on type
+	switch fieldType {
+	case "number":
+		values := make([]*float64, rowCount)
+		return data.NewField(fieldName, nil, values)
+	case "time":
+		values := make([]*time.Time, rowCount)
+		return data.NewField(fieldName, nil, values)
+	case "boolean":
+		values := make([]*bool, rowCount)
+		return data.NewField(fieldName, nil, values)
+	default:
+		// Default to nullable string
+		values := make([]*string, rowCount)
+		return data.NewField(fieldName, nil, values)
+	}
 }
 
 // markFieldsAsFilterable marks dimension fields as filterable to enable AdHoc filter buttons
