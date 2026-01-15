@@ -1,0 +1,29 @@
+---
+title: Dependency Management Rules
+description: Rules for managing package dependencies with exact versions
+globs:
+  - "**/package.json"
+---
+
+# Dependency Management
+
+**All dependencies must be pinned (exact versions without caret ^ or tilde ~).**
+
+- Always use exact versions like `"16.3.0"` instead of `"^16.3.0"` or `"~16.3.0"`
+- This is required for Renovate compatibility and ensures deterministic builds
+- When updating dependencies, remove any version range operators (^, ~) and use exact versions
+- Check `package.json` to ensure all dependencies follow this pattern
+
+## Examples
+
+✅ **Correct dependency versions:**
+```json
+"@testing-library/react": "16.3.0"
+"react": "18.3.1"
+```
+
+❌ **Incorrect dependency versions:**
+```json
+"@testing-library/react": "^16.3.0"
+"react": "~18.3.1"
+```

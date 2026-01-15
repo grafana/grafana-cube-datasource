@@ -1,0 +1,57 @@
+---
+title: Git Workflow Rules
+description: Rules for git operations, commit strategy, and GitHub CLI usage
+alwaysApply: true
+---
+
+# Git Workflow Rules
+
+## Git Operations
+
+**In "run everything" Agent mode, avoid interactive commands that require human input.**
+
+- Never use `git rebase -i` (interactive rebase) - it blocks execution waiting for UI input
+- Use non-interactive alternatives:
+  - `git rebase --onto` to skip specific commits
+  - `git reset` + `cherry-pick` to rebuild branches
+  - `GIT_SEQUENCE_EDITOR` environment variable for automated rebase editing
+- Prefer non-interactive flags and automated approaches
+
+### Examples
+
+✅ **Correct git operations:**
+```bash
+git rebase --onto base-branch unwanted-commit~1 current-branch
+git reset --hard base-branch && git cherry-pick commit1 commit2
+```
+
+❌ **Incorrect git operations:**
+```bash
+git rebase -i base-branch  # Blocks waiting for human input
+```
+
+## Commit Strategy
+
+**Prefer atomic commits over amending.**
+
+- Create separate commits for each logical change (e.g., add test, fix bug, refactor)
+- Only amend or fixup when explicitly asked by the user
+- After completing a commit, new work should go in a new commit
+- This preserves the progression of work and makes code review easier
+
+## GitHub CLI
+
+**When updating GitHub PR descriptions, use the REST API instead of `gh pr edit`.**
+
+- The GraphQL-based `gh pr edit` command fails with "Projects (classic) is being deprecated" errors on some repositories
+- Use the REST API directly for reliable PR updates
+
+✅ **Correct:**
+```bash
+gh api repos/OWNER/REPO/pulls/NUMBER -X PATCH -f body='...'
+```
+
+❌ **Incorrect:**
+```bash
+gh pr edit NUMBER --body '...'
+```
