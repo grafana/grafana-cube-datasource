@@ -1,0 +1,37 @@
+---
+title: Testing Rules
+description: Rules for writing tests - applies to Jest, Playwright, and Go tests
+globs:
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*_test.go"
+---
+
+# Testing Rules
+
+## General Testing Philosophy
+
+**Write minimal tests that are just sufficient to verify behaviour.**
+
+- Use the least amount of test data required to reproduce or illustrate the issue
+- Prefer fewer assertions that directly verify the expected behaviour
+- Avoid verbose setup when a simpler configuration would suffice
+
+## Playwright Testing
+
+**Use non-interactive reporter when running Playwright tests.**
+
+- The default reporter serves an interactive HTML report that blocks with "Press Ctrl+C to quit"
+- Use `--reporter=list` for clean, non-interactive output
+- This is especially important in "Run Everything" Agent mode
+
+✅ **Correct:**
+```bash
+npx playwright test --reporter=list
+```
+
+❌ **Incorrect:**
+```bash
+npx playwright test  # Blocks waiting for human input
+```
