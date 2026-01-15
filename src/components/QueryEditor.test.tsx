@@ -5,7 +5,7 @@ import { DataSource } from '../datasource';
 import { MyQuery, MyDataSourceOptions } from '../types';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { renderWithClient } from 'testUtils';
+import { setup } from 'testUtils';
 
 // Mock the SQLPreview component
 jest.mock('./SQLPreview', () => ({
@@ -90,9 +90,7 @@ describe('QueryEditor', () => {
 
     const query = createMockQuery();
 
-    renderWithClient(
-      <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
-    );
+    setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
     // Should show loading state initially
     expect(screen.getByText('Loading dimensions...')).toBeInTheDocument();
@@ -134,9 +132,7 @@ describe('QueryEditor', () => {
     const datasource = createMockDataSource(mockMetadata);
     const query = createMockQuery();
 
-    renderWithClient(
-      <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
-    );
+    setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
     await waitFor(() => {
       expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
@@ -152,9 +148,7 @@ describe('QueryEditor', () => {
 
     const query = createMockQuery();
 
-    renderWithClient(
-      <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
-    );
+    setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
     await waitFor(() => {
       expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
@@ -177,7 +171,7 @@ describe('QueryEditor', () => {
       measures: ['orders.count'],
     });
 
-    renderWithClient(
+    setup(
       <QueryEditor query={existingQuery} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
     );
 
@@ -205,9 +199,7 @@ describe('QueryEditor', () => {
     const datasource = createMockDataSource(mockMetadata);
     const query = createMockQuery();
 
-    renderWithClient(
-      <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
-    );
+    setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
     await waitFor(() => {
       expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
@@ -244,9 +236,7 @@ describe('QueryEditor', () => {
       measures: ['orders.count'],
     });
 
-    renderWithClient(
-      <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
-    );
+    setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
     await waitFor(() => {
       expect(screen.getByTestId('sql-preview')).toHaveTextContent(
@@ -277,9 +267,7 @@ describe('QueryEditor', () => {
       measures: ['orders.count'],
     });
 
-    renderWithClient(
-      <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
-    );
+    setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
     // Should show compiling state
     await waitFor(() => {
@@ -302,9 +290,7 @@ describe('QueryEditor', () => {
       const datasource = createMockDataSource();
       const query = createMockQuery();
 
-      renderWithClient(
-        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
-      );
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
       await waitFor(() => {
         expect(screen.getByLabelText('Row Limit')).toBeInTheDocument();
@@ -324,7 +310,7 @@ describe('QueryEditor', () => {
         limit: 100,
       });
 
-      renderWithClient(
+      setup(
         <QueryEditor
           query={queryWithLimit}
           onChange={mockOnChange}
@@ -346,7 +332,7 @@ describe('QueryEditor', () => {
         measures: ['orders.count'],
       });
 
-      renderWithClient(
+      setup(
         <QueryEditor
           query={queryWithoutLimit}
           onChange={mockOnChange}
@@ -368,9 +354,7 @@ describe('QueryEditor', () => {
         measures: ['orders.count'],
       });
 
-      renderWithClient(
-        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
-      );
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
       await waitFor(() => {
         expect(screen.getByLabelText('Row Limit')).toBeInTheDocument();
@@ -397,7 +381,7 @@ describe('QueryEditor', () => {
         limit: 100,
       });
 
-      renderWithClient(
+      setup(
         <QueryEditor
           query={queryWithLimit}
           onChange={mockOnChange}
@@ -430,9 +414,7 @@ describe('QueryEditor', () => {
         measures: ['orders.count'],
       });
 
-      renderWithClient(
-        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
-      );
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
       await waitFor(() => {
         expect(screen.getByLabelText('Row Limit')).toBeInTheDocument();
@@ -466,7 +448,7 @@ describe('QueryEditor', () => {
         limit: 25,
       });
 
-      renderWithClient(
+      setup(
         <QueryEditor
           query={queryWithLimit}
           onChange={mockOnChange}
@@ -502,7 +484,7 @@ describe('QueryEditor', () => {
         order: { 'orders.count': 'desc' },
       });
 
-      renderWithClient(
+      setup(
         <QueryEditor
           query={queryWithOrder}
           onChange={mockOnChange}
@@ -540,9 +522,7 @@ describe('QueryEditor', () => {
       const datasource = createMockDataSource(mockMetadata);
       const query = createMockQuery({ dimensions: ['orders.discount', 'orders.last_name'] });
 
-      renderWithClient(
-        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
-      );
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
       await waitFor(() => expect(screen.getByText('orders.discount')).toBeInTheDocument());
 
@@ -563,9 +543,7 @@ describe('QueryEditor', () => {
       const datasource = createMockDataSource(mockMetadata);
       const query = createMockQuery({ measures: ['orders.total', 'orders.amount'] });
 
-      renderWithClient(
-        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
-      );
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
       await waitFor(() => expect(screen.getByText('orders.total')).toBeInTheDocument());
 
@@ -596,9 +574,7 @@ describe('QueryEditor', () => {
         measures: ['orders.count'],
       });
 
-      renderWithClient(
-        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
-      );
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
       await waitFor(() => {
         expect(datasource.getResource).toHaveBeenCalledWith('sql', {
@@ -649,9 +625,7 @@ describe('QueryEditor', () => {
         // No timeDimensions in query - should use $cubeTimeDimension
       });
 
-      renderWithClient(
-        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
-      );
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
       await waitFor(() => {
         expect(datasource.getResource).toHaveBeenCalledWith('sql', {
@@ -695,9 +669,7 @@ describe('QueryEditor', () => {
         timeDimensions: [{ dimension: 'orders.updated_at', granularity: 'day' }],
       });
 
-      renderWithClient(
-        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
-      );
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
       await waitFor(() => {
         expect(datasource.getResource).toHaveBeenCalled();
@@ -730,9 +702,7 @@ describe('QueryEditor', () => {
         filters: [{ member: 'orders.status', operator: 'equals', values: ['active'] }],
       });
 
-      renderWithClient(
-        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
-      );
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
       await waitFor(() => {
         expect(datasource.getResource).toHaveBeenCalled();
