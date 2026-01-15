@@ -18,7 +18,7 @@ export function QueryEditor({
   const cubeQueryJson = useMemo(() => buildCubeQueryJson(query, datasource), [query, datasource]);
 
   const { data, isLoading: metadataIsLoading, isError: metadataIsError } = useMetadataQuery({ datasource });
-  const { dimensions, measures } = data ?? { dimensions: [], measures: [] };
+  const metadata = data ?? { dimensions: [], measures: [] };
 
   const { data: compiledSql, isLoading: compiledSqlIsLoading } = useCompiledSqlQuery({
     datasource,
@@ -28,8 +28,14 @@ export function QueryEditor({
   const { onDimensionOrMeasureChange, onLimitChange, onAddOrder, onRemoveOrder, onToggleOrderDirection } =
     useQueryEditorHandlers(query, onChange, onRunQuery);
 
-  const selectedDimensions = dimensions.filter(({ value }: MetadataOption) => query.dimensions?.includes(value));
-  const selectedMeasures = measures.filter(({ value }: MetadataOption) => query.measures?.includes(value));
+  // Map from query order to preserve user selection order (not metadata schema order)
+  const selectedDimensions = (query.dimensions || [])
+    .map((name) => metadata.dimensions.find((option) => option.value === name))
+    .filter((option): option is MetadataOption => option !== undefined);
+
+  const selectedMeasures = (query.measures || [])
+    .map((name) => metadata.measures.find((option) => option.value === name))
+    .filter((option): option is MetadataOption => option !== undefined);
   const currentLimit = query.limit ?? '';
 
   // Fields available for ordering (only selected dimensions and measures that aren't already ordered)
@@ -47,7 +53,7 @@ export function QueryEditor({
       <InlineField label="Dimensions" labelWidth={16} tooltip="Select the dimensions to group your data by">
         <MultiSelect
           aria-label="Dimensions"
-          options={dimensions}
+          options={metadata.dimensions}
           value={selectedDimensions}
           onChange={(v) => onDimensionOrMeasureChange(v, 'dimensions')}
           placeholder={metadataIsLoading ? 'Loading dimensions...' : 'Select dimensions...'}
@@ -59,7 +65,7 @@ export function QueryEditor({
       <InlineField label="Measures" labelWidth={16} tooltip="Select the measures to aggregate">
         <MultiSelect
           aria-label="Measures"
-          options={measures}
+          options={metadata.measures}
           value={selectedMeasures}
           onChange={(v) => onDimensionOrMeasureChange(v, 'measures')}
           placeholder={metadataIsLoading ? 'Loading measures...' : 'Select measures...'}
