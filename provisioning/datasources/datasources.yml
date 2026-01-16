@@ -1,0 +1,35 @@
+apiVersion: 1
+
+datasources:
+  - name: 'cube'
+    type: 'grafana-cube-datasource'
+    access: proxy
+    isDefault: true
+    orgId: 1
+    version: 1
+    editable: true
+    uid: 'cube-datasource'
+    jsonData:
+      cubeApiUrl: 'http://cube:4000'
+      deploymentType: 'self-hosted'
+      exploreSqlDatasourceUid: 'postgres-datasource'
+    secureJsonData:
+      apiSecret: 'dd122a535ad5d703a9d8977179f118bc'
+  - name: 'PostgreSQL'
+    type: 'postgres'
+    access: proxy
+    isDefault: false
+    orgId: 1
+    version: 1
+    editable: true
+    uid: 'postgres-datasource'
+    url: 'postgres:5432'
+    database: 'jaffle_shop'
+    user: 'user'
+    jsonData:
+      sslmode: 'disable'
+      postgresVersion: 1000
+      timescaledb: false
+      database: 'jaffle_shop'
+    secureJsonData:
+      password: 'password'

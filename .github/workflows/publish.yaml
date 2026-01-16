@@ -1,0 +1,51 @@
+# Simple example for using the shared workflows for plugins provided by plugin-ci-workflows.
+# All inputs are documented in the workflow files themselves:
+# https://github.com/grafana/plugin-ci-workflows/tree/main/.github/workflows
+# Additional documentation is also available on EngHub, here:
+# https://enghub.grafana-ops.net/docs/default/component/grafana-plugins-platform/plugins-ci-github-actions/010-plugins-ci-github-actions/#customizing-the-workflows-with-inputs
+
+name: Plugins - CD
+run-name: Deploy ${{ inputs.branch }} to ${{ inputs.environment }} by @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch to publish from. Can be used to deploy PRs to dev
+        default: main
+      environment:
+        description: Environment to publish to
+        required: true
+        type: choice
+        options:
+          - 'dev'
+          - 'ops'
+          - 'prod-canary'
+          - 'prod'
+      docs-only:
+        description: Only publish docs, do not publish the plugin
+        default: false
+        type: boolean
+
+permissions: {}
+
+jobs:
+  cd:
+    name: CD
+    uses: grafana/plugin-ci-workflows/.github/workflows/cd.yml@ci-cd-workflows/v4.3.0
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    with:
+      branch: ${{ github.event.inputs.branch }}
+      environment: ${{ github.event.inputs.environment }}
+      docs-only: ${{ fromJSON(github.event.inputs.docs-only) }}
+      # Scope for the plugin when publishing it to the catalog.
+      # Choose between:
+      # - 'universal': on-prem + cloud (default)
+      # - 'grafana_cloud': cloud only, hidden for on-prem users
+      scopes: universal
+
+      # TODO: add here any other CI custom inputs you may need. You most likely also have to add the same options to push.yaml:
+      #   https://enghub.grafana-ops.net/docs/default/component/grafana-plugins-platform/plugins-ci-github-actions/010-plugins-ci-github-actions/#customizing-the-workflows-with-inputs

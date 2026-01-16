@@ -1,0 +1,77 @@
+# In Cube, views are used to expose slices of your data graph and act as data marts.
+# You can control which measures and dimensions are exposed to BIs or data apps,
+# as well as the direction of joins between the exposed cubes.
+# You can learn more about views in documentation here - https://cube.dev/docs/schema/reference/view
+
+# The following example shows a view defined on top of orders and customers cubes.
+# Both orders and customers cubes are exposed using the "includes" parameter to
+# control which measures and dimensions are exposed.
+# Prefixes can also be applied when exposing measures or dimensions.
+# In this case, the customers' city dimension is prefixed with the cube name,
+# resulting in "customers_city" when querying the view.
+
+views:
+  - name: orders
+
+    cubes:
+      - join_path: raw_orders
+        includes:
+          - status
+          - order_date
+          - created_at
+          - is_gift
+          - priority
+          - id
+          - count
+          - gift_count
+          - avg_priority
+        prefix: true
+
+      - join_path: raw_orders.raw_customers
+        includes:
+          - first_name
+          - last_name
+          - email
+          - is_active
+          - created_at
+          - customer_segment
+          - count
+          - active_count
+        prefix: true
+
+      - join_path: raw_orders.raw_payments
+        includes:
+          - payment_method
+          - currency
+          - is_successful
+          - created_at
+          - amount
+          - tax
+          - discount
+          - processing_fee
+          - refund_amount
+          - total_amount
+          - total_discount
+          - total_tax
+          - total_fees
+          - avg_amount
+          - avg_tax
+          - min_amount
+          - max_amount
+          - unique_payment_methods
+          - net_amount
+          - effective_tax_rate
+          - zero_amount_count
+          - total_refunds
+          - net_revenue
+          - count_with_discount
+          - avg_non_null_discount
+          - successful_payment_count
+          - failure_rate
+          - count
+          - total_amount_in_microdollars
+          - amount_fraction_of_billion
+          - near_max_int_test
+          - scientific_notation_test
+          - tiny_decimal_test
+        prefix: true

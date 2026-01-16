@@ -1,0 +1,23 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "github>grafana/grafana-renovate-config//presets/base",
+    "github>grafana/grafana-renovate-config//presets/plugin-ci-workflows"
+  ],
+  "platformAutomerge": true,
+  "packageRules": [
+    {
+      "groupName": "All non-major dependencies",
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
+      "automerge": true,
+      "labels": [
+        "automerge"
+      ]
+    }
+  ]
+}
