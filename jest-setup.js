@@ -6,3 +6,14 @@ import './.config/jest-setup';
 HTMLCanvasElement.prototype.getContext = jest.fn(() => ({
   measureText: jest.fn(() => ({ width: 100 })),
 }));
+
+// Mock IntersectionObserver for Select component
+global.IntersectionObserver = class IntersectionObserver {
+  constructor() {}
+  disconnect() {}
+  observe() {}
+  unobserve() {}
+  takeRecords() {
+    return [];
+  }
+};

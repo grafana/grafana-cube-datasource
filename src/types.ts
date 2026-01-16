@@ -1,6 +1,9 @@
 import { DataSourceJsonData } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
+export const DEFAULT_ORDER: Order = 'asc';
+export type Order = 'asc' | 'desc';
+
 export enum Operator {
   Equals = 'equals',
   NotEquals = 'notEquals',
@@ -18,7 +21,7 @@ export interface MyQuery extends DataQuery {
   timeDimensions?: any[];
   limit?: number;
   filters?: CubeFilter[];
-  order?: Record<string, 'asc' | 'desc'>;
+  order?: Record<string, Order>;
 }
 
 export const DEFAULT_QUERY: Partial<MyQuery> = {};
