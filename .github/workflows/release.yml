@@ -1,0 +1,48 @@
+# Creates GitHub releases with downloadable artifacts when version tags are pushed.
+# This runs in addition to the CD workflow (publish.yaml) which publishes to the Grafana catalog.
+#
+# To create a release:
+#   1. Bump version: npm version patch|minor|major
+#   2. Push with tags: git push --follow-tags
+#
+# The workflow will create a draft GitHub release with:
+#   - Signed plugin zip files for all platforms
+#   - SHA checksums
+#   - Provenance attestation
+#
+# For more information, see https://github.com/grafana/plugin-actions/blob/main/build-plugin/README.md
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions: read-all
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      attestations: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          persist-credentials: false
+
+      - name: Get Vault secrets
+        id: get-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@28361cdb22223e5f1e34358c86c20908e7248760
+        with:
+          common_secrets: |
+            GRAFANA_ACCESS_POLICY_TOKEN=plugins/sign-plugin-access-policy-token:token
+
+      - name: Build and package plugin
+        uses: grafana/plugin-actions/build-plugin@main # zizmor: ignore[unpinned-uses] provided by grafana
+        with:
+          policy_token: ${{ env.GRAFANA_ACCESS_POLICY_TOKEN }}
+          attestation: true
