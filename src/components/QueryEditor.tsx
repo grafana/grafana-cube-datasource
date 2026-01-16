@@ -5,7 +5,7 @@ import { DataSource } from '../datasource';
 import { MyDataSourceOptions, MyQuery } from '../types';
 import { SQLPreview } from './SQLPreview';
 import { useMetadataQuery, useCompiledSqlQuery, MetadataOption } from 'queries';
-import { OrderByField } from './OrderByField';
+import { OrderBy } from './OrderBy/OrderBy';
 import { FilterField } from './FilterField/FilterField';
 import { useQueryEditorHandlers } from '../hooks/useQueryEditorHandlers';
 import { buildCubeQueryJson } from '../utils/buildCubeQuery';
@@ -32,6 +32,7 @@ export function QueryEditor({
     onAddOrder,
     onRemoveOrder,
     onToggleOrderDirection,
+    onReorderFields,
     onAddFilter,
     onUpdateFilter,
     onRemoveFilter,
@@ -47,14 +48,11 @@ export function QueryEditor({
     .filter((option): option is MetadataOption => option !== undefined);
   const currentLimit = query.limit ?? '';
 
-  // Fields available for ordering (only selected dimensions and measures that aren't already ordered)
+  // All selected dimensions and measures with their labels (for OrderBy component)
   const availableOrderOptions = useMemo(() => {
     const selectedFields = [...(query.dimensions || []), ...(query.measures || [])];
-    const alreadyOrdered = Object.keys(query.order || {});
-    return selectedFields
-      .filter((field) => !alreadyOrdered.includes(field))
-      .map((field) => ({ label: field.split('.').pop() || field, value: field }));
-  }, [query.dimensions, query.measures, query.order]);
+    return selectedFields.map((field) => ({ label: field.split('.').pop() || field, value: field }));
+  }, [query.dimensions, query.measures]);
 
   return (
     <>
@@ -106,15 +104,16 @@ export function QueryEditor({
         />
       </Field>
 
-      <InlineField label="Order By" labelWidth={16} tooltip="Order results by selected fields">
-        <OrderByField
+      <Field label="Order By" description="Order results by selected fields">
+        <OrderBy
           order={query.order}
           availableOptions={availableOrderOptions}
           onAdd={onAddOrder}
           onRemove={onRemoveOrder}
           onToggleDirection={onToggleOrderDirection}
+          onReorder={onReorderFields}
         />
-      </InlineField>
+      </Field>
 
       {!compiledSql && compiledSqlIsLoading && (
         <InlineField label="" labelWidth={16}>

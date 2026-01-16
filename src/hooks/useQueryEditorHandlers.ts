@@ -1,5 +1,5 @@
 import { ChangeEvent } from 'react';
-import type { MyQuery, CubeFilter, Operator } from '../types';
+import { MyQuery, CubeFilter, Operator, Order, DEFAULT_ORDER } from '../types';
 import { SelectableValue } from '@grafana/data';
 
 export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery) => void, onRunQuery: () => void) {
@@ -36,7 +36,7 @@ export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery
     }
   };
 
-  const onAddOrder = (field: string, direction: 'asc' | 'desc' = 'asc') => {
+  const onAddOrder = (field: string, direction: Order = DEFAULT_ORDER) => {
     const newOrder = { ...(query.order || {}), [field]: direction };
     updateQueryAndRun({ order: newOrder });
   };
@@ -56,6 +56,23 @@ export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery
     }
     const newDirection = query.order[field] === 'asc' ? 'desc' : 'asc';
     updateQueryAndRun({ order: { ...query.order, [field]: newDirection } });
+  };
+
+  const onReorderFields = (fromIndex: number, toIndex: number) => {
+    if (!query.order) {
+      return;
+    }
+    const orderEntries = Object.entries(query.order);
+
+    // Validate bounds to prevent undefined from being inserted
+    if (fromIndex < 0 || fromIndex >= orderEntries.length || toIndex < 0 || toIndex >= orderEntries.length) {
+      return;
+    }
+
+    const [removed] = orderEntries.splice(fromIndex, 1);
+    orderEntries.splice(toIndex, 0, removed);
+    const newOrder = Object.fromEntries(orderEntries);
+    updateQueryAndRun({ order: newOrder });
   };
 
   const onAddFilter = (member: string, operator: Operator, value: string) => {
@@ -95,6 +112,7 @@ export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery
     onAddOrder,
     onRemoveOrder,
     onToggleOrderDirection,
+    onReorderFields,
     onAddFilter,
     onUpdateFilter,
     onRemoveFilter,
