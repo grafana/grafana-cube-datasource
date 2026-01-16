@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
-import { InlineField, Input, Alert, MultiSelect, Text } from '@grafana/ui';
+import { InlineField, Input, Alert, MultiSelect, Text, Field } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
 import { MyDataSourceOptions, MyQuery } from '../types';
 import { SQLPreview } from './SQLPreview';
 import { useMetadataQuery, useCompiledSqlQuery, MetadataOption } from 'queries';
 import { OrderByField } from './OrderByField';
+import { FilterField } from './FilterField/FilterField';
 import { useQueryEditorHandlers } from '../hooks/useQueryEditorHandlers';
 import { buildCubeQueryJson } from '../utils/buildCubeQuery';
 
@@ -25,8 +26,16 @@ export function QueryEditor({
     cubeQueryJson,
   });
 
-  const { onDimensionOrMeasureChange, onLimitChange, onAddOrder, onRemoveOrder, onToggleOrderDirection } =
-    useQueryEditorHandlers(query, onChange, onRunQuery);
+  const {
+    onDimensionOrMeasureChange,
+    onLimitChange,
+    onAddOrder,
+    onRemoveOrder,
+    onToggleOrderDirection,
+    onAddFilter,
+    onUpdateFilter,
+    onRemoveFilter,
+  } = useQueryEditorHandlers(query, onChange, onRunQuery);
 
   // Map from query order to preserve user selection order (not metadata schema order)
   const selectedDimensions = (query.dimensions || [])
@@ -85,6 +94,17 @@ export function QueryEditor({
           min={1}
         />
       </InlineField>
+
+      <Field label="Filters" description="Filter results by field values">
+        <FilterField
+          filters={query.filters}
+          dimensions={metadata.dimensions}
+          onAdd={onAddFilter}
+          onUpdate={onUpdateFilter}
+          onRemove={onRemoveFilter}
+          datasource={datasource}
+        />
+      </Field>
 
       <InlineField label="Order By" labelWidth={16} tooltip="Order results by selected fields">
         <OrderByField

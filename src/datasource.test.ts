@@ -1,6 +1,6 @@
 import { DataSource } from './datasource';
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { MyDataSourceOptions } from './types';
+import { MyDataSourceOptions, Operator } from './types';
 import { getTemplateSrv } from '@grafana/runtime';
 
 // Mock @grafana/runtime
@@ -187,7 +187,7 @@ describe('DataSource', () => {
         filters: [
           {
             member: '$dimension',
-            operator: 'equals',
+            operator: Operator.Equals,
             values: ['$filterValue'],
           },
         ],
