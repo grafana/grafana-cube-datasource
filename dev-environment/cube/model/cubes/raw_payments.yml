@@ -1,0 +1,190 @@
+cubes:
+  - name: raw_payments
+    sql_table: raw_payments
+    data_source: default
+
+    dimensions:
+      - name: id
+        sql: id
+        type: number
+        primary_key: true
+
+      - name: order_id
+        sql: order_id
+        type: number
+
+      - name: payment_method
+        sql: payment_method
+        type: string
+
+      - name: amount
+        sql: amount
+        type: number
+        description: 'Payment amount (decimal, 2DP)'
+
+      - name: tax
+        sql: tax
+        type: number
+        description: 'Tax amount as dimension (numeric)'
+
+      - name: discount
+        sql: discount
+        type: number
+        description: 'Discount amount as dimension (numeric)'
+
+      - name: processing_fee
+        sql: processing_fee
+        type: number
+        description: 'Processing fee as dimension (numeric)'
+
+      - name: refund_amount
+        sql: refund_amount
+        type: number
+        description: 'Refund amount (tests NEGATIVE numbers)'
+
+      - name: created_at
+        sql: created_at
+        type: time
+        description: 'Payment timestamp (tests datetime)'
+
+      - name: is_successful
+        sql: is_successful
+        type: boolean
+        description: 'Payment success status (tests boolean)'
+
+      - name: currency
+        sql: currency
+        type: string
+        description: 'Currency code (tests multi-value categorical)'
+
+    measures:
+      # Test SUM aggregation with decimals
+      - name: total_amount
+        sql: amount
+        type: sum
+        description: 'Total payment amount (tests decimal number conversion)'
+
+      - name: total_tax
+        sql: tax
+        type: sum
+        description: 'Total tax (tests decimal conversion)'
+
+      - name: total_discount
+        sql: discount
+        type: sum
+
+      - name: total_fees
+        sql: processing_fee
+        type: sum
+
+      # Test AVG aggregation (returns decimals)
+      - name: avg_amount
+        sql: amount
+        type: avg
+        description: 'Average payment amount (tests avg decimal conversion)'
+
+      - name: avg_tax
+        sql: tax
+        type: avg
+
+      # Test MIN/MAX (could be integers or decimals)
+      - name: min_amount
+        sql: amount
+        type: min
+        description: 'Minimum payment amount (tests min conversion)'
+
+      - name: max_amount
+        sql: amount
+        type: max
+        description: 'Maximum payment amount (tests max conversion)'
+
+      # Test COUNT (always returns integer)
+      - name: count
+        type: count
+        description: 'Payment count (tests integer conversion)'
+
+      # Test COUNT_DISTINCT
+      - name: unique_payment_methods
+        sql: payment_method
+        type: count_distinct
+        description: 'Unique payment method count'
+
+      # Test calculated measure (formula with multiple fields)
+      - name: net_amount
+        sql: 'amount - COALESCE(discount, 0) - COALESCE(processing_fee, 0)'
+        type: sum
+        description: 'Net payment after discounts and fees (tests formula conversion)'
+
+      - name: effective_tax_rate
+        sql: 'CASE WHEN amount > 0 THEN (tax / amount) * 100 ELSE 0 END'
+        type: avg
+        description: 'Average effective tax rate percentage'
+
+      # Test zero and null handling
+      - name: zero_amount_count
+        sql: 'CASE WHEN amount = 0 THEN 1 ELSE 0 END'
+        type: sum
+        description: 'Count of zero-amount payments'
+
+      # Test negative numbers (refunds)
+      - name: total_refunds
+        sql: refund_amount
+        type: sum
+        description: 'Total refunds (tests NEGATIVE number aggregation)'
+
+      - name: net_revenue
+        sql: 'amount + refund_amount'
+        type: sum
+        description: 'Net revenue after refunds (tests mixed positive/negative)'
+
+      # Test NULL handling
+      - name: count_with_discount
+        sql: 'CASE WHEN discount > 0 THEN 1 ELSE 0 END'
+        type: sum
+        description: 'Count payments with discount (tests NULL handling)'
+
+      - name: avg_non_null_discount
+        sql: discount
+        type: avg
+        description: 'Average discount amount'
+
+      # Test boolean aggregation
+      - name: successful_payment_count
+        sql: 'CASE WHEN is_successful THEN 1 ELSE 0 END'
+        type: sum
+        description: 'Count of successful payments (tests boolean aggregation)'
+
+      - name: failure_rate
+        sql: 'CASE WHEN is_successful THEN 0 ELSE 1 END'
+        type: avg
+        description: 'Payment failure rate (tests boolean)'
+
+      # Test very large and very small numbers
+      - name: total_amount_in_microdollars
+        sql: 'amount * 1000000'
+        type: sum
+        description: 'Amount in microdollars (tests 7+ digit numbers)'
+
+      - name: amount_fraction_of_billion
+        sql: 'amount / 1000000000.0'
+        type: sum
+        description: 'Amount as fraction of billion (tests very small decimals)'
+
+      - name: near_max_int_test
+        sql: 'CAST(9223372036854775807 AS BIGINT)'
+        type: max
+        description: 'Tests 64-bit signed integer max value (2^63 - 1)'
+
+      - name: scientific_notation_test
+        sql: 'amount * 1.0e15'
+        type: sum
+        description: 'Tests scientific notation and large floating point numbers'
+
+      - name: tiny_decimal_test
+        sql: 'amount / 1.0e15'
+        type: avg
+        description: 'Tests very small decimal precision (scientific notation)'
+
+    pre_aggregations:
+      # Pre-aggregation definitions go here.
+      # Learn more in the documentation: https://cube.dev/docs/caching/pre-aggregations/getting-started

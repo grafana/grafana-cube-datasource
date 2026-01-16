@@ -1,0 +1,691 @@
+import React, { act } from 'react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { QueryEditor } from './QueryEditor';
+import { DataSource } from '../datasource';
+import { MyQuery, MyDataSourceOptions } from '../types';
+import { DataSourceInstanceSettings } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+
+// Mock the SQLPreview component
+jest.mock('./SQLPreview', () => ({
+  SQLPreview: ({ sql }: { sql: string }) => <div data-testid="sql-preview">{sql}</div>,
+}));
+
+// Mock @grafana/runtime for getTemplateSrv
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: jest.fn(),
+}));
+
+const mockGetTemplateSrv = getTemplateSrv as jest.Mock;
+
+const createMockDataSource = (mockMetadata: any = null, mockSQLResponse: any = null) => {
+  const instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions> = {
+    id: 1,
+    uid: 'test-uid',
+    type: 'cube-datasource',
+    name: 'Test Cube',
+    meta: {} as any,
+    jsonData: { cubeApiUrl: 'http://localhost:4000' },
+    readOnly: false,
+    access: 'proxy',
+  };
+
+  const datasource = new DataSource(instanceSettings);
+
+  // Mock getMetadata
+  datasource.getMetadata = jest.fn().mockResolvedValue(
+    mockMetadata || {
+      dimensions: [
+        { label: 'orders.status', value: 'orders.status' },
+        { label: 'orders.customer', value: 'orders.customer' },
+      ],
+      measures: [
+        { label: 'orders.count', value: 'orders.count' },
+        { label: 'orders.total', value: 'orders.total' },
+      ],
+    }
+  );
+
+  // Mock getResource for SQL compilation
+  datasource.getResource = jest.fn().mockResolvedValue(
+    mockSQLResponse || {
+      sql: 'SELECT status, customer, COUNT(*) FROM orders GROUP BY status, customer',
+    }
+  );
+
+  return datasource;
+};
+
+const createMockQuery = (overrides: Partial<MyQuery> = {}): MyQuery => ({
+  refId: 'A',
+  ...overrides,
+});
+
+describe('QueryEditor', () => {
+  const mockOnChange = jest.fn();
+  const mockOnRunQuery = jest.fn();
+
+  beforeEach(() => {
+    mockOnChange.mockClear();
+    mockOnRunQuery.mockClear();
+
+    // Setup default mock for getTemplateSrv
+    mockGetTemplateSrv.mockReturnValue({
+      replace: jest.fn((value: string) => value), // Return value unchanged by default
+      getAdhocFilters: jest.fn(() => []), // No ad-hoc filters by default
+    });
+  });
+
+  it('should render loading state initially', async () => {
+    const datasource = createMockDataSource();
+
+    // Make metadata loading slower to catch the loading state
+    let resolveMetadata: (value: any) => void;
+    const metadataPromise = new Promise((resolve) => {
+      resolveMetadata = resolve;
+    });
+    datasource.getMetadata = jest.fn().mockReturnValue(metadataPromise);
+
+    const query = createMockQuery();
+
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+    // Should show loading state initially
+    expect(screen.getByText('Loading dimensions...')).toBeInTheDocument();
+    expect(screen.getByText('Loading measures...')).toBeInTheDocument();
+
+    // Resolve the metadata
+    await act(async () => {
+      resolveMetadata!({
+        dimensions: [
+          { label: 'orders.status', value: 'orders.status' },
+          { label: 'orders.customer', value: 'orders.customer' },
+        ],
+        measures: [
+          { label: 'orders.count', value: 'orders.count' },
+          { label: 'orders.total', value: 'orders.total' },
+        ],
+      });
+    });
+
+    // Should show normal state after metadata loads
+    await waitFor(() => {
+      expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
+      expect(screen.getByText('Select measures...')).toBeInTheDocument();
+    });
+  });
+
+  it('should fetch and display metadata options', async () => {
+    const mockMetadata = {
+      dimensions: [
+        { label: 'orders.status', value: 'orders.status' },
+        { label: 'orders.customer', value: 'orders.customer' },
+      ],
+      measures: [
+        { label: 'orders.count', value: 'orders.count' },
+        { label: 'orders.total', value: 'orders.total' },
+      ],
+    };
+
+    const datasource = createMockDataSource(mockMetadata);
+    const query = createMockQuery();
+
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
+      expect(screen.getByText('Select measures...')).toBeInTheDocument();
+    });
+
+    expect(datasource.getMetadata).toHaveBeenCalledTimes(1);
+  });
+
+  it('should handle metadata fetch errors gracefully', async () => {
+    const datasource = createMockDataSource();
+    datasource.getMetadata = jest.fn().mockRejectedValue(new Error('API Error'));
+
+    const query = createMockQuery();
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
+    });
+
+    expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch metadata:', expect.any(Error));
+    consoleSpy.mockRestore();
+  });
+
+  it('should parse existing query and select appropriate options', async () => {
+    const mockMetadata = {
+      dimensions: [
+        { label: 'orders.status', value: 'orders.status' },
+        { label: 'orders.customer', value: 'orders.customer' },
+      ],
+      measures: [{ label: 'orders.count', value: 'orders.count' }],
+    };
+
+    const datasource = createMockDataSource(mockMetadata);
+    const existingQuery = createMockQuery({
+      dimensions: ['orders.status'],
+      measures: ['orders.count'],
+    });
+
+    render(
+      <QueryEditor query={existingQuery} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+    );
+
+    await waitFor(() => {
+      // When there are selected values, the placeholder text changes
+      // Look for the selected values instead
+      expect(screen.getByText('orders.status')).toBeInTheDocument();
+      expect(screen.getByText('orders.count')).toBeInTheDocument();
+    });
+
+    // The component should have parsed the existing query
+    // and selected the appropriate options
+    expect(datasource.getMetadata).toHaveBeenCalledTimes(1);
+  });
+
+  it('should call onChange and onRunQuery when query parameters change', async () => {
+    const mockMetadata = {
+      dimensions: [
+        { label: 'orders.status', value: 'orders.status' },
+        { label: 'orders.customer', value: 'orders.customer' },
+      ],
+      measures: [{ label: 'orders.count', value: 'orders.count' }],
+    };
+
+    const datasource = createMockDataSource(mockMetadata);
+    const query = createMockQuery();
+
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
+    });
+
+    // Note: Testing MultiSelect interactions directly is complex with react-select
+    // Instead, we verify that updateQueryAndRun works correctly
+    // by testing the limit input which uses the same pattern
+
+    const limitInput = screen.getByLabelText('Row Limit');
+
+    fireEvent.change(limitInput, { target: { value: '100' } });
+
+    // Verify both onChange and onRunQuery are called together
+    expect(mockOnChange).toHaveBeenCalledTimes(1);
+    expect(mockOnRunQuery).toHaveBeenCalledTimes(1);
+
+    // Test another change - modify the limit again
+    fireEvent.change(limitInput, { target: { value: '200' } });
+
+    // Verify both are called again (total of 2 times each)
+    expect(mockOnChange).toHaveBeenCalledTimes(2);
+    expect(mockOnRunQuery).toHaveBeenCalledTimes(2);
+  });
+
+  it('should compile SQL when query changes', async () => {
+    const mockSQLResponse = {
+      sql: 'SELECT status, COUNT(*) FROM orders GROUP BY status',
+    };
+
+    const datasource = createMockDataSource(null, mockSQLResponse);
+    const query = createMockQuery({
+      dimensions: ['orders.status'],
+      measures: ['orders.count'],
+    });
+
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('sql-preview')).toHaveTextContent(
+        'SELECT status, COUNT(*) FROM orders GROUP BY status'
+      );
+    });
+
+    expect(datasource.getResource).toHaveBeenCalledWith('sql', {
+      query: JSON.stringify({
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+      }),
+    });
+  });
+
+  it('should show compiling state during SQL compilation', async () => {
+    const datasource = createMockDataSource();
+
+    // Make getResource return a promise that we can control
+    let resolveSQL: (value: any) => void;
+    const sqlPromise = new Promise((resolve) => {
+      resolveSQL = resolve;
+    });
+    datasource.getResource = jest.fn().mockReturnValue(sqlPromise);
+
+    const query = createMockQuery({
+      dimensions: ['orders.status'],
+      measures: ['orders.count'],
+    });
+
+    render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+    // Should show compiling state
+    await waitFor(() => {
+      expect(screen.getByText('Compiling SQL...')).toBeInTheDocument();
+    });
+
+    // Resolve the SQL compilation
+    await act(async () => {
+      resolveSQL!({ sql: 'SELECT * FROM orders' });
+    });
+
+    // Should hide compiling state
+    await waitFor(() => {
+      expect(screen.queryByText('Compiling SQL...')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Row Limit Feature', () => {
+    it('should render row limit input field', async () => {
+      const datasource = createMockDataSource();
+      const query = createMockQuery();
+
+      render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Row Limit')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Enter row limit...')).toBeInTheDocument();
+      });
+
+      const limitInput = screen.getByLabelText('Row Limit');
+      expect(limitInput).toHaveAttribute('type', 'number');
+      expect(limitInput).toHaveAttribute('min', '1');
+    });
+
+    it('should display existing row limit value from query', async () => {
+      const datasource = createMockDataSource();
+      const queryWithLimit = createMockQuery({
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+        limit: 100,
+      });
+
+      render(
+        <QueryEditor
+          query={queryWithLimit}
+          onChange={mockOnChange}
+          onRunQuery={mockOnRunQuery}
+          datasource={datasource}
+        />
+      );
+
+      await waitFor(() => {
+        const limitInput = screen.getByLabelText('Row Limit') as HTMLInputElement;
+        expect(limitInput.value).toBe('100');
+      });
+    });
+
+    it('should display empty value when no limit is set', async () => {
+      const datasource = createMockDataSource();
+      const queryWithoutLimit = createMockQuery({
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+      });
+
+      render(
+        <QueryEditor
+          query={queryWithoutLimit}
+          onChange={mockOnChange}
+          onRunQuery={mockOnRunQuery}
+          datasource={datasource}
+        />
+      );
+
+      await waitFor(() => {
+        const limitInput = screen.getByLabelText('Row Limit') as HTMLInputElement;
+        expect(limitInput.value).toBe('');
+      });
+    });
+
+    it('should update query when valid limit is entered', async () => {
+      const datasource = createMockDataSource();
+      const query = createMockQuery({
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+      });
+
+      render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Row Limit')).toBeInTheDocument();
+      });
+
+      const limitInput = screen.getByLabelText('Row Limit');
+
+      fireEvent.change(limitInput, { target: { value: '50' } });
+
+      expect(mockOnChange).toHaveBeenCalledWith({
+        ...query,
+        limit: 50,
+      });
+
+      // Verify that onRunQuery is also called to re-evaluate the query
+      expect(mockOnRunQuery).toHaveBeenCalledTimes(1);
+    });
+
+    it('should remove limit from query when input is cleared', async () => {
+      const datasource = createMockDataSource();
+      const queryWithLimit = createMockQuery({
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+        limit: 100,
+      });
+
+      render(
+        <QueryEditor
+          query={queryWithLimit}
+          onChange={mockOnChange}
+          onRunQuery={mockOnRunQuery}
+          datasource={datasource}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Row Limit')).toBeInTheDocument();
+      });
+
+      const limitInput = screen.getByLabelText('Row Limit');
+
+      fireEvent.change(limitInput, { target: { value: '' } });
+
+      expect(mockOnChange).toHaveBeenCalledWith({
+        ...queryWithLimit,
+        limit: undefined,
+      });
+
+      // Verify that onRunQuery is also called to re-evaluate the query
+      expect(mockOnRunQuery).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not update query for invalid values', async () => {
+      const datasource = createMockDataSource();
+      const query = createMockQuery({
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+      });
+
+      render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Row Limit')).toBeInTheDocument();
+      });
+
+      const limitInput = screen.getByLabelText('Row Limit');
+
+      // Test negative number
+      fireEvent.change(limitInput, { target: { value: '-5' } });
+
+      // Test zero
+      fireEvent.change(limitInput, { target: { value: '0' } });
+
+      // Test non-numeric value
+      fireEvent.change(limitInput, { target: { value: 'abc' } });
+
+      // onChange and onRunQuery should not have been called for invalid values
+      expect(mockOnChange).not.toHaveBeenCalled();
+      expect(mockOnRunQuery).not.toHaveBeenCalled();
+    });
+
+    it('should include limit in SQL compilation request', async () => {
+      const mockSQLResponse = {
+        sql: 'SELECT status, COUNT(*) FROM orders GROUP BY status LIMIT 25',
+      };
+
+      const datasource = createMockDataSource(null, mockSQLResponse);
+      const queryWithLimit = createMockQuery({
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+        limit: 25,
+      });
+
+      render(
+        <QueryEditor
+          query={queryWithLimit}
+          onChange={mockOnChange}
+          onRunQuery={mockOnRunQuery}
+          datasource={datasource}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('sql-preview')).toHaveTextContent(
+          'SELECT status, COUNT(*) FROM orders GROUP BY status LIMIT 25'
+        );
+      });
+
+      expect(datasource.getResource).toHaveBeenCalledWith('sql', {
+        query: JSON.stringify({
+          dimensions: ['orders.status'],
+          measures: ['orders.count'],
+          limit: 25,
+        }),
+      });
+    });
+
+    it('should include order in SQL compilation request', async () => {
+      const mockSQLResponse = {
+        sql: 'SELECT status, COUNT(*) FROM orders GROUP BY status ORDER BY COUNT(*) DESC',
+      };
+
+      const datasource = createMockDataSource(null, mockSQLResponse);
+      const queryWithOrder = createMockQuery({
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+        order: { 'orders.count': 'desc' },
+      });
+
+      render(
+        <QueryEditor
+          query={queryWithOrder}
+          onChange={mockOnChange}
+          onRunQuery={mockOnRunQuery}
+          datasource={datasource}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('sql-preview')).toHaveTextContent(
+          'SELECT status, COUNT(*) FROM orders GROUP BY status ORDER BY COUNT(*) DESC'
+        );
+      });
+
+      expect(datasource.getResource).toHaveBeenCalledWith('sql', {
+        query: JSON.stringify({
+          dimensions: ['orders.status'],
+          measures: ['orders.count'],
+          order: { 'orders.count': 'desc' },
+        }),
+      });
+    });
+  });
+
+  describe('SQL Preview with AdHoc Filters and Dashboard Variables', () => {
+    it('should include AdHoc filters in SQL compilation request', async () => {
+      // Setup mock to return AdHoc filters
+      mockGetTemplateSrv.mockReturnValue({
+        replace: jest.fn((value: string) => value),
+        getAdhocFilters: jest.fn(() => [
+          { key: 'orders.status', operator: '=', value: 'completed' },
+          { key: 'orders.customer', operator: '!=', value: 'test-user', values: [] },
+        ]),
+      });
+
+      const mockSQLResponse = {
+        sql: 'SELECT status FROM orders WHERE status = "completed"',
+      };
+
+      const datasource = createMockDataSource(null, mockSQLResponse);
+      const query = createMockQuery({
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+      });
+
+      render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      await waitFor(() => {
+        expect(datasource.getResource).toHaveBeenCalledWith('sql', {
+          query: expect.stringContaining('"filters"'),
+        });
+      });
+
+      // Parse the query to verify the filters
+      const callArg = (datasource.getResource as jest.Mock).mock.calls.find(
+        (call: unknown[]) => call[0] === 'sql'
+      )?.[1]?.query;
+      const parsedQuery = JSON.parse(callArg);
+
+      expect(parsedQuery.filters).toEqual([
+        { member: 'orders.status', operator: 'equals', values: ['completed'] },
+        { member: 'orders.customer', operator: 'notEquals', values: ['test-user'] },
+      ]);
+    });
+
+    it('should include $cubeTimeDimension in SQL compilation when variable is set', async () => {
+      const fromTimestamp = Date.now() - 3600000; // 1 hour ago
+      const toTimestamp = Date.now();
+
+      // Setup mock to return dashboard time dimension
+      mockGetTemplateSrv.mockReturnValue({
+        replace: jest.fn((value: string) => {
+          if (value === '$cubeTimeDimension') {
+            return 'orders.created_at';
+          }
+          if (value === '$__from') {
+            return String(fromTimestamp);
+          }
+          if (value === '$__to') {
+            return String(toTimestamp);
+          }
+          return value;
+        }),
+        getAdhocFilters: jest.fn(() => []),
+      });
+
+      const mockSQLResponse = {
+        sql: 'SELECT status FROM orders WHERE created_at BETWEEN ...',
+      };
+
+      const datasource = createMockDataSource(null, mockSQLResponse);
+      const query = createMockQuery({
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+        // No timeDimensions in query - should use $cubeTimeDimension
+      });
+
+      render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      await waitFor(() => {
+        expect(datasource.getResource).toHaveBeenCalledWith('sql', {
+          query: expect.stringContaining('"timeDimensions"'),
+        });
+      });
+
+      // Parse the query to verify the time dimension
+      const callArg = (datasource.getResource as jest.Mock).mock.calls.find(
+        (call: unknown[]) => call[0] === 'sql'
+      )?.[1]?.query;
+      const parsedQuery = JSON.parse(callArg);
+
+      expect(parsedQuery.timeDimensions).toHaveLength(1);
+      expect(parsedQuery.timeDimensions[0].dimension).toBe('orders.created_at');
+      expect(parsedQuery.timeDimensions[0].dateRange).toHaveLength(2);
+    });
+
+    // Issue #147: Layered time dimension config (Panel Override → Dashboard Default → Datasource Default)
+    it('should use panel-specific timeDimensions over dashboard-wide $cubeTimeDimension', async () => {
+      // Dashboard has $cubeTimeDimension set to orders.created_at
+      mockGetTemplateSrv.mockReturnValue({
+        replace: jest.fn((value: string) => {
+          if (value === '$cubeTimeDimension') {
+            return 'orders.created_at';
+          }
+          return value;
+        }),
+        getAdhocFilters: jest.fn(() => []),
+      });
+
+      const mockSQLResponse = {
+        sql: 'SELECT status FROM orders WHERE updated_at BETWEEN ...',
+      };
+
+      const datasource = createMockDataSource(null, mockSQLResponse);
+
+      // Panel has its own time dimension configured - this should take precedence
+      const query = createMockQuery({
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+        timeDimensions: [{ dimension: 'orders.updated_at', granularity: 'day' }],
+      });
+
+      render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      await waitFor(() => {
+        expect(datasource.getResource).toHaveBeenCalled();
+      });
+
+      // Verify the panel's time dimension is used, not the dashboard variable
+      const callArg = (datasource.getResource as jest.Mock).mock.calls.find(
+        (call: unknown[]) => call[0] === 'sql'
+      )?.[1]?.query;
+      const parsedQuery = JSON.parse(callArg);
+
+      expect(parsedQuery.timeDimensions).toHaveLength(1);
+      expect(parsedQuery.timeDimensions[0].dimension).toBe('orders.updated_at');
+      expect(parsedQuery.timeDimensions[0].granularity).toBe('day');
+    });
+
+    it('should combine query filters with AdHoc filters', async () => {
+      // Setup mock to return AdHoc filters
+      mockGetTemplateSrv.mockReturnValue({
+        replace: jest.fn((value: string) => value),
+        getAdhocFilters: jest.fn(() => [{ key: 'orders.region', operator: '=', value: 'US' }]),
+      });
+
+      const mockSQLResponse = { sql: 'SELECT status FROM orders WHERE ...' };
+      const datasource = createMockDataSource(null, mockSQLResponse);
+
+      const query = createMockQuery({
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+        // Query has its own filters
+        filters: [{ member: 'orders.status', operator: 'equals', values: ['active'] }],
+      });
+
+      render(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      await waitFor(() => {
+        expect(datasource.getResource).toHaveBeenCalled();
+      });
+
+      // Parse the query to verify both filters are included
+      const callArg = (datasource.getResource as jest.Mock).mock.calls.find(
+        (call: unknown[]) => call[0] === 'sql'
+      )?.[1]?.query;
+      const parsedQuery = JSON.parse(callArg);
+
+      expect(parsedQuery.filters).toHaveLength(2);
+      expect(parsedQuery.filters).toContainEqual({
+        member: 'orders.status',
+        operator: 'equals',
+        values: ['active'],
+      });
+      expect(parsedQuery.filters).toContainEqual({
+        member: 'orders.region',
+        operator: 'equals',
+        values: ['US'],
+      });
+    });
+  });
+});

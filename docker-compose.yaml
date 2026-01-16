@@ -1,0 +1,50 @@
+services:
+  grafana:
+    extends:
+      file: .config/docker-compose-base.yaml
+      service: grafana
+    container_name: 'grafana-itself'
+    build:
+      args:
+        grafana_version: ${GRAFANA_VERSION:-12.2.0-17253726931}
+        grafana_image: ${GRAFANA_IMAGE:-grafana}
+    environment:
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/cube-datasource-poc.json
+      GF_FEATURE_TOGGLES_ENABLE: 'tableNextGen,queryLibrary,sqlExpressions,dashboardDsAdHocFiltering,adhocFiltersInTooltips'
+    depends_on:
+      - cube
+
+  cube:
+    image: cubejs/cube:latest@sha256:118ed7c2071ff0b6d4db1301e8f02c87cc4fa6389efa290a7b067843acc02706
+    ports:
+      - 4000:4000
+      - 15432:15432
+    volumes:
+      - ./dev-environment/cube:/cube/conf
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:18@sha256:38d5c9d522037d8bf0864c9068e4df2f8a60127c6489ab06f98fdeda535560f9
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: jaffle_shop
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./dev-environment/data/seeds/:/data/seeds/
+      - ./dev-environment/data/migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
+    # Enable SQL queries in the logs (minimal output)
+    command:
+      [
+        'postgres',
+        '-c',
+        'log_statement=all',
+        '-c',
+        'log_line_prefix=',
+        '-c',
+        'log_duration=off',
+        '-c',
+        'log_parameter_max_length=0',
+      ]

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
+  "type": "datasource",
+  "name": "Cube",
+  "id": "grafana-cube-datasource",
+  "metrics": true,
+  "backend": true,
+  "alerting": true,
+  "multiValueFilterOperators": true,
+  "executable": "gpx_cube",
+  "info": {
+    "description": "",
+    "author": {
+      "name": "Grafana"
+    },
+    "keywords": ["datasource"],
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    },
+    "links": [],
+    "screenshots": [],
+    "version": "%VERSION%",
+    "updated": "%TODAY%"
+  },
+  "dependencies": {
+    "grafanaDependency": ">=12.1.0",
+    "plugins": []
+  }
+}

@@ -1,0 +1,47 @@
+# Simple example for using the shared workflows for plugins provided by plugin-ci-workflows.
+# All inputs are documented in the workflow files themselves:
+# https://github.com/grafana/plugin-ci-workflows/tree/main/.github/workflows
+# Additional documentation is also available on EngHub, here:
+# https://enghub.grafana-ops.net/docs/default/component/grafana-plugins-platform/plugins-ci-github-actions/010-plugins-ci-github-actions/#customizing-the-workflows-with-inputs
+
+name: Plugins - CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions: {}
+
+jobs:
+  check-lockfile-drift:
+    name: Check for package-lock.json drift
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install dependencies (fails if lockfile is out of sync)
+        run: npm ci
+
+  ci:
+    name: CI
+    uses: grafana/plugin-ci-workflows/.github/workflows/ci.yml@ci-cd-workflows/v4.3.0
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      plugin-version-suffix: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
+
+      # TODO: add here any other CI custom inputs you may need. You most likely also have to add the same options to publish.yaml:
+      #   https://enghub.grafana-ops.net/docs/default/component/grafana-plugins-platform/plugins-ci-github-actions/010-plugins-ci-github-actions/#customizing-the-workflows-with-inputs

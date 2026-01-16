@@ -1,0 +1,46 @@
+# Cursor Rules for Grafana Cube Datasource
+
+## Dependency Management
+
+**All dependencies must be pinned (exact versions without caret ^ or tilde ~).**
+
+- Always use exact versions like `"16.3.0"` instead of `"^16.3.0"` or `"~16.3.0"`
+- This is required for Renovate compatibility and ensures deterministic builds
+- When updating dependencies, remove any version range operators (^, ~) and use exact versions
+- Check `package.json` to ensure all dependencies follow this pattern
+
+## Git Operations
+
+**In "run everything" Agent mode, avoid interactive commands that require human input.**
+
+- Never use `git rebase -i` (interactive rebase) - it blocks execution waiting for UI input
+- Use non-interactive alternatives:
+  - `git rebase --onto` to skip specific commits
+  - `git reset` + `cherry-pick` to rebuild branches
+  - `GIT_SEQUENCE_EDITOR` environment variable for automated rebase editing
+- Prefer non-interactive flags and automated approaches
+
+## Examples
+
+✅ **Correct dependency versions:**
+```json
+"@testing-library/react": "16.3.0"
+"react": "18.3.1"
+```
+
+❌ **Incorrect dependency versions:**
+```json
+"@testing-library/react": "^16.3.0"
+"react": "~18.3.1"
+```
+
+✅ **Correct git operations:**
+```bash
+git rebase --onto base-branch unwanted-commit~1 current-branch
+git reset --hard base-branch && git cherry-pick commit1 commit2
+```
+
+❌ **Incorrect git operations:**
+```bash
+git rebase -i base-branch  # Blocks waiting for human input
+```

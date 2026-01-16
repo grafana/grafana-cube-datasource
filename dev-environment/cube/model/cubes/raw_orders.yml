@@ -1,0 +1,62 @@
+cubes:
+  - name: raw_orders
+    sql_table: raw_orders
+    data_source: default
+
+    joins:
+      - name: raw_customers
+        sql: '{CUBE}.user_id = {raw_customers}.id'
+        relationship: many_to_one
+
+      - name: raw_payments
+        sql: '{CUBE}.id = {raw_payments}.order_id'
+        # One order can have multiple payments
+        relationship: one_to_many
+
+    dimensions:
+      - name: id
+        sql: id
+        type: number
+        primary_key: true
+
+      - name: status
+        sql: status
+        type: string
+
+      - name: order_date
+        sql: order_date
+        type: time
+        description: 'Date field (tests date-only)'
+
+      - name: created_at
+        sql: created_at
+        type: time
+        description: 'Timestamp field with time (tests full datetime)'
+
+      - name: is_gift
+        sql: is_gift
+        type: boolean
+        description: 'Gift indicator (tests boolean)'
+
+      - name: priority
+        sql: priority
+        type: number
+        description: 'Priority level (tests integer dimension)'
+
+    measures:
+      - name: count
+        type: count
+
+      - name: gift_count
+        sql: 'CASE WHEN is_gift THEN 1 ELSE 0 END'
+        type: sum
+        description: 'Count of gift orders (tests boolean measure)'
+
+      - name: avg_priority
+        sql: priority
+        type: avg
+        description: 'Average priority (tests avg of integers)'
+
+    pre_aggregations:
+      # Pre-aggregation definitions go here.
+      # Learn more in the documentation: https://cube.dev/docs/caching/pre-aggregations/getting-started

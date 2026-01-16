@@ -1,0 +1,91 @@
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: One minute
+    folder: Cube Datasource
+    interval: 1m
+    rules:
+      - uid: bex5cbpzwjlkwa
+        title: Order Amount by Payment Method
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: cube-datasource
+            model:
+              datasource:
+                type: grafana-cube-datasource
+                uid: cube-datasource
+              instant: false
+              intervalMs: 1000
+              maxDataPoints: 43200
+              dimensions:
+                - orders.raw_payments_payment_method
+              measures:
+                - orders.raw_payments_total_amount
+              range: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 70000
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: B
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        dashboardUid: cube-datasource-poc
+        panelId: 2
+        noDataState: NoData
+        execErrState: Error
+        for: 1m
+        annotations:
+          __dashboardUid__: cube-datasource-poc
+          __panelId__: '2'
+        labels: {}
+        isPaused: false
+        notification_settings:
+          receiver: grafana-default-email

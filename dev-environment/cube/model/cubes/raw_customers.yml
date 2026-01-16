@@ -1,0 +1,53 @@
+cubes:
+  - name: raw_customers
+    sql_table: raw_customers
+    data_source: default
+
+    joins: []
+
+    dimensions:
+      - name: id
+        sql: id
+        type: number
+        primary_key: true
+
+      - name: first_name
+        sql: first_name
+        type: string
+
+      - name: last_name
+        sql: last_name
+        type: string
+
+      - name: email
+        sql: email
+        type: string
+        description: 'Email addresses (tests string with special chars)'
+
+      - name: is_active
+        sql: is_active
+        type: boolean
+        description: 'Boolean field (tests true/false)'
+
+      - name: created_at
+        sql: created_at
+        type: time
+        description: 'Timestamp field (tests datetime)'
+
+      - name: customer_segment
+        sql: customer_segment
+        type: string
+        description: 'Customer categorization (tests categorical data)'
+
+    measures:
+      - name: count
+        type: count
+
+      - name: active_count
+        sql: 'CASE WHEN is_active THEN 1 ELSE 0 END'
+        type: sum
+        description: 'Count of active customers (tests boolean aggregation)'
+
+    pre_aggregations:
+      # Pre-aggregation definitions go here.
+      # Learn more in the documentation: https://cube.dev/docs/caching/pre-aggregations/getting-started
