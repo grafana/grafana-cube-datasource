@@ -81,3 +81,26 @@ export const useCompiledSqlQuery = ({
     enabled: Boolean(cubeQueryJson),
   });
 };
+
+interface TagValue {
+  text: string;
+}
+
+export const useMemberValuesQuery = ({
+  datasource,
+  member,
+}: {
+  datasource: DataSource;
+  member: string | null;
+}): UseQueryResult<TagValue[]> => {
+  return useQuery<TagValue[]>({
+    queryKey: ['memberValues', datasource.uid, member],
+    queryFn: async (): Promise<TagValue[]> => {
+      if (!member) {
+        return [];
+      }
+      return await datasource.getTagValues({ key: member });
+    },
+    enabled: !!member,
+  });
+};

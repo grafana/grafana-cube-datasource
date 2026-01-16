@@ -1,11 +1,9 @@
 import React, { act } from 'react';
 import { screen, waitFor, fireEvent } from '@testing-library/react';
 import { QueryEditor } from './QueryEditor';
-import { DataSource } from '../datasource';
-import { MyQuery, MyDataSourceOptions } from '../types';
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { MyQuery, Operator } from '../types';
 import { getTemplateSrv } from '@grafana/runtime';
-import { setup } from 'testUtils';
+import { createMockDataSource, setup } from 'testUtils';
 
 // Mock the SQLPreview component
 jest.mock('./SQLPreview', () => ({
@@ -19,44 +17,6 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 const mockGetTemplateSrv = getTemplateSrv as jest.Mock;
-
-const createMockDataSource = (mockMetadata: any = null, mockSQLResponse: any = null) => {
-  const instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions> = {
-    id: 1,
-    uid: 'test-uid',
-    type: 'cube-datasource',
-    name: 'Test Cube',
-    meta: {} as any,
-    jsonData: { cubeApiUrl: 'http://localhost:4000' },
-    readOnly: false,
-    access: 'proxy',
-  };
-
-  const datasource = new DataSource(instanceSettings);
-
-  // Mock getMetadata
-  datasource.getMetadata = jest.fn().mockResolvedValue(
-    mockMetadata || {
-      dimensions: [
-        { label: 'orders.status', value: 'orders.status' },
-        { label: 'orders.customer', value: 'orders.customer' },
-      ],
-      measures: [
-        { label: 'orders.count', value: 'orders.count' },
-        { label: 'orders.total', value: 'orders.total' },
-      ],
-    }
-  );
-
-  // Mock getResource for SQL compilation
-  datasource.getResource = jest.fn().mockResolvedValue(
-    mockSQLResponse || {
-      sql: 'SELECT status, customer, COUNT(*) FROM orders GROUP BY status, customer',
-    }
-  );
-
-  return datasource;
-};
 
 const createMockQuery = (overrides: Partial<MyQuery> = {}): MyQuery => ({
   refId: 'A',
@@ -699,7 +659,7 @@ describe('QueryEditor', () => {
         dimensions: ['orders.status'],
         measures: ['orders.count'],
         // Query has its own filters
-        filters: [{ member: 'orders.status', operator: 'equals', values: ['active'] }],
+        filters: [{ member: 'orders.status', operator: Operator.Equals, values: ['active'] }],
       });
 
       setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);

@@ -1,9 +1,14 @@
 import { DataSourceJsonData } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
+export enum Operator {
+  Equals = 'equals',
+  NotEquals = 'notEquals',
+}
+
 export interface CubeFilter {
   member: string;
-  operator: string;
+  operator: Operator;
   values: string[];
 }
 
@@ -41,6 +46,6 @@ export interface MyDataSourceOptions extends DataSourceJsonData {
  * Value that is used in the backend, but never sent over HTTP to the frontend
  */
 export interface MySecureJsonData {
-  apiKey?: string;    // For Cube Cloud
+  apiKey?: string; // For Cube Cloud
   apiSecret?: string; // For self-hosted Cube (JWT generation)
 }
