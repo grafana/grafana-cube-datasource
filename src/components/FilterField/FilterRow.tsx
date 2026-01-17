@@ -1,5 +1,5 @@
 import React from 'react';
-import { Select } from '@grafana/ui';
+import { MultiSelect, Select } from '@grafana/ui';
 import { Operator } from '../../types';
 import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
 import { SelectableValue } from '@grafana/data';
@@ -14,7 +14,7 @@ const OPERATOR_OPTIONS: Array<{ label: string; value: Operator }> = [
 export type FilterState = {
   member: string | null;
   operator: Operator;
-  value: string | null;
+  values: string[];
 };
 
 interface FilterRowProps {
@@ -35,7 +35,9 @@ export function FilterRow({ filter, index, dimensions, allFilters, onUpdate, onR
 
   // Get values already selected for this member by other filters
   const usedValues = new Set(
-    allFilters.filter((f, i) => i !== index && f.member === filter.member && f.value).map((f) => f.value)
+    allFilters
+      .filter((f, i) => i !== index && f.member === filter.member)
+      .flatMap((f) => f.values)
   );
 
   const valueOptions = tagValues
@@ -45,13 +47,15 @@ export function FilterRow({ filter, index, dimensions, allFilters, onUpdate, onR
       value: tagValue.text,
     }));
 
+  const currentValues = filter.values.map((v) => ({ label: v, value: v }));
+
   return (
     <InputGroup>
       <Select
         aria-label="Select field"
         options={dimensions}
         value={filter.member}
-        onChange={(option) => onUpdate(index, { member: option?.value || null, value: null })}
+        onChange={(option) => onUpdate(index, { member: option?.value || null, values: [] })}
         placeholder="Select field"
         width="auto"
       />
@@ -62,11 +66,14 @@ export function FilterRow({ filter, index, dimensions, allFilters, onUpdate, onR
         onChange={(option) => onUpdate(index, { operator: option.value as Operator })}
         width="auto"
       />
-      <Select
+      <MultiSelect
         aria-label="Select value"
         options={valueOptions}
-        value={filter.value}
-        onChange={(option) => onUpdate(index, { value: option.value || '' })}
+        value={currentValues}
+        onChange={(options) => {
+          const newValues = options.map((o) => o.value).filter((v): v is string => !!v);
+          onUpdate(index, { values: newValues });
+        }}
         placeholder={isLoading ? 'Loading...' : 'Select value'}
         width="auto"
         disabled={!filter.member}
