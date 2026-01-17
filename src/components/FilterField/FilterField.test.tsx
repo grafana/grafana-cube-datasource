@@ -215,5 +215,60 @@ describe('FilterField', () => {
       // Add button should remain disabled until a value is selected
       expect(screen.getByRole('button', { name: 'Add filter' })).toBeDisabled();
     });
+
+    it('should render and allow interaction with many values (15+)', async () => {
+      // Generate 15 values to test handling of many selections
+      const manyValues = Array.from({ length: 15 }, (_, i) => `value-${i + 1}`);
+
+      setup(
+        <FilterField
+          dimensions={mockOptions}
+          filters={[{ member: 'orders.status', operator: Operator.Equals, values: manyValues }]}
+          onAdd={mockOnAdd}
+          onUpdate={mockOnUpdate}
+          onRemove={mockOnRemove}
+          datasource={mockDataSource}
+        />
+      );
+
+      // All 15 values should be rendered
+      for (const value of manyValues) {
+        expect(await screen.findByText(value)).toBeInTheDocument();
+      }
+
+      // Each value should have a remove button (the 'x' on the pill)
+      // In Grafana's MultiSelect, each selected value has a button to remove it
+      const removeValueButtons = screen.getAllByRole('button', { name: /Remove/i });
+      // Should have at least 15 remove buttons for the values (plus the filter remove button)
+      expect(removeValueButtons.length).toBeGreaterThanOrEqual(15);
+    });
+
+    it('should allow removing individual values from a multi-value filter', async () => {
+      const { user } = setup(
+        <FilterField
+          dimensions={mockOptions}
+          filters={[{ member: 'orders.status', operator: Operator.Equals, values: ['completed', 'pending', 'cancelled'] }]}
+          onAdd={mockOnAdd}
+          onUpdate={mockOnUpdate}
+          onRemove={mockOnRemove}
+          datasource={mockDataSource}
+        />
+      );
+
+      // Wait for values to load
+      await screen.findByText('completed');
+      const pendingText = await screen.findByText('pending');
+      await screen.findByText('cancelled');
+
+      // Find the remove button for 'pending' value by finding its parent container
+      // and then the sibling button within that container
+      const pendingContainer = pendingText.closest('[class*="multi-value-container"]');
+      const pendingRemoveButton = pendingContainer?.querySelector('button[aria-label="Remove"]');
+      expect(pendingRemoveButton).toBeInTheDocument();
+      await user.click(pendingRemoveButton!);
+
+      // Should call onUpdate with the remaining values
+      expect(mockOnUpdate).toHaveBeenCalledWith(0, 'orders.status', Operator.Equals, ['completed', 'cancelled']);
+    });
   });
 });
