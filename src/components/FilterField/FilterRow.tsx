@@ -71,7 +71,7 @@ export function FilterRow({ filter, index, dimensions, allFilters, onUpdate, onR
         value={selectedValues}
         onChange={(selected) => onUpdate(index, { values: selected.map((s) => s.value || '') })}
         placeholder={isLoading ? 'Loading...' : 'Select values'}
-        width="auto"
+        width={50}
         disabled={!filter.member}
         isLoading={isLoading}
         isClearable

@@ -187,5 +187,32 @@ describe('FilterField', () => {
       // Should have called onAdd with the first value
       expect(mockOnAdd).toHaveBeenCalledWith('orders.status', Operator.Equals, ['completed']);
     });
+
+    it('should render filter with many values (15+) and allow removal of individual values', async () => {
+      const manyValues = Array.from({ length: 15 }, (_, i) => `value${i + 1}`);
+
+      setup(
+        <FilterField
+          dimensions={mockOptions}
+          filters={[{ member: 'orders.status', operator: Operator.Equals, values: manyValues }]}
+          onAdd={mockOnAdd}
+          onUpdate={mockOnUpdate}
+          onRemove={mockOnRemove}
+          datasource={mockDataSource}
+        />
+      );
+
+      // All 15 values should be visible
+      for (const value of manyValues) {
+        expect(screen.getByText(value)).toBeInTheDocument();
+      }
+
+      // Each value should have a remove button (the "x" on each tag)
+      const removeButtons = screen.getAllByRole('button', { name: 'Remove' });
+      expect(removeButtons.length).toBe(15);
+
+      // The MultiSelect combobox should still be accessible to add more values
+      expect(screen.getByRole('combobox', { name: 'Select values' })).toBeInTheDocument();
+    });
   });
 });
