@@ -35,7 +35,7 @@ describe('FilterField', () => {
     expect(screen.getByText('orders.status')).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Select operator' })).toBeInTheDocument();
     expect(screen.getByText('=')).toBeInTheDocument();
-    expect(screen.getByRole('combobox', { name: 'Select value' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Select values' })).toBeInTheDocument();
 
     // Wait for the value to load
     expect(await screen.findByText('completed')).toBeInTheDocument();
