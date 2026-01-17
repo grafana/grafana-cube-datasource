@@ -1,6 +1,6 @@
 import React from 'react';
-import { screen } from '@testing-library/react';
-import { createMockDataSource, setup } from 'testUtils';
+import { screen, waitFor } from '@testing-library/react';
+import { createMockDataSource, setup, selectOptionInTest } from 'testUtils';
 import { FilterField } from './FilterField';
 import { Operator } from 'types';
 
@@ -23,7 +23,7 @@ describe('FilterField', () => {
     setup(
       <FilterField
         dimensions={mockOptions}
-        filters={[{ member: 'orders.status', operator: Operator.Equals, values: ['completed'] }]}
+        filters={[{ member: 'orders.status', operator: Operator.Equals, values: ['completed', 'pending'] }]}
         onAdd={mockOnAdd}
         onUpdate={mockOnUpdate}
         onRemove={mockOnRemove}
@@ -37,8 +37,9 @@ describe('FilterField', () => {
     expect(screen.getByText('=')).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Select value' })).toBeInTheDocument();
 
-    // Wait for the value to load
+    // Wait for the values to load
     expect(await screen.findByText('completed')).toBeInTheDocument();
+    expect(screen.getByText('pending')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Remove filter' })).toBeInTheDocument();
   });
 
@@ -58,6 +59,66 @@ describe('FilterField', () => {
 
     // Just check one of the fields is rendered
     expect(screen.getByRole('combobox', { name: 'Select field' })).toBeInTheDocument();
+  });
+
+  it('should allow selecting multiple values for a new filter', async () => {
+    const { user } = setup(
+      <FilterField
+        dimensions={mockOptions}
+        filters={[]}
+        onAdd={mockOnAdd}
+        onUpdate={mockOnUpdate}
+        onRemove={mockOnRemove}
+        datasource={mockDataSource}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Add filter' }));
+
+    await selectOptionInTest(screen.getByLabelText('Select field'), 'orders.status');
+    await selectOptionInTest(screen.getByLabelText('Select value'), ['completed', 'pending']);
+
+    await waitFor(() => {
+      expect(mockOnAdd).toHaveBeenLastCalledWith('orders.status', Operator.Equals, ['completed', 'pending']);
+    });
+  });
+
+  it('should update existing filter with multiple values', async () => {
+    setup(
+      <FilterField
+        dimensions={mockOptions}
+        filters={[{ member: 'orders.status', operator: Operator.Equals, values: ['completed'] }]}
+        onAdd={mockOnAdd}
+        onUpdate={mockOnUpdate}
+        onRemove={mockOnRemove}
+        datasource={mockDataSource}
+      />
+    );
+
+    await selectOptionInTest(screen.getByLabelText('Select value'), 'pending');
+
+    await waitFor(() => {
+      expect(mockOnUpdate).toHaveBeenLastCalledWith(0, 'orders.status', Operator.Equals, ['completed', 'pending']);
+    });
+  });
+
+  it('should allow removing a single value from a filter', async () => {
+    const { user } = setup(
+      <FilterField
+        dimensions={mockOptions}
+        filters={[{ member: 'orders.status', operator: Operator.Equals, values: ['completed', 'pending'] }]}
+        onAdd={mockOnAdd}
+        onUpdate={mockOnUpdate}
+        onRemove={mockOnRemove}
+        datasource={mockDataSource}
+      />
+    );
+
+    await user.click(await screen.findByLabelText('Remove completed'));
+
+    await waitFor(() => {
+      expect(mockOnUpdate).toHaveBeenLastCalledWith(0, 'orders.status', Operator.Equals, ['pending']);
+    });
   });
 
   it('should have add button disabled when field is not selected', async () => {
