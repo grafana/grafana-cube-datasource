@@ -75,24 +75,24 @@ export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery
     updateQueryAndRun({ order: newOrder });
   };
 
-  const onAddFilter = (member: string, operator: Operator, value: string) => {
+  const onAddFilter = (member: string, operator: Operator, values: string[]) => {
     const newFilter: CubeFilter = {
       member,
       operator,
-      values: [value],
+      values,
     };
     const newFilters = [...(query.filters || []), newFilter];
     updateQueryAndRun({ filters: newFilters });
   };
 
-  const onUpdateFilter = (index: number, member: string, operator: Operator, value: string) => {
+  const onUpdateFilter = (index: number, member: string, operator: Operator, values: string[]) => {
     if (!query.filters || index >= query.filters.length) {
       return;
     }
     const updatedFilter: CubeFilter = {
       member,
       operator,
-      values: [value],
+      values,
     };
     const newFilters = query.filters.map((filter, i) => (i === index ? updatedFilter : filter));
     updateQueryAndRun({ filters: newFilters });
