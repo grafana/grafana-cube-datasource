@@ -8,8 +8,8 @@ import { FilterRow, FilterState } from './FilterRow';
 interface FilterFieldProps {
   dimensions: Array<SelectableValue<string>>;
   filters?: CubeFilter[];
-  onAdd: (member: string, operator: Operator, value: string) => void;
-  onUpdate: (index: number, member: string, operator: Operator, value: string) => void;
+  onAdd: (member: string, operator: Operator, values: string[]) => void;
+  onUpdate: (index: number, member: string, operator: Operator, values: string[]) => void;
   onRemove: (index: number) => void;
   datasource: DataSource;
 }
@@ -19,11 +19,11 @@ export function FilterField({ dimensions, filters = [], onAdd, onUpdate, onRemov
     filters.map((filter) => ({
       member: filter.member,
       operator: filter.operator,
-      value: filter.values[0] || '',
+      values: filter.values ?? [],
     }))
   );
 
-  const hasIncompleteFilter = filterStates.some((f) => !f.member || !f.value);
+  const hasIncompleteFilter = filterStates.some((f) => !f.member || f.values.length === 0);
 
   const handleAddNew = () => {
     setFilterStates([
@@ -31,7 +31,7 @@ export function FilterField({ dimensions, filters = [], onAdd, onUpdate, onRemov
       {
         member: null,
         operator: Operator.Equals,
-        value: '',
+        values: [],
       },
     ]);
   };
@@ -48,12 +48,12 @@ export function FilterField({ dimensions, filters = [], onAdd, onUpdate, onRemov
     const updatedFilter = { ...filterStates[index], ...updates };
     setFilterStates(filterStates.map((f, i) => (i === index ? updatedFilter : f)));
 
-    if (updatedFilter.member && updatedFilter.value) {
+    if (updatedFilter.member && updatedFilter.values.length > 0) {
       // If this is an existing filter, update it otherwise add it
       if (index < filters.length) {
-        onUpdate(index, updatedFilter.member, updatedFilter.operator, updatedFilter.value);
+        onUpdate(index, updatedFilter.member, updatedFilter.operator, updatedFilter.values);
       } else {
-        onAdd(updatedFilter.member, updatedFilter.operator, updatedFilter.value);
+        onAdd(updatedFilter.member, updatedFilter.operator, updatedFilter.values);
       }
     }
   };

@@ -1,10 +1,11 @@
 import React from 'react';
-import { Select } from '@grafana/ui';
+import { Select, useStyles2 } from '@grafana/ui';
 import { Operator } from '../../types';
 import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
-import { SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { DataSource } from '../../datasource';
 import { useMemberValuesQuery } from '../../queries';
+import { css } from '@emotion/css';
 
 const OPERATOR_OPTIONS: Array<{ label: string; value: Operator }> = [
   { label: '=', value: Operator.Equals },
@@ -14,7 +15,7 @@ const OPERATOR_OPTIONS: Array<{ label: string; value: Operator }> = [
 export type FilterState = {
   member: string | null;
   operator: Operator;
-  value: string | null;
+  values: string[];
 };
 
 interface FilterRowProps {
@@ -28,6 +29,7 @@ interface FilterRowProps {
 }
 
 export function FilterRow({ filter, index, dimensions, allFilters, onUpdate, onRemove, datasource }: FilterRowProps) {
+  const styles = useStyles2(getStyles);
   const { data: tagValues = [], isLoading } = useMemberValuesQuery({
     datasource,
     member: filter.member,
@@ -35,15 +37,25 @@ export function FilterRow({ filter, index, dimensions, allFilters, onUpdate, onR
 
   // Get values already selected for this member by other filters
   const usedValues = new Set(
-    allFilters.filter((f, i) => i !== index && f.member === filter.member && f.value).map((f) => f.value)
+    allFilters
+      .filter((f, i) => i !== index && f.member === filter.member)
+      .flatMap((f) => f.values)
+      .filter((value): value is string => Boolean(value))
   );
 
-  const valueOptions = tagValues
-    .filter((tagValue) => !usedValues.has(tagValue.text))
-    .map((tagValue) => ({
-      label: tagValue.text,
-      value: tagValue.text,
-    }));
+  const selectedValues = filter.values ?? [];
+  const selectedValuesSet = new Set(selectedValues);
+  const selectedOptions = selectedValues.map((value) => ({ label: value, value }));
+
+  const valueOptions = [
+    ...selectedOptions,
+    ...tagValues
+      .filter((tagValue) => !usedValues.has(tagValue.text) && !selectedValuesSet.has(tagValue.text))
+      .map((tagValue) => ({
+        label: tagValue.text,
+        value: tagValue.text,
+      })),
+  ];
 
   return (
     <InputGroup>
@@ -51,7 +63,7 @@ export function FilterRow({ filter, index, dimensions, allFilters, onUpdate, onR
         aria-label="Select field"
         options={dimensions}
         value={filter.member}
-        onChange={(option) => onUpdate(index, { member: option?.value || null, value: null })}
+        onChange={(option) => onUpdate(index, { member: option?.value || null, values: [] })}
         placeholder="Select field"
         width="auto"
       />
@@ -65,12 +77,20 @@ export function FilterRow({ filter, index, dimensions, allFilters, onUpdate, onR
       <Select
         aria-label="Select value"
         options={valueOptions}
-        value={filter.value}
-        onChange={(option) => onUpdate(index, { value: option.value || '' })}
-        placeholder={isLoading ? 'Loading...' : 'Select value'}
-        width="auto"
+        value={selectedOptions}
+        onChange={(options: Array<SelectableValue<string>> | SelectableValue<string> | null) => {
+          const selected = Array.isArray(options) ? options : options ? [options] : [];
+          const values = Array.from(
+            new Set(selected.map((option) => option.value).filter((value): value is string => Boolean(value)))
+          );
+          onUpdate(index, { values });
+        }}
+        placeholder={isLoading ? 'Loading...' : 'Select values'}
+        className={styles.valueSelect}
         disabled={!filter.member}
         isLoading={isLoading}
+        isMulti
+        closeMenuOnSelect={false}
       />
       <AccessoryButton
         size="md"
@@ -82,3 +102,13 @@ export function FilterRow({ filter, index, dimensions, allFilters, onUpdate, onR
     </InputGroup>
   );
 }
+
+const getStyles = (_theme: GrafanaTheme2) => {
+  return {
+    valueSelect: css({
+      minWidth: '280px',
+      maxWidth: '520px',
+      flex: '1 1 360px',
+    }),
+  };
+};
