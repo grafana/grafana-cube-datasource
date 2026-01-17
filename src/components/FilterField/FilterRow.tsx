@@ -75,7 +75,7 @@ export function FilterRow({ filter, index, dimensions, allFilters, onUpdate, onR
           onUpdate(index, { values: newValues });
         }}
         placeholder={isLoading ? 'Loading...' : 'Select value'}
-        width="auto"
+        width={40}
         disabled={!filter.member}
         isLoading={isLoading}
       />
