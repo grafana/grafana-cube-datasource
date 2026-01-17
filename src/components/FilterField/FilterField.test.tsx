@@ -35,7 +35,7 @@ describe('FilterField', () => {
     expect(screen.getByText('orders.status')).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Select operator' })).toBeInTheDocument();
     expect(screen.getByText('=')).toBeInTheDocument();
-    expect(screen.getByRole('combobox', { name: 'Select value' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Select values' })).toBeInTheDocument();
 
     // Wait for the value to load
     expect(await screen.findByText('completed')).toBeInTheDocument();
@@ -110,7 +110,110 @@ describe('FilterField', () => {
     );
 
     // Both filters should render successfully
-    const valueSelects = screen.getAllByRole('combobox', { name: 'Select value' });
+    const valueSelects = screen.getAllByRole('combobox', { name: 'Select values' });
     expect(valueSelects).toHaveLength(2);
+  });
+
+  describe('multi-value selection', () => {
+    it('should render filter with multiple values', async () => {
+      setup(
+        <FilterField
+          dimensions={mockOptions}
+          filters={[{ member: 'orders.status', operator: Operator.Equals, values: ['completed', 'pending'] }]}
+          onAdd={mockOnAdd}
+          onUpdate={mockOnUpdate}
+          onRemove={mockOnRemove}
+          datasource={mockDataSource}
+        />
+      );
+
+      // Both values should be displayed as selected
+      expect(await screen.findByText('completed')).toBeInTheDocument();
+      expect(await screen.findByText('pending')).toBeInTheDocument();
+    });
+
+    it('should call onUpdate with array of values when selecting multiple values', async () => {
+      const { user } = setup(
+        <FilterField
+          dimensions={mockOptions}
+          filters={[{ member: 'orders.status', operator: Operator.Equals, values: ['completed'] }]}
+          onAdd={mockOnAdd}
+          onUpdate={mockOnUpdate}
+          onRemove={mockOnRemove}
+          datasource={mockDataSource}
+        />
+      );
+
+      // Wait for values to load
+      await screen.findByText('completed');
+
+      // Click on the multi-select to open it
+      const valueSelect = screen.getByRole('combobox', { name: 'Select values' });
+      await user.click(valueSelect);
+
+      // Select an additional value
+      const pendingOption = await screen.findByText('pending');
+      await user.click(pendingOption);
+
+      // Should call onUpdate with array containing both values
+      expect(mockOnUpdate).toHaveBeenCalledWith(0, 'orders.status', Operator.Equals, ['completed', 'pending']);
+    });
+
+    it('should call onAdd with array of values when adding a new filter with multiple values', async () => {
+      const { user } = setup(
+        <FilterField
+          dimensions={mockOptions}
+          filters={[]}
+          onAdd={mockOnAdd}
+          onUpdate={mockOnUpdate}
+          onRemove={mockOnRemove}
+          datasource={mockDataSource}
+        />
+      );
+
+      // Add a new filter
+      await user.click(screen.getByRole('button', { name: 'Add filter' }));
+
+      // Select field
+      const fieldSelect = screen.getByRole('combobox', { name: 'Select field' });
+      await user.click(fieldSelect);
+      await user.click(await screen.findByText('orders.status'));
+
+      // Select first value
+      const valueSelect = screen.getByRole('combobox', { name: 'Select values' });
+      await user.click(valueSelect);
+      await user.click(await screen.findByText('completed'));
+
+      // Open again and select another value
+      await user.click(valueSelect);
+      await user.click(await screen.findByText('pending'));
+
+      // Should call onAdd with array of values
+      expect(mockOnAdd).toHaveBeenCalledWith('orders.status', Operator.Equals, ['completed', 'pending']);
+    });
+
+    it('should disable add filter button when filter has no values selected', async () => {
+      const { user } = setup(
+        <FilterField
+          dimensions={mockOptions}
+          filters={[]}
+          onAdd={mockOnAdd}
+          onUpdate={mockOnUpdate}
+          onRemove={mockOnRemove}
+          datasource={mockDataSource}
+        />
+      );
+
+      // Add a new filter
+      await user.click(screen.getByRole('button', { name: 'Add filter' }));
+
+      // Select field only
+      const fieldSelect = screen.getByRole('combobox', { name: 'Select field' });
+      await user.click(fieldSelect);
+      await user.click(await screen.findByText('orders.status'));
+
+      // Add button should remain disabled until a value is selected
+      expect(screen.getByRole('button', { name: 'Add filter' })).toBeDisabled();
+    });
   });
 });
