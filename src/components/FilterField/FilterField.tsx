@@ -48,6 +48,13 @@ export function FilterField({ dimensions, filters = [], onAdd, onUpdate, onRemov
     const updatedFilter = { ...filterStates[index], ...updates };
     setFilterStates(filterStates.map((f, i) => (i === index ? updatedFilter : f)));
 
+    if (updatedFilter.member && updatedFilter.values.length === 0) {
+      if (index < filters.length) {
+        onRemove(index);
+      }
+      return;
+    }
+
     if (updatedFilter.member && updatedFilter.values.length > 0) {
       // If this is an existing filter, update it otherwise add it
       if (index < filters.length) {
