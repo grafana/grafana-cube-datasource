@@ -6,6 +6,7 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { DataSource } from '../../datasource';
 import { useMemberValuesQuery } from '../../queries';
 import { css } from '@emotion/css';
+import { components, MultiValueRemoveProps } from 'react-select';
 
 const OPERATOR_OPTIONS: Array<{ label: string; value: Operator }> = [
   { label: '=', value: Operator.Equals },
@@ -91,6 +92,7 @@ export function FilterRow({ filter, index, dimensions, allFilters, onUpdate, onR
         isLoading={isLoading}
         isMulti
         closeMenuOnSelect={false}
+        components={{ MultiValueRemove }}
       />
       <AccessoryButton
         size="md"
@@ -102,6 +104,20 @@ export function FilterRow({ filter, index, dimensions, allFilters, onUpdate, onR
     </InputGroup>
   );
 }
+
+const MultiValueRemove = (props: MultiValueRemoveProps<SelectableValue<string>>) => {
+  const label = props.data?.label ?? props.data?.value ?? 'value';
+
+  return (
+    <components.MultiValueRemove
+      {...props}
+      innerProps={{
+        ...props.innerProps,
+        'aria-label': `Remove ${label}`,
+      }}
+    />
+  );
+};
 
 const getStyles = (_theme: GrafanaTheme2) => {
   return {
