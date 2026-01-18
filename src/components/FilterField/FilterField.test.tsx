@@ -121,6 +121,26 @@ describe('FilterField', () => {
     });
   });
 
+  it('should remove a filter from the parent when all values are cleared', async () => {
+    const { user } = setup(
+      <FilterField
+        dimensions={mockOptions}
+        filters={[{ member: 'orders.status', operator: Operator.Equals, values: ['completed'] }]}
+        onAdd={mockOnAdd}
+        onUpdate={mockOnUpdate}
+        onRemove={mockOnRemove}
+        datasource={mockDataSource}
+      />
+    );
+
+    await user.click(await screen.findByLabelText('Remove completed'));
+
+    await waitFor(() => {
+      expect(mockOnRemove).toHaveBeenCalledWith(0);
+    });
+    expect(mockOnUpdate).not.toHaveBeenCalled();
+  });
+
   it('should have add button disabled when field is not selected', async () => {
     const { user } = setup(
       <FilterField
