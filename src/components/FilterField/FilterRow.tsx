@@ -1,10 +1,11 @@
 import React from 'react';
-import { MultiSelect, Select } from '@grafana/ui';
+import { MultiSelect, Select, useStyles2 } from '@grafana/ui';
 import { Operator } from '../../types';
 import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
-import { SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { DataSource } from '../../datasource';
 import { useMemberValuesQuery } from '../../queries';
+import { css } from '@emotion/css';
 
 const OPERATOR_OPTIONS: Array<{ label: string; value: Operator }> = [
   { label: '=', value: Operator.Equals },
@@ -28,6 +29,7 @@ interface FilterRowProps {
 }
 
 export function FilterRow({ filter, index, dimensions, allFilters, onUpdate, onRemove, datasource }: FilterRowProps) {
+  const styles = useStyles2(getStyles);
   const { data: tagValues = [], isLoading } = useMemberValuesQuery({
     datasource,
     member: filter.member,
@@ -70,17 +72,20 @@ export function FilterRow({ filter, index, dimensions, allFilters, onUpdate, onR
         onChange={(option) => onUpdate(index, { operator: option.value as Operator })}
         width="auto"
       />
-      <MultiSelect
-        aria-label="Select values"
-        options={valueOptions}
-        value={selectedValues}
-        onChange={(options) => onUpdate(index, { values: options.map((o) => o.value).filter((v): v is string => !!v) })}
-        placeholder={isLoading ? 'Loading...' : 'Select values'}
-        width={40}
-        disabled={!filter.member}
-        isLoading={isLoading}
-        closeMenuOnSelect={false}
-      />
+      <div className={styles.valueSelect}>
+        <MultiSelect
+          aria-label="Select values"
+          options={valueOptions}
+          value={selectedValues}
+          onChange={(options) =>
+            onUpdate(index, { values: options.map((o) => o.value).filter((v): v is string => !!v) })
+          }
+          placeholder={isLoading ? 'Loading...' : 'Select values'}
+          disabled={!filter.member}
+          isLoading={isLoading}
+          closeMenuOnSelect={false}
+        />
+      </div>
       <AccessoryButton
         size="md"
         onClick={() => onRemove(index)}
@@ -91,3 +96,13 @@ export function FilterRow({ filter, index, dimensions, allFilters, onUpdate, onR
     </InputGroup>
   );
 }
+
+const getStyles = (_theme: GrafanaTheme2) => {
+  return {
+    valueSelect: css({
+      minWidth: '280px',
+      maxWidth: '520px',
+      flex: '1 1 360px',
+    }),
+  };
+};
