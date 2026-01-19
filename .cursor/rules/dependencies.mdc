@@ -27,3 +27,34 @@ globs:
 "@testing-library/react": "^16.3.0"
 "react": "~18.3.1"
 ```
+
+## Package Lock File
+
+**Only commit `package-lock.json` changes when `package.json` was also modified.**
+
+- Running `npm install` can cause metadata-only changes to `package-lock.json` (like `"peer": true` flags) due to npm version differences
+- These changes are noise and should not be committed
+- Before committing, check if `package.json` was modified:
+  - If yes → include `package-lock.json` in the commit
+  - If no → restore `package-lock.json` with `git checkout package-lock.json`
+
+### Examples
+
+✅ **Correct: Adding a new dependency**
+```bash
+# package.json was modified, so commit both files
+git add package.json package-lock.json
+git commit -m "feat: add lodash dependency"
+```
+
+❌ **Incorrect: Committing lockfile noise**
+```bash
+# Only ran npm install, no package.json changes
+git add package-lock.json  # Don't do this!
+```
+
+✅ **Correct: Restoring lockfile after npm install**
+```bash
+# If package-lock.json changed but package.json didn't
+git checkout package-lock.json
+```
