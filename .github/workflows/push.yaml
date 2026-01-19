@@ -42,6 +42,8 @@ jobs:
       id-token: write
     with:
       plugin-version-suffix: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
+      # Skip the grafana-dev image in Playwright tests (image may be temporarily unavailable)
+      run-playwright-with-skip-grafana-dev-image: true
 
       # TODO: add here any other CI custom inputs you may need. You most likely also have to add the same options to publish.yaml:
       #   https://enghub.grafana-ops.net/docs/default/component/grafana-plugins-platform/plugins-ci-github-actions/010-plugins-ci-github-actions/#customizing-the-workflows-with-inputs
