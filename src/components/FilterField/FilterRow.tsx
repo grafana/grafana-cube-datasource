@@ -74,7 +74,6 @@ export function FilterRow({ filter, index, dimensions, allFilters, onUpdate, onR
         width={50}
         disabled={!filter.member}
         isLoading={isLoading}
-        isClearable
         closeMenuOnSelect={false}
       />
       <AccessoryButton
