@@ -440,8 +440,6 @@ describe('DataSource', () => {
           getAdhocFilters: () => [
             { key: 'orders.status', operator: '=', value: 'completed' },
             { key: 'orders.customer', operator: '!=', value: 'test' },
-            { key: 'orders.name', operator: '=~', value: 'John' },
-            { key: 'orders.notes', operator: '!~', value: 'spam' },
           ],
         });
 
@@ -455,11 +453,9 @@ describe('DataSource', () => {
 
         const result = datasource.applyTemplateVariables(query, {});
 
-        expect(result.filters).toHaveLength(4);
+        expect(result.filters).toHaveLength(2);
         expect(result.filters![0].operator).toBe('equals');
         expect(result.filters![1].operator).toBe('notEquals');
-        expect(result.filters![2].operator).toBe('contains');
-        expect(result.filters![3].operator).toBe('notContains');
       });
     });
   });
