@@ -35,9 +35,7 @@ export function QueryEditor({
     onRemoveOrder,
     onToggleOrderDirection,
     onReorderFields,
-    onAddFilter,
-    onUpdateFilter,
-    onRemoveFilter,
+    onFiltersChange,
   } = useQueryEditorHandlers(query, onChange, onRunQuery);
 
   // Map from query order to preserve user selection order (not metadata schema order)
@@ -105,9 +103,7 @@ export function QueryEditor({
         <FilterField
           filters={query.filters}
           dimensions={metadata.dimensions}
-          onAdd={onAddFilter}
-          onUpdate={onUpdateFilter}
-          onRemove={onRemoveFilter}
+          onChange={onFiltersChange}
           datasource={datasource}
         />
       </Field>
