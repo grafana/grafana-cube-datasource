@@ -72,19 +72,21 @@ export function FilterRow({ filter, index, dimensions, allFilters, onUpdate, onR
         onChange={(option) => onUpdate(index, { operator: option.value as Operator })}
         width="auto"
       />
-      <div className={styles.valueSelect}>
-        <MultiSelect
-          aria-label="Select values"
-          options={valueOptions}
-          value={selectedValues}
-          onChange={(options) =>
-            onUpdate(index, { values: options.map((o) => o.value).filter((v): v is string => !!v) })
-          }
-          placeholder={isLoading ? 'Loading...' : 'Select values'}
-          disabled={!filter.member}
-          isLoading={isLoading}
-          closeMenuOnSelect={false}
-        />
+      <div className={styles.valueSelectWrapper}>
+        <div className={styles.valueSelect}>
+          <MultiSelect
+            aria-label="Select values"
+            options={valueOptions}
+            value={selectedValues}
+            onChange={(options) =>
+              onUpdate(index, { values: options.map((o) => o.value).filter((v): v is string => !!v) })
+            }
+            placeholder={isLoading ? 'Loading...' : 'Select values'}
+            disabled={!filter.member}
+            isLoading={isLoading}
+            closeMenuOnSelect={false}
+          />
+        </div>
       </div>
       <AccessoryButton
         size="md"
@@ -97,12 +99,13 @@ export function FilterRow({ filter, index, dimensions, allFilters, onUpdate, onR
   );
 }
 
-const getStyles = (_theme: GrafanaTheme2) => {
-  return {
-    valueSelect: css({
-      minWidth: '280px',
-      maxWidth: '520px',
-      flex: '1 1 360px',
-    }),
-  };
-};
+const getStyles = (_theme: GrafanaTheme2) => ({
+  valueSelectWrapper: css({
+    flex: '1 1 auto',
+    containerType: 'inline-size',
+  }),
+  valueSelect: css({
+    width: '100%',
+    minWidth: '150px',
+  }),
+});
