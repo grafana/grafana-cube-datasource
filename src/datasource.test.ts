@@ -458,5 +458,36 @@ describe('DataSource', () => {
         expect(result.filters![1].operator).toBe('notEquals');
       });
     });
+
+    describe('filter validation', () => {
+      beforeEach(() => {
+        // Reset template srv mock to avoid AdHoc filters from previous tests
+        mockGetTemplateSrv.mockReturnValue({
+          replace: (str: string) => str,
+          getAdhocFilters: () => [],
+        });
+      });
+
+      it('should strip out filters with empty values', () => {
+        const datasource = createDataSource();
+
+        const query = {
+          refId: 'A',
+          measures: ['orders.count'],
+          filters: [
+            { member: 'orders.status', operator: Operator.Equals, values: ['completed'] },
+            { member: 'orders.type', operator: Operator.Equals, values: [] }, // should be stripped
+            { member: 'orders.customer', operator: Operator.NotEquals, values: ['test'] },
+          ],
+        };
+
+        const result = datasource.applyTemplateVariables(query, {});
+
+        // Only valid filters should remain
+        expect(result.filters).toHaveLength(2);
+        expect(result.filters![0].member).toBe('orders.status');
+        expect(result.filters![1].member).toBe('orders.customer');
+      });
+    });
   });
 });
