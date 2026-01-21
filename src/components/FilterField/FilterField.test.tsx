@@ -60,47 +60,6 @@ describe('FilterField', () => {
     expect(screen.getByRole('combobox', { name: 'Select field' })).toBeInTheDocument();
   });
 
-  it('should disable add filter button when a previous filter has no field selected', async () => {
-    const { user } = setup(
-      <FilterField
-        dimensions={mockOptions}
-        filters={[]}
-        onAdd={mockOnAdd}
-        onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
-        datasource={mockDataSource}
-      />
-    );
-
-    const addButton = screen.getByRole('button', { name: 'Add filter' });
-    await user.click(addButton);
-    expect(addButton).toBeDisabled();
-  });
-
-  it('should disable add filter button when a previous filter has no values selected', async () => {
-  const { user } = setup(
-    <FilterField
-      dimensions={mockOptions}
-      filters={[]}
-      onAdd={mockOnAdd}
-      onUpdate={mockOnUpdate}
-      onRemove={mockOnRemove}
-      datasource={mockDataSource}
-    />
-  );
-
-  // Add a new filter
-  await user.click(screen.getByRole('button', { name: 'Add filter' }));
-
-  // Select field only
-  const fieldSelect = screen.getByRole('combobox', { name: 'Select field' });
-  await user.click(fieldSelect);
-  await user.click(await screen.findByText('orders.status'));
-
-  // Add button should remain disabled until a value is selected
-  expect(screen.getByRole('button', { name: 'Add filter' })).toBeDisabled();
-});
-
   it('removes a filter when the remove button is clicked', async () => {
     const { user } = setup(
       <FilterField

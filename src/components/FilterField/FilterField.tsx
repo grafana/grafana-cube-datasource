@@ -23,8 +23,6 @@ export function FilterField({ dimensions, filters = [], onAdd, onUpdate, onRemov
     }))
   );
 
-  const hasIncompleteFilter = filterStates.some((f) => !f.member || f.values.length === 0);
-
   const handleAddNew = () => {
     setFilterStates([
       ...filterStates,
@@ -75,14 +73,7 @@ export function FilterField({ dimensions, filters = [], onAdd, onUpdate, onRemov
         />
       ))}
       <div>
-        <Button
-          onClick={handleAddNew}
-          disabled={hasIncompleteFilter}
-          icon="plus"
-          variant="secondary"
-          size="sm"
-          aria-label="Add filter"
-        >
+        <Button onClick={handleAddNew} icon="plus" variant="secondary" size="sm" aria-label="Add filter">
           Add Filter
         </Button>
       </div>
