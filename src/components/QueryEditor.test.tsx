@@ -689,15 +689,11 @@ describe('QueryEditor', () => {
 
   describe('filter state management integration', () => {
     /**
-     * Integration test with stateful wrapper to verify that adding a filter with
-     * multiple values doesn't create duplicate filters in the query state.
+     * Integration test to verify that adding a filter with multiple values
+     * results in exactly one filter in the query state (not duplicates).
      *
-     * This tests the interaction between FilterField and useQueryEditorHandlers.
-     * React's synchronous rendering ensures that after each onAdd/onUpdate call,
-     * the component re-renders with updated props before the next user interaction.
-     * 
-     * Specifically addresses reviewer comment at
-     * https://github.com/grafana/grafana-cube-datasource/pull/27#discussion_r2711651376
+     * Uses a stateful wrapper to simulate real Grafana prop updates, testing
+     * the interaction between FilterField and useQueryEditorHandlers.
      */
     it('should not create duplicate filters when adding a filter with multiple values', async () => {
       const mockMetadata = {
