@@ -53,6 +53,7 @@ export function FilterField({ dimensions, filters = [], onAdd, onUpdate, onRemov
       return;
     }
 
+    // Sync to parent: onAdd for new filters, onUpdate for existing ones
     if (index < filters.length) {
       onUpdate(index, updatedFilter.member, updatedFilter.operator, updatedFilter.values);
     } else {
