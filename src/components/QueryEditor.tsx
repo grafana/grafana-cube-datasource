@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import { InlineField, Input, Alert, MultiSelect, Text, Field } from '@grafana/ui';
-import { QueryEditorProps } from '@grafana/data';
+import { InlineField, Input, Alert, MultiSelect, Text, Field, useStyles2 } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
 import { MyDataSourceOptions, MyQuery } from '../types';
 import { SQLPreview } from './SQLPreview';
@@ -16,6 +17,7 @@ export function QueryEditor({
   onRunQuery,
   datasource,
 }: QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>) {
+  const styles = useStyles2(getStyles);
   const cubeQueryJson = useMemo(() => buildCubeQueryJson(query, datasource), [query, datasource]);
 
   const { data, isLoading: metadataIsLoading, isError: metadataIsError } = useMetadataQuery({ datasource });
@@ -57,28 +59,34 @@ export function QueryEditor({
   return (
     <>
       {metadataIsError && <Alert title="Error fetching metadata" severity="error" />}
-      <InlineField label="Dimensions" labelWidth={16} tooltip="Select the dimensions to group your data by">
-        <MultiSelect
-          aria-label="Dimensions"
-          options={metadata.dimensions}
-          value={selectedDimensions}
-          onChange={(v) => onDimensionOrMeasureChange(v, 'dimensions')}
-          placeholder={metadataIsLoading ? 'Loading dimensions...' : 'Select dimensions...'}
-          width={100}
-          isLoading={metadataIsLoading}
-        />
+      <InlineField label="Dimensions" labelWidth={16} tooltip="Select the dimensions to group your data by" grow>
+        <div className={styles.multiSelectWrapper}>
+          <div className={styles.multiSelectContainer}>
+            <MultiSelect
+              aria-label="Dimensions"
+              options={metadata.dimensions}
+              value={selectedDimensions}
+              onChange={(v) => onDimensionOrMeasureChange(v, 'dimensions')}
+              placeholder={metadataIsLoading ? 'Loading dimensions...' : 'Select dimensions...'}
+              isLoading={metadataIsLoading}
+            />
+          </div>
+        </div>
       </InlineField>
 
-      <InlineField label="Measures" labelWidth={16} tooltip="Select the measures to aggregate">
-        <MultiSelect
-          aria-label="Measures"
-          options={metadata.measures}
-          value={selectedMeasures}
-          onChange={(v) => onDimensionOrMeasureChange(v, 'measures')}
-          placeholder={metadataIsLoading ? 'Loading measures...' : 'Select measures...'}
-          width={100}
-          isLoading={metadataIsLoading}
-        />
+      <InlineField label="Measures" labelWidth={16} tooltip="Select the measures to aggregate" grow>
+        <div className={styles.multiSelectWrapper}>
+          <div className={styles.multiSelectContainer}>
+            <MultiSelect
+              aria-label="Measures"
+              options={metadata.measures}
+              value={selectedMeasures}
+              onChange={(v) => onDimensionOrMeasureChange(v, 'measures')}
+              placeholder={metadataIsLoading ? 'Loading measures...' : 'Select measures...'}
+              isLoading={metadataIsLoading}
+            />
+          </div>
+        </div>
       </InlineField>
 
       <InlineField label="Row Limit" labelWidth={16} tooltip="Maximum number of rows to return (optional)">
@@ -128,3 +136,16 @@ export function QueryEditor({
     </>
   );
 }
+
+const getStyles = (_theme: GrafanaTheme2) => {
+  return {
+    multiSelectWrapper: css({
+      width: '100%',
+      containerType: 'inline-size',
+    }),
+    multiSelectContainer: css({
+      width: '100%',
+      minWidth: '240px',
+    }),
+  };
+};
