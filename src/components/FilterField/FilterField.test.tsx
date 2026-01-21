@@ -221,5 +221,29 @@ describe('FilterField', () => {
       // Should call onUpdate with the remaining values (last value removed)
       expect(mockOnUpdate).toHaveBeenCalledWith(0, 'orders.status', Operator.Equals, ['completed']);
     });
+
+    it('should call onUpdate with empty array when all values are removed from an existing filter', async () => {
+      const { user } = setup(
+        <FilterField
+          dimensions={mockOptions}
+          filters={[{ member: 'orders.status', operator: Operator.Equals, values: ['completed'] }]}
+          onAdd={mockOnAdd}
+          onUpdate={mockOnUpdate}
+          onRemove={mockOnRemove}
+          datasource={mockDataSource}
+        />
+      );
+
+      // Wait for value to render
+      await screen.findByText('completed');
+
+      // Clear the value using backspace
+      const valueSelect = screen.getByRole('combobox', { name: 'Select values' });
+      await user.click(valueSelect);
+      await user.keyboard('{Backspace}');
+
+      // Should call onUpdate with empty array so parent state is synchronized
+      expect(mockOnUpdate).toHaveBeenCalledWith(0, 'orders.status', Operator.Equals, []);
+    });
   });
 });

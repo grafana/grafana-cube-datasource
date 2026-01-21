@@ -83,8 +83,11 @@ export function buildCubeQueryJson(query: MyQuery, datasource: DataSource): stri
     filters = [...filters, ...cubeFilters];
   }
 
-  if (filters.length > 0) {
-    cubeQuery.filters = filters;
+  // Filter out incomplete filters (Cube API requires values to be non-empty)
+  const validFilters = filters.filter((f) => f.member && f.values.length > 0);
+
+  if (validFilters.length > 0) {
+    cubeQuery.filters = validFilters;
   }
 
   if (query.order) {

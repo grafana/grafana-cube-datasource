@@ -92,12 +92,18 @@ export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptio
       }
     }
 
+    // Filter out invalid filters
+    // Cube API requires values to be non-empty for Equals and NotEquals operators
+    // Other operators have not been implemented yet
+    
+    const validFilters = filters.filter((f) => f.member && f.values.length > 0);
+
     return {
       ...query,
       dimensions: interpolatedDimensions,
       measures: interpolatedMeasures,
       timeDimensions: interpolatedTimeDimensions,
-      filters: filters.length > 0 ? filters : undefined,
+      filters: validFilters.length > 0 ? validFilters : undefined,
     };
   }
 
