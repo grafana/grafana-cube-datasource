@@ -2,6 +2,7 @@ import { DataSourceInstanceSettings, CoreApp, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 
 import { MyQuery, MyDataSourceOptions, DEFAULT_QUERY, CubeFilter } from './types';
+import { filterValidCubeFilters } from './utils/filterValidation';
 
 export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptions> {
   readonly instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>;
@@ -92,12 +93,14 @@ export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptio
       }
     }
 
+    const validFilters = filterValidCubeFilters(filters);
+
     return {
       ...query,
       dimensions: interpolatedDimensions,
       measures: interpolatedMeasures,
       timeDimensions: interpolatedTimeDimensions,
-      filters: filters.length > 0 ? filters : undefined,
+      filters: validFilters.length > 0 ? validFilters : undefined,
     };
   }
 
@@ -110,10 +113,14 @@ export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptio
       case '!=':
       case '!=|': // "Not one of" - Cube's notEquals operator supports multiple values
         return 'notEquals';
+      // Note: =~ and !~ are Prometheus regex operators, not substring contains.
+      // We intentionally don't (yet) map these to `contains` or `notContains` to avoid semantic confusion,
+      // and because isValidCubeFilter doesn't support `contains` or `notContains` yet.
+      // We don't yet test for the behaviour below because it's not desirable long term - it's a temporary workaround.
       case '=~':
-        return 'contains';
+        return 'equals';
       case '!~':
-        return 'notContains';
+        return 'notEquals';
       default:
         return 'equals';
     }

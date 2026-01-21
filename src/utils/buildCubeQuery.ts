@@ -1,6 +1,7 @@
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataSource } from '../datasource';
 import { CubeFilter, MyQuery } from '../types';
+import { filterValidCubeFilters } from './filterValidation';
 
 /**
  * Builds a Cube.js query JSON string from a Grafana query object.
@@ -83,8 +84,10 @@ export function buildCubeQueryJson(query: MyQuery, datasource: DataSource): stri
     filters = [...filters, ...cubeFilters];
   }
 
-  if (filters.length > 0) {
-    cubeQuery.filters = filters;
+  const validFilters = filterValidCubeFilters(filters);
+
+  if (validFilters.length > 0) {
+    cubeQuery.filters = validFilters;
   }
 
   if (query.order) {
