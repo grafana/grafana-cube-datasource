@@ -22,32 +22,22 @@ interface FilterRowProps {
   filter: FilterState;
   index: number;
   dimensions: Array<SelectableValue<string>>;
-  allFilters: FilterState[];
   onUpdate: (index: number, updates: Partial<FilterState>) => void;
   onRemove: (index: number) => void;
   datasource: DataSource;
 }
 
-export function FilterRow({ filter, index, dimensions, allFilters, onUpdate, onRemove, datasource }: FilterRowProps) {
+export function FilterRow({ filter, index, dimensions, onUpdate, onRemove, datasource }: FilterRowProps) {
   const styles = useStyles2(getStyles);
   const { data: tagValues = [], isLoading } = useMemberValuesQuery({
     datasource,
     member: filter.member,
   });
 
-  // Get values already selected for this member by other filters (excluding this filter)
-  const usedValues = new Set(
-    allFilters
-      .filter((f, i) => i !== index && f.member === filter.member)
-      .flatMap((f) => f.values)
-  );
-
-  const valueOptions = tagValues
-    .filter((tagValue) => !usedValues.has(tagValue.text))
-    .map((tagValue) => ({
-      label: tagValue.text,
-      value: tagValue.text,
-    }));
+  const valueOptions = tagValues.map((tagValue) => ({
+    label: tagValue.text,
+    value: tagValue.text,
+  }));
 
   // Convert filter.values to SelectableValue array for MultiSelect
   const selectedValues: Array<SelectableValue<string>> = filter.values.map((v) => ({
