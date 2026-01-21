@@ -8,13 +8,11 @@ import { FilterRow, FilterState } from './FilterRow';
 interface FilterFieldProps {
   dimensions: Array<SelectableValue<string>>;
   filters?: CubeFilter[];
-  onAdd: (member: string, operator: Operator, values: string[]) => void;
-  onUpdate: (index: number, member: string, operator: Operator, values: string[]) => void;
-  onRemove: (index: number) => void;
+  onChange: (filters: CubeFilter[]) => void;
   datasource: DataSource;
 }
 
-export function FilterField({ dimensions, filters = [], onAdd, onUpdate, onRemove, datasource }: FilterFieldProps) {
+export function FilterField({ dimensions, filters = [], onChange, datasource }: FilterFieldProps) {
   const [filterStates, setFilterStates] = useState<FilterState[]>(() =>
     filters.map((filter) => ({
       member: filter.member,
@@ -22,6 +20,18 @@ export function FilterField({ dimensions, filters = [], onAdd, onUpdate, onRemov
       values: filter.values || [],
     }))
   );
+
+  // Derive complete filters and sync to parent
+  const syncToParent = (newStates: FilterState[]) => {
+    const completeFilters: CubeFilter[] = newStates
+      .filter((f): f is FilterState & { member: string } => f.member !== null)
+      .map((f) => ({
+        member: f.member,
+        operator: f.operator,
+        values: f.values,
+      }));
+    onChange(completeFilters);
+  };
 
   const handleAddNew = () => {
     setFilterStates([
@@ -35,28 +45,15 @@ export function FilterField({ dimensions, filters = [], onAdd, onUpdate, onRemov
   };
 
   const handleRemove = (index: number) => {
-    // Only call onRemove if this filter exists in the parent's filters array
-    if (index < filters.length) {
-      onRemove(index);
-    }
-    setFilterStates(filterStates.filter((_, i) => i !== index));
+    const newStates = filterStates.filter((_, i) => i !== index);
+    setFilterStates(newStates);
+    syncToParent(newStates);
   };
 
   const handleUpdate = (index: number, updates: Partial<FilterState>) => {
-    const updatedFilter = { ...filterStates[index], ...updates };
-    setFilterStates(filterStates.map((f, i) => (i === index ? updatedFilter : f)));
-
-    // Always sync to parent when member is set - the query builder handles filtering out incomplete filters
-    if (!updatedFilter.member) {
-      return;
-    }
-
-    // Sync to parent: onAdd for new filters, onUpdate for existing ones
-    if (index < filters.length) {
-      onUpdate(index, updatedFilter.member, updatedFilter.operator, updatedFilter.values);
-    } else {
-      onAdd(updatedFilter.member, updatedFilter.operator, updatedFilter.values);
-    }
+    const newStates = filterStates.map((f, i) => (i === index ? { ...f, ...updates } : f));
+    setFilterStates(newStates);
+    syncToParent(newStates);
   };
 
   return (

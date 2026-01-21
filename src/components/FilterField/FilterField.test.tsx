@@ -5,9 +5,7 @@ import { FilterField } from './FilterField';
 import { Operator } from 'types';
 
 describe('FilterField', () => {
-  const mockOnAdd = jest.fn();
-  const mockOnRemove = jest.fn();
-  const mockOnUpdate = jest.fn();
+  const mockOnChange = jest.fn();
 
   const mockDataSource = createMockDataSource();
   const mockOptions = [
@@ -24,9 +22,7 @@ describe('FilterField', () => {
       <FilterField
         dimensions={mockOptions}
         filters={[{ member: 'orders.status', operator: Operator.Equals, values: ['completed'] }]}
-        onAdd={mockOnAdd}
-        onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
+        onChange={mockOnChange}
         datasource={mockDataSource}
       />
     );
@@ -36,173 +32,98 @@ describe('FilterField', () => {
     expect(screen.getByRole('combobox', { name: 'Select operator' })).toBeInTheDocument();
     expect(screen.getByText('=')).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Select values' })).toBeInTheDocument();
-
-    // Wait for the value to load
     expect(await screen.findByText('completed')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Remove filter' })).toBeInTheDocument();
   });
 
-  it('should allow adding a new filter', async () => {
+  it('should allow adding a new filter row', async () => {
     const { user } = setup(
       <FilterField
         dimensions={mockOptions}
         filters={[]}
-        onAdd={mockOnAdd}
-        onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
+        onChange={mockOnChange}
         datasource={mockDataSource}
       />
     );
 
     await user.click(screen.getByRole('button', { name: 'Add filter' }));
 
-    // Just check one of the fields is rendered
     expect(screen.getByRole('combobox', { name: 'Select field' })).toBeInTheDocument();
   });
 
-  it('removes a filter when the remove button is clicked', async () => {
+  it('should call onChange when a filter is removed', async () => {
     const { user } = setup(
       <FilterField
         dimensions={mockOptions}
         filters={[{ member: 'orders.status', operator: Operator.Equals, values: ['completed'] }]}
-        onAdd={mockOnAdd}
-        onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
+        onChange={mockOnChange}
         datasource={mockDataSource}
       />
     );
 
-    const removeButton = screen.getByRole('button', { name: 'Remove filter' });
-    await user.click(removeButton);
-    expect(mockOnRemove).toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Remove filter' }));
+
+    expect(mockOnChange).toHaveBeenCalledWith([]);
   });
 
-  describe('multi-value selection', () => {
-    it('should render filter with multiple values', async () => {
-      setup(
-        <FilterField
-          dimensions={mockOptions}
-          filters={[{ member: 'orders.status', operator: Operator.Equals, values: ['completed', 'pending'] }]}
-          onAdd={mockOnAdd}
-          onUpdate={mockOnUpdate}
-          onRemove={mockOnRemove}
-          datasource={mockDataSource}
-        />
-      );
+  it('should call onChange with updated values when selecting a value', async () => {
+    const { user } = setup(
+      <FilterField
+        dimensions={mockOptions}
+        filters={[{ member: 'orders.status', operator: Operator.Equals, values: ['completed'] }]}
+        onChange={mockOnChange}
+        datasource={mockDataSource}
+      />
+    );
 
-      // Both values should be displayed as selected
-      expect(await screen.findByText('completed')).toBeInTheDocument();
-      expect(await screen.findByText('pending')).toBeInTheDocument();
-    });
+    await screen.findByText('completed');
+    const valueSelect = screen.getByRole('combobox', { name: 'Select values' });
+    await user.click(valueSelect);
+    await user.click(await screen.findByText('pending'));
 
-    it('should call onUpdate with array of values when selecting multiple values', async () => {
-      const { user } = setup(
-        <FilterField
-          dimensions={mockOptions}
-          filters={[{ member: 'orders.status', operator: Operator.Equals, values: ['completed'] }]}
-          onAdd={mockOnAdd}
-          onUpdate={mockOnUpdate}
-          onRemove={mockOnRemove}
-          datasource={mockDataSource}
-        />
-      );
+    expect(mockOnChange).toHaveBeenLastCalledWith([
+      { member: 'orders.status', operator: Operator.Equals, values: ['completed', 'pending'] },
+    ]);
+  });
 
-      // Wait for values to load
-      await screen.findByText('completed');
+  it('should call onChange when removing a value', async () => {
+    const { user } = setup(
+      <FilterField
+        dimensions={mockOptions}
+        filters={[{ member: 'orders.status', operator: Operator.Equals, values: ['completed', 'pending'] }]}
+        onChange={mockOnChange}
+        datasource={mockDataSource}
+      />
+    );
 
-      // Click on the multi-select to open it
-      const valueSelect = screen.getByRole('combobox', { name: 'Select values' });
-      await user.click(valueSelect);
+    await screen.findByText('completed');
+    await screen.findByText('pending');
 
-      // Select an additional value
-      const pendingOption = await screen.findByText('pending');
-      await user.click(pendingOption);
+    const valueSelect = screen.getByRole('combobox', { name: 'Select values' });
+    await user.click(valueSelect);
+    await user.keyboard('{Backspace}');
 
-      // Should call onUpdate with array containing both values
-      expect(mockOnUpdate).toHaveBeenCalledWith(0, 'orders.status', Operator.Equals, ['completed', 'pending']);
-    });
+    expect(mockOnChange).toHaveBeenLastCalledWith([
+      { member: 'orders.status', operator: Operator.Equals, values: ['completed'] },
+    ]);
+  });
 
-    it('should call onAdd with array of values when adding a new filter with multiple values', async () => {
-      const { user } = setup(
-        <FilterField
-          dimensions={mockOptions}
-          filters={[]}
-          onAdd={mockOnAdd}
-          onUpdate={mockOnUpdate}
-          onRemove={mockOnRemove}
-          datasource={mockDataSource}
-        />
-      );
+  it('should call onChange when selecting a field for a new filter', async () => {
+    const { user } = setup(
+      <FilterField
+        dimensions={mockOptions}
+        filters={[]}
+        onChange={mockOnChange}
+        datasource={mockDataSource}
+      />
+    );
 
-      // Add a new filter
-      await user.click(screen.getByRole('button', { name: 'Add filter' }));
+    await user.click(screen.getByRole('button', { name: 'Add filter' }));
+    await user.click(screen.getByRole('combobox', { name: 'Select field' }));
+    await user.click(await screen.findByText('orders.status'));
 
-      // Select field
-      const fieldSelect = screen.getByRole('combobox', { name: 'Select field' });
-      await user.click(fieldSelect);
-      await user.click(await screen.findByText('orders.status'));
-
-      // Select first value
-      const valueSelect = screen.getByRole('combobox', { name: 'Select values' });
-      await user.click(valueSelect);
-      await user.click(await screen.findByText('completed'));
-
-      // Open again and select another value
-      await user.click(valueSelect);
-      await user.click(await screen.findByText('pending'));
-
-      // Should call onAdd with array of values
-      expect(mockOnAdd).toHaveBeenCalledWith('orders.status', Operator.Equals, ['completed', 'pending']);
-    });
-
-    it('should allow removing individual values from a multi-value filter', async () => {
-      const { user } = setup(
-        <FilterField
-          dimensions={mockOptions}
-          filters={[{ member: 'orders.status', operator: Operator.Equals, values: ['completed', 'pending'] }]}
-          onAdd={mockOnAdd}
-          onUpdate={mockOnUpdate}
-          onRemove={mockOnRemove}
-          datasource={mockDataSource}
-        />
-      );
-
-      // Wait for values to load/render
-      await screen.findByText('completed');
-      await screen.findByText('pending');
-
-      // Avoid relying on react-select internal DOM/class names.
-      // Use keyboard behavior: backspace removes the last selected value.
-      const valueSelect = screen.getByRole('combobox', { name: 'Select values' });
-      await user.click(valueSelect);
-      await user.keyboard('{Backspace}');
-
-      // Should call onUpdate with the remaining values (last value removed)
-      expect(mockOnUpdate).toHaveBeenCalledWith(0, 'orders.status', Operator.Equals, ['completed']);
-    });
-
-    it('should call onUpdate with empty array when all values are removed from an existing filter', async () => {
-      const { user } = setup(
-        <FilterField
-          dimensions={mockOptions}
-          filters={[{ member: 'orders.status', operator: Operator.Equals, values: ['completed'] }]}
-          onAdd={mockOnAdd}
-          onUpdate={mockOnUpdate}
-          onRemove={mockOnRemove}
-          datasource={mockDataSource}
-        />
-      );
-
-      // Wait for value to render
-      await screen.findByText('completed');
-
-      // Clear the value using backspace
-      const valueSelect = screen.getByRole('combobox', { name: 'Select values' });
-      await user.click(valueSelect);
-      await user.keyboard('{Backspace}');
-
-      // Should call onUpdate with empty array so parent state is synchronized
-      expect(mockOnUpdate).toHaveBeenCalledWith(0, 'orders.status', Operator.Equals, []);
-    });
+    expect(mockOnChange).toHaveBeenLastCalledWith([
+      { member: 'orders.status', operator: Operator.Equals, values: [] },
+    ]);
   });
 });

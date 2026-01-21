@@ -1,5 +1,5 @@
 import { ChangeEvent } from 'react';
-import { MyQuery, CubeFilter, Operator, Order, DEFAULT_ORDER } from '../types';
+import { MyQuery, CubeFilter, Order, DEFAULT_ORDER } from '../types';
 import { SelectableValue } from '@grafana/data';
 
 export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery) => void, onRunQuery: () => void) {
@@ -75,35 +75,8 @@ export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery
     updateQueryAndRun({ order: newOrder });
   };
 
-  const onAddFilter = (member: string, operator: Operator, values: string[]) => {
-    const newFilter: CubeFilter = {
-      member,
-      operator,
-      values,
-    };
-    const newFilters = [...(query.filters || []), newFilter];
-    updateQueryAndRun({ filters: newFilters });
-  };
-
-  const onUpdateFilter = (index: number, member: string, operator: Operator, values: string[]) => {
-    if (!query.filters || index >= query.filters.length) {
-      return;
-    }
-    const updatedFilter: CubeFilter = {
-      member,
-      operator,
-      values,
-    };
-    const newFilters = query.filters.map((filter, i) => (i === index ? updatedFilter : filter));
-    updateQueryAndRun({ filters: newFilters });
-  };
-
-  const onRemoveFilter = (index: number) => {
-    if (!query.filters) {
-      return;
-    }
-    const newFilters = query.filters.filter((_, i) => i !== index);
-    updateQueryAndRun({ filters: newFilters.length > 0 ? newFilters : undefined });
+  const onFiltersChange = (filters: CubeFilter[]) => {
+    updateQueryAndRun({ filters: filters.length > 0 ? filters : undefined });
   };
 
   return {
@@ -113,8 +86,6 @@ export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery
     onRemoveOrder,
     onToggleOrderDirection,
     onReorderFields,
-    onAddFilter,
-    onUpdateFilter,
-    onRemoveFilter,
+    onFiltersChange,
   };
 }
