@@ -2,6 +2,7 @@ import { DataSourceInstanceSettings, CoreApp, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 
 import { MyQuery, MyDataSourceOptions, DEFAULT_QUERY, CubeFilter } from './types';
+import { filterValidCubeFilters } from './utils/filterValidation';
 
 export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptions> {
   readonly instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>;
@@ -92,11 +93,7 @@ export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptio
       }
     }
 
-    // Filter out invalid filters
-    // Cube API requires values to be non-empty for Equals and NotEquals operators
-    // Other operators have not been implemented yet
-    
-    const validFilters = filters.filter((f) => f.member && f.values.length > 0);
+    const validFilters = filterValidCubeFilters(filters);
 
     return {
       ...query,
