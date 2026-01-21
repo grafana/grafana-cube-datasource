@@ -144,7 +144,7 @@ const getStyles = (_theme: GrafanaTheme2) => {
       containerType: 'inline-size',
     }),
     multiSelectContainer: css({
-      width: '100cqw',
+      width: '100%',
       minWidth: '280px',
     }),
   };
