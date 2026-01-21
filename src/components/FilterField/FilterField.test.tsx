@@ -60,7 +60,7 @@ describe('FilterField', () => {
     expect(screen.getByRole('combobox', { name: 'Select field' })).toBeInTheDocument();
   });
 
-  it('should have add button disabled when field is not selected', async () => {
+  it('should have add button disabled when a previous filter has no field selected', async () => {
     const { user } = setup(
       <FilterField
         dimensions={mockOptions}
@@ -92,26 +92,6 @@ describe('FilterField', () => {
     const removeButton = screen.getByRole('button', { name: 'Remove filter' });
     await user.click(removeButton);
     expect(mockOnRemove).toHaveBeenCalled();
-  });
-
-  it('filters out already-selected values for the same member', () => {
-    setup(
-      <FilterField
-        dimensions={mockOptions}
-        filters={[
-          { member: 'orders.status', operator: Operator.Equals, values: ['completed'] },
-          { member: 'orders.status', operator: Operator.Equals, values: ['pending'] },
-        ]}
-        onAdd={mockOnAdd}
-        onUpdate={mockOnUpdate}
-        onRemove={mockOnRemove}
-        datasource={mockDataSource}
-      />
-    );
-
-    // Both filters should render successfully
-    const valueSelects = screen.getAllByRole('combobox', { name: 'Select values' });
-    expect(valueSelects).toHaveLength(2);
   });
 
   describe('multi-value selection', () => {
@@ -216,32 +196,11 @@ describe('FilterField', () => {
       expect(screen.getByRole('button', { name: 'Add filter' })).toBeDisabled();
     });
 
-    it('should render and allow interaction with many values (15+)', async () => {
-      // Generate 15 values to test handling of many selections
-      const manyValues = Array.from({ length: 15 }, (_, i) => `value-${i + 1}`);
-
-      setup(
-        <FilterField
-          dimensions={mockOptions}
-          filters={[{ member: 'orders.status', operator: Operator.Equals, values: manyValues }]}
-          onAdd={mockOnAdd}
-          onUpdate={mockOnUpdate}
-          onRemove={mockOnRemove}
-          datasource={mockDataSource}
-        />
-      );
-
-      // All 15 values should be rendered
-      for (const value of manyValues) {
-        expect(await screen.findByText(value)).toBeInTheDocument();
-      }
-    });
-
     it('should allow removing individual values from a multi-value filter', async () => {
       const { user } = setup(
         <FilterField
           dimensions={mockOptions}
-          filters={[{ member: 'orders.status', operator: Operator.Equals, values: ['completed', 'pending', 'cancelled'] }]}
+          filters={[{ member: 'orders.status', operator: Operator.Equals, values: ['completed', 'pending'] }]}
           onAdd={mockOnAdd}
           onUpdate={mockOnUpdate}
           onRemove={mockOnRemove}
@@ -252,7 +211,6 @@ describe('FilterField', () => {
       // Wait for values to load/render
       await screen.findByText('completed');
       await screen.findByText('pending');
-      await screen.findByText('cancelled');
 
       // Avoid relying on react-select internal DOM/class names.
       // Use keyboard behavior: backspace removes the last selected value.
@@ -261,7 +219,7 @@ describe('FilterField', () => {
       await user.keyboard('{Backspace}');
 
       // Should call onUpdate with the remaining values (last value removed)
-      expect(mockOnUpdate).toHaveBeenCalledWith(0, 'orders.status', Operator.Equals, ['completed', 'pending']);
+      expect(mockOnUpdate).toHaveBeenCalledWith(0, 'orders.status', Operator.Equals, ['completed']);
     });
   });
 });

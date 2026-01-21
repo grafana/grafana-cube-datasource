@@ -66,7 +66,6 @@ export function FilterField({ dimensions, filters = [], onAdd, onUpdate, onRemov
           filter={filter}
           index={index}
           dimensions={dimensions}
-          allFilters={filterStates}
           onUpdate={handleUpdate}
           onRemove={handleRemove}
           datasource={datasource}
