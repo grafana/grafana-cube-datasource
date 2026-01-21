@@ -145,7 +145,7 @@ const getStyles = (_theme: GrafanaTheme2) => {
     }),
     multiSelectContainer: css({
       width: '100%',
-      minWidth: '280px',
+      minWidth: '240px',
     }),
   };
 };
