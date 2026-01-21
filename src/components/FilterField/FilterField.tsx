@@ -48,13 +48,16 @@ export function FilterField({ dimensions, filters = [], onAdd, onUpdate, onRemov
     const updatedFilter = { ...filterStates[index], ...updates };
     setFilterStates(filterStates.map((f, i) => (i === index ? updatedFilter : f)));
 
-    if (updatedFilter.member && updatedFilter.values.length > 0) {
-      // If this is an existing filter, update it otherwise add it
-      if (index < filters.length) {
-        onUpdate(index, updatedFilter.member, updatedFilter.operator, updatedFilter.values);
-      } else {
-        onAdd(updatedFilter.member, updatedFilter.operator, updatedFilter.values);
-      }
+    // Always sync to parent when member is set - the query builder handles filtering out incomplete filters
+    if (!updatedFilter.member) {
+      return;
+    }
+
+    // Sync to parent: onAdd for new filters, onUpdate for existing ones
+    if (index < filters.length) {
+      onUpdate(index, updatedFilter.member, updatedFilter.operator, updatedFilter.values);
+    } else {
+      onAdd(updatedFilter.member, updatedFilter.operator, updatedFilter.values);
     }
   };
 

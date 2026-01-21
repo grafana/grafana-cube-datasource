@@ -686,4 +686,87 @@ describe('QueryEditor', () => {
       });
     });
   });
+
+  describe('filter state management integration', () => {
+    /**
+     * Integration test to verify that adding a filter with multiple values
+     * results in exactly one filter in the query state (not duplicates).
+     *
+     * Uses a stateful wrapper to simulate real Grafana prop updates, testing
+     * the interaction between FilterField and useQueryEditorHandlers.
+     */
+    it('should not create duplicate filters when adding a filter with multiple values', async () => {
+      const mockMetadata = {
+        dimensions: [{ label: 'orders.status', value: 'orders.status' }],
+        measures: [{ label: 'orders.count', value: 'orders.count' }],
+      };
+
+      const mockMemberValues = [{ text: 'completed' }, { text: 'pending' }, { text: 'shipped' }];
+
+      const datasource = createMockDataSource(mockMetadata);
+      datasource.getTagValues = jest.fn().mockResolvedValue(mockMemberValues);
+
+      // Track all query states to detect duplicates
+      const queryHistory: MyQuery[] = [];
+      let currentQuery = createMockQuery();
+
+      // Stateful wrapper that updates props like real Grafana does
+      const StatefulWrapper = () => {
+        const [query, setQuery] = React.useState(currentQuery);
+
+        const handleChange = (newQuery: MyQuery) => {
+          queryHistory.push({ ...newQuery });
+          currentQuery = newQuery;
+          setQuery(newQuery);
+        };
+
+        return (
+          <QueryEditor
+            query={query}
+            onChange={handleChange}
+            onRunQuery={mockOnRunQuery}
+            datasource={datasource}
+          />
+        );
+      };
+
+      const { user } = setup(<StatefulWrapper />);
+
+      // Wait for metadata to load
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'Add filter' })).toBeInTheDocument();
+      });
+
+      // Add a new filter
+      await user.click(screen.getByRole('button', { name: 'Add filter' }));
+
+      // Select field
+      const fieldSelect = screen.getByRole('combobox', { name: 'Select field' });
+      await user.click(fieldSelect);
+      await user.click(await screen.findByText('orders.status'));
+
+      // Select first value
+      const valueSelect = screen.getByRole('combobox', { name: 'Select values' });
+      await user.click(valueSelect);
+      await user.click(await screen.findByText('completed'));
+
+      // Select second value
+      await user.click(valueSelect);
+      await user.click(await screen.findByText('pending'));
+
+      // Verify final query state has exactly ONE filter with both values
+      expect(currentQuery.filters).toHaveLength(1);
+      expect(currentQuery.filters![0]).toEqual({
+        member: 'orders.status',
+        operator: 'equals',
+        values: ['completed', 'pending'],
+      });
+
+      // Verify no intermediate states had duplicate filters (the reviewer's concern)
+      for (const state of queryHistory) {
+        const filterCount = state.filters?.length ?? 0;
+        expect(filterCount).toBeLessThanOrEqual(1);
+      }
+    });
+  });
 });
