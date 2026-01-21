@@ -113,10 +113,14 @@ export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptio
       case '!=':
       case '!=|': // "Not one of" - Cube's notEquals operator supports multiple values
         return 'notEquals';
+      // Note: =~ and !~ are Prometheus regex operators, not substring contains.
+      // We intentionally don't (yet) map these to `contains` or `notContains` to avoid semantic confusion,
+      // and because isValidCubeFilter doesn't support `contains` or `notContains` yet.
+      // We don't yet test for the behaviour below because it's not desirable long term - it's a temporary workaround.
       case '=~':
-        return 'contains';
+        return 'equals';
       case '!~':
-        return 'notContains';
+        return 'notEquals';
       default:
         return 'equals';
     }
