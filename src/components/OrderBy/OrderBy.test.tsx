@@ -78,7 +78,7 @@ describe('OrderBy', () => {
         onRemove={mockOnRemove}
         onToggleDirection={mockOnToggleDirection}
         onReorder={mockOnReorder}
-        order={{ 'orders.status': 'desc' }}
+        order={[['orders.status', 'desc']]}
       />
     );
 
@@ -96,7 +96,7 @@ describe('OrderBy', () => {
         onRemove={mockOnRemove}
         onToggleDirection={mockOnToggleDirection}
         onReorder={mockOnReorder}
-        order={{ 'orders.status': 'desc' }}
+        order={[['orders.status', 'desc']]}
       />
     );
 

@@ -441,7 +441,7 @@ describe('QueryEditor', () => {
       const queryWithOrder = createMockQuery({
         dimensions: ['orders.status'],
         measures: ['orders.count'],
-        order: { 'orders.count': 'desc' },
+        order: [['orders.count', 'desc']],
       });
 
       setup(
@@ -463,7 +463,7 @@ describe('QueryEditor', () => {
         query: JSON.stringify({
           dimensions: ['orders.status'],
           measures: ['orders.count'],
-          order: { 'orders.count': 'desc' },
+          order: [['orders.count', 'desc']],
         }),
       });
     });

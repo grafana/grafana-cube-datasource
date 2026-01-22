@@ -21,7 +21,7 @@ export interface MyQuery extends DataQuery {
   timeDimensions?: any[];
   limit?: number;
   filters?: CubeFilter[];
-  order?: Record<string, Order>;
+  order?: Array<[string, Order]>;
 }
 
 export const DEFAULT_QUERY: Partial<MyQuery> = {};
