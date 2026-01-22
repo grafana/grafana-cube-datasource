@@ -55,3 +55,35 @@ gh api repos/OWNER/REPO/pulls/NUMBER -X PATCH -f body='...'
 ```bash
 gh pr edit NUMBER --body '...'
 ```
+
+## Release Process
+
+**Never push version tags before CI passes.**
+
+When creating a release:
+
+1. Create a version bump PR (use `npm version patch --no-git-tag-version`)
+2. Wait for CI to pass and merge the PR
+3. Only then create and push the tag on main
+
+✅ **Correct release flow:**
+```bash
+# On a branch - bump version without tag
+npm version patch --no-git-tag-version
+git add package.json package-lock.json
+git commit -m "chore: release vX.Y.Z"
+# Create PR, wait for CI, merge
+
+# After merge - tag on main
+git checkout main && git pull
+git tag vX.Y.Z
+git push origin vX.Y.Z
+```
+
+❌ **Incorrect:**
+```bash
+npm version patch  # Creates tag immediately
+git push --follow-tags  # Pushes tag before CI validates
+```
+
+See the "Releasing" section in README.md for full documentation.
