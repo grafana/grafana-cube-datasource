@@ -1,6 +1,7 @@
 import { ChangeEvent } from 'react';
 import { MyQuery, CubeFilter, Order, DEFAULT_ORDER } from '../types';
 import { SelectableValue } from '@grafana/data';
+import { normalizeOrder, OrderArray } from '../utils/normalizeOrder';
 
 export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery) => void, onRunQuery: () => void) {
   const updateQueryAndRun = (updates: Partial<MyQuery>) => {
@@ -16,13 +17,12 @@ export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery
     const validFields = new Set([...newValues, ...(query[otherType] || [])]);
 
     // Clean up order: remove any ordered fields that are no longer selected
-    const cleanedOrder = query.order
-      ? Object.fromEntries(Object.entries(query.order).filter(([field]) => validFields.has(field)))
-      : undefined;
+    const normalizedOrder = normalizeOrder(query.order);
+    const cleanedOrder = normalizedOrder ? normalizedOrder.filter(([field]) => validFields.has(field)) : undefined;
 
     updateQueryAndRun({
       [type]: newValues,
-      order: cleanedOrder && Object.keys(cleanedOrder).length > 0 ? cleanedOrder : undefined,
+      order: cleanedOrder && cleanedOrder.length > 0 ? cleanedOrder : undefined,
     });
   };
 
@@ -37,41 +37,49 @@ export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery
   };
 
   const onAddOrder = (field: string, direction: Order = DEFAULT_ORDER) => {
-    const newOrder = { ...(query.order || {}), [field]: direction };
+    const normalizedOrder = normalizeOrder(query.order);
+    const newOrder: OrderArray = [...(normalizedOrder || []), [field, direction]];
     updateQueryAndRun({ order: newOrder });
   };
 
   const onRemoveOrder = (field: string) => {
-    if (!query.order) {
+    const normalizedOrder = normalizeOrder(query.order);
+    if (!normalizedOrder) {
       return;
     }
-    const newOrder = { ...query.order };
-    delete newOrder[field];
-    updateQueryAndRun({ order: Object.keys(newOrder).length > 0 ? newOrder : undefined });
+    const newOrder = normalizedOrder.filter(([f]) => f !== field);
+    updateQueryAndRun({ order: newOrder.length > 0 ? newOrder : undefined });
   };
 
   const onToggleOrderDirection = (field: string) => {
-    if (!query.order || !query.order[field]) {
+    const normalizedOrder = normalizeOrder(query.order);
+    if (!normalizedOrder) {
       return;
     }
-    const newDirection = query.order[field] === 'asc' ? 'desc' : 'asc';
-    updateQueryAndRun({ order: { ...query.order, [field]: newDirection } });
+    const index = normalizedOrder.findIndex(([f]) => f === field);
+    if (index === -1) {
+      return;
+    }
+    const newDirection = normalizedOrder[index][1] === 'asc' ? 'desc' : 'asc';
+    const newOrder: OrderArray = [...normalizedOrder];
+    newOrder[index] = [field, newDirection];
+    updateQueryAndRun({ order: newOrder });
   };
 
   const onReorderFields = (fromIndex: number, toIndex: number) => {
-    if (!query.order) {
+    const normalizedOrder = normalizeOrder(query.order);
+    if (!normalizedOrder) {
       return;
     }
-    const orderEntries = Object.entries(query.order);
 
     // Validate bounds to prevent undefined from being inserted
-    if (fromIndex < 0 || fromIndex >= orderEntries.length || toIndex < 0 || toIndex >= orderEntries.length) {
+    if (fromIndex < 0 || fromIndex >= normalizedOrder.length || toIndex < 0 || toIndex >= normalizedOrder.length) {
       return;
     }
 
-    const [removed] = orderEntries.splice(fromIndex, 1);
-    orderEntries.splice(toIndex, 0, removed);
-    const newOrder = Object.fromEntries(orderEntries);
+    const newOrder = [...normalizedOrder];
+    const [removed] = newOrder.splice(fromIndex, 1);
+    newOrder.splice(toIndex, 0, removed);
     updateQueryAndRun({ order: newOrder });
   };
 
