@@ -147,9 +147,60 @@ A: ZIP files are uploaded to:
 **Q: How can I use these ZIPs on Grafana Cloud?**  
 A: For Grafana Cloud deployment, use the **"Plugins - CD"** workflow in the Actions tab to publish to dev/ops/prod environments.
 
+## Releasing
+
+This repository uses a **two-step release process**:
+
+1. **GitHub Release** (via `release.yml`) — Created automatically when you push a version tag
+2. **Catalog Publishing** (via `publish.yaml`) — Manual workflow to publish to Grafana Cloud environments
+
+### Why Two Separate Workflows?
+
+We want GitHub releases with downloadable artifacts to be available **as soon as a version is tagged**, regardless of whether it's published to the Grafana catalog. This allows:
+
+- QA and testers to download and verify the plugin before catalog publishing
+- Transparency about what version exists, even if only deployed to dev/ops
+- A clear audit trail of all released versions
+
+The standard `plugin-ci-workflows` only creates GitHub releases when publishing to prod. Our custom `release.yml` fills this gap by creating releases on any tag push.
+
+### Creating a Release
+
+Since `main` is protected, releases are a two-step process:
+
+**Step 1: Version bump PR**
+
+```bash
+# Create a release branch
+git checkout -b release/v1.2.3
+
+# Bump version (updates package.json and package-lock.json)
+npm version patch --no-git-tag-version  # or minor/major
+
+# Commit the version bump
+git add package.json package-lock.json
+git commit -m "chore: release v1.2.3"
+
+# Push and create PR
+git push -u origin release/v1.2.3
+```
+
+Wait for CI to pass, then merge the PR.
+
+**Step 2: Tag the release**
+
+```bash
+# After merging, pull main and create the tag
+git checkout main && git pull
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+The tag push triggers the `release.yml` workflow, which creates a GitHub release with signed plugin artifacts. You can then publish to the catalog whenever you're ready.
+
 ## Publishing Workflow
 
-To publish the plugin:
+To publish the plugin to the Grafana catalog:
 
 1. Go to **Actions** → **"Plugins - CD"** → **"Run workflow"**
 2. Choose target environment: `dev`, `ops`, `prod-canary`, or `prod`
