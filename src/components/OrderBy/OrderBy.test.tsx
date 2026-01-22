@@ -78,7 +78,7 @@ describe('OrderBy', () => {
         onRemove={mockOnRemove}
         onToggleDirection={mockOnToggleDirection}
         onReorder={mockOnReorder}
-        order={{ 'orders.status': 'desc' }}
+        order={[['orders.status', 'desc']]}
       />
     );
 
@@ -96,7 +96,7 @@ describe('OrderBy', () => {
         onRemove={mockOnRemove}
         onToggleDirection={mockOnToggleDirection}
         onReorder={mockOnReorder}
-        order={{ 'orders.status': 'desc' }}
+        order={[['orders.status', 'desc']]}
       />
     );
 
@@ -104,5 +104,26 @@ describe('OrderBy', () => {
     await user.click(directionButton);
 
     expect(mockOnToggleDirection).toHaveBeenCalledWith('orders.status');
+  });
+
+  it('should handle legacy object format for backward compatibility', async () => {
+    const { user } = setup(
+      <OrderBy
+        availableOptions={mockOptions}
+        onAdd={mockOnAdd}
+        onRemove={mockOnRemove}
+        onToggleDirection={mockOnToggleDirection}
+        onReorder={mockOnReorder}
+        order={{ 'orders.status': 'desc' }}
+      />
+    );
+
+    // Should render the order field from legacy format
+    expect(screen.getByText('Status')).toBeInTheDocument();
+
+    // Should still work with callbacks
+    const removeButton = screen.getByRole('button', { name: 'Remove field from order by' });
+    await user.click(removeButton);
+    expect(mockOnRemove).toHaveBeenCalledWith('orders.status');
   });
 });
