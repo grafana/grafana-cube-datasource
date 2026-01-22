@@ -36,7 +36,7 @@ jobs:
 
       - name: Get Vault secrets
         id: get-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@35cda2c3dd809b06e4462bd4f792bc9cae4dce17
+        uses: grafana/shared-workflows/actions/get-vault-secrets@02e11133b44d47c5fa8356395095026fb70378fb
         with:
           common_secrets: |
             GRAFANA_ACCESS_POLICY_TOKEN=plugins/sign-plugin-access-policy-token:token
