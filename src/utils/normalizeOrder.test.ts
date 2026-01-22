@@ -1,4 +1,4 @@
-import { normalizeOrder } from './normalizeOrder';
+import { normalizeOrder, OrderArray, OrderRecord } from './normalizeOrder';
 
 describe('normalizeOrder', () => {
   it('should return undefined for undefined input', () => {
@@ -6,7 +6,7 @@ describe('normalizeOrder', () => {
   });
 
   it('should return array format as-is', () => {
-    const arrayOrder: Array<[string, 'asc' | 'desc']> = [
+    const arrayOrder: OrderArray = [
       ['orders.count', 'desc'],
       ['orders.status', 'asc'],
     ];
@@ -14,7 +14,7 @@ describe('normalizeOrder', () => {
   });
 
   it('should convert object format to array format', () => {
-    const objectOrder = { 'orders.count': 'desc' as const, 'orders.status': 'asc' as const };
+    const objectOrder: OrderRecord = { 'orders.count': 'desc', 'orders.status': 'asc' };
     const result = normalizeOrder(objectOrder);
     expect(result).toEqual([
       ['orders.count', 'desc'],
