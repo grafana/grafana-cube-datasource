@@ -12,7 +12,7 @@ interface OrderByProps {
   onRemove: (field: string) => void;
   onToggleDirection: (field: string) => void;
   onReorder: (fromIndex: number, toIndex: number) => void;
-  order?: Record<string, Order>;
+  order?: Array<[string, Order]>;
 }
 
 export function OrderBy({ availableOptions, onAdd, onRemove, onToggleDirection, onReorder, order }: OrderByProps) {
@@ -22,7 +22,7 @@ export function OrderBy({ availableOptions, onAdd, onRemove, onToggleDirection, 
     if (!order) {
       return [];
     }
-    return Object.entries(order).map(([field, direction]) => ({ field, direction }));
+    return order.map(([field, direction]) => ({ field, direction }));
   }, [order]);
 
   const availableFieldsToAdd = useMemo(() => {

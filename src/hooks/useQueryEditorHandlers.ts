@@ -16,13 +16,11 @@ export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery
     const validFields = new Set([...newValues, ...(query[otherType] || [])]);
 
     // Clean up order: remove any ordered fields that are no longer selected
-    const cleanedOrder = query.order
-      ? Object.fromEntries(Object.entries(query.order).filter(([field]) => validFields.has(field)))
-      : undefined;
+    const cleanedOrder = query.order ? query.order.filter(([field]) => validFields.has(field)) : undefined;
 
     updateQueryAndRun({
       [type]: newValues,
-      order: cleanedOrder && Object.keys(cleanedOrder).length > 0 ? cleanedOrder : undefined,
+      order: cleanedOrder && cleanedOrder.length > 0 ? cleanedOrder : undefined,
     });
   };
 
@@ -37,7 +35,7 @@ export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery
   };
 
   const onAddOrder = (field: string, direction: Order = DEFAULT_ORDER) => {
-    const newOrder = { ...(query.order || {}), [field]: direction };
+    const newOrder: Array<[string, Order]> = [...(query.order || []), [field, direction]];
     updateQueryAndRun({ order: newOrder });
   };
 
@@ -45,33 +43,37 @@ export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery
     if (!query.order) {
       return;
     }
-    const newOrder = { ...query.order };
-    delete newOrder[field];
-    updateQueryAndRun({ order: Object.keys(newOrder).length > 0 ? newOrder : undefined });
+    const newOrder = query.order.filter(([f]) => f !== field);
+    updateQueryAndRun({ order: newOrder.length > 0 ? newOrder : undefined });
   };
 
   const onToggleOrderDirection = (field: string) => {
-    if (!query.order || !query.order[field]) {
+    if (!query.order) {
       return;
     }
-    const newDirection = query.order[field] === 'asc' ? 'desc' : 'asc';
-    updateQueryAndRun({ order: { ...query.order, [field]: newDirection } });
+    const index = query.order.findIndex(([f]) => f === field);
+    if (index === -1) {
+      return;
+    }
+    const newDirection = query.order[index][1] === 'asc' ? 'desc' : 'asc';
+    const newOrder: Array<[string, Order]> = [...query.order];
+    newOrder[index] = [field, newDirection];
+    updateQueryAndRun({ order: newOrder });
   };
 
   const onReorderFields = (fromIndex: number, toIndex: number) => {
     if (!query.order) {
       return;
     }
-    const orderEntries = Object.entries(query.order);
 
     // Validate bounds to prevent undefined from being inserted
-    if (fromIndex < 0 || fromIndex >= orderEntries.length || toIndex < 0 || toIndex >= orderEntries.length) {
+    if (fromIndex < 0 || fromIndex >= query.order.length || toIndex < 0 || toIndex >= query.order.length) {
       return;
     }
 
-    const [removed] = orderEntries.splice(fromIndex, 1);
-    orderEntries.splice(toIndex, 0, removed);
-    const newOrder = Object.fromEntries(orderEntries);
+    const newOrder = [...query.order];
+    const [removed] = newOrder.splice(fromIndex, 1);
+    newOrder.splice(toIndex, 0, removed);
     updateQueryAndRun({ order: newOrder });
   };
 
