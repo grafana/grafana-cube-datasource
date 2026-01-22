@@ -8,22 +8,15 @@
   "packageRules": [
     {
       "groupName": "All non-major dependencies",
-      "matchUpdateTypes": [
-        "minor",
-        "patch",
-        "pin",
-        "digest"
-      ],
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "automerge": true,
-      "labels": [
-        "automerge"
-      ]
+      "labels": ["automerge"]
     }
   ],
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": ["^\\.github/workflows/.*\\.ya?ml$"],
+      "managerFilePatterns": ["/^\\.github/workflows/.*\\.ya?ml$/"],
       "matchStrings": ["go-version:\\s*[\"']?(?<currentValue>[\\d.]+)[\"']?"],
       "depNameTemplate": "go",
       "datasourceTemplate": "golang-version"
