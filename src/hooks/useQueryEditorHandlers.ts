@@ -1,7 +1,7 @@
 import { ChangeEvent } from 'react';
 import { MyQuery, CubeFilter, Order, DEFAULT_ORDER } from '../types';
 import { SelectableValue } from '@grafana/data';
-import { normalizeOrder } from '../utils/normalizeOrder';
+import { normalizeOrder, OrderArray } from '../utils/normalizeOrder';
 
 export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery) => void, onRunQuery: () => void) {
   const updateQueryAndRun = (updates: Partial<MyQuery>) => {
@@ -38,7 +38,7 @@ export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery
 
   const onAddOrder = (field: string, direction: Order = DEFAULT_ORDER) => {
     const normalizedOrder = normalizeOrder(query.order);
-    const newOrder: Array<[string, Order]> = [...(normalizedOrder || []), [field, direction]];
+    const newOrder: OrderArray = [...(normalizedOrder || []), [field, direction]];
     updateQueryAndRun({ order: newOrder });
   };
 
@@ -61,7 +61,7 @@ export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery
       return;
     }
     const newDirection = normalizedOrder[index][1] === 'asc' ? 'desc' : 'asc';
-    const newOrder: Array<[string, Order]> = [...normalizedOrder];
+    const newOrder: OrderArray = [...normalizedOrder];
     newOrder[index] = [field, newDirection];
     updateQueryAndRun({ order: newOrder });
   };
