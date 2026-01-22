@@ -5,6 +5,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { OrderByItem } from './OrderByItem';
+import { normalizeOrder, OrderInput } from '../../utils/normalizeOrder';
 
 interface OrderByProps {
   availableOptions: Array<{ label: string; value: string }>;
@@ -12,17 +13,18 @@ interface OrderByProps {
   onRemove: (field: string) => void;
   onToggleDirection: (field: string) => void;
   onReorder: (fromIndex: number, toIndex: number) => void;
-  order?: Array<[string, Order]>;
+  order?: OrderInput;
 }
 
 export function OrderBy({ availableOptions, onAdd, onRemove, onToggleDirection, onReorder, order }: OrderByProps) {
   const [selectedField, setSelectedField] = useState<string | null>(null);
   const styles = useStyles2(getStyles);
   const orderEntries = useMemo(() => {
-    if (!order) {
+    const normalized = normalizeOrder(order);
+    if (!normalized) {
       return [];
     }
-    return order.map(([field, direction]) => ({ field, direction }));
+    return normalized.map(([field, direction]) => ({ field, direction }));
   }, [order]);
 
   const availableFieldsToAdd = useMemo(() => {

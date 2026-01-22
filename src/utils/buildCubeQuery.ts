@@ -2,6 +2,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { DataSource } from '../datasource';
 import { CubeFilter, MyQuery } from '../types';
 import { filterValidCubeFilters } from './filterValidation';
+import { normalizeOrder } from './normalizeOrder';
 
 /**
  * Builds a Cube.js query JSON string from a Grafana query object.
@@ -90,8 +91,9 @@ export function buildCubeQueryJson(query: MyQuery, datasource: DataSource): stri
     cubeQuery.filters = validFilters;
   }
 
-  if (query.order) {
-    cubeQuery.order = query.order;
+  const normalizedOrder = normalizeOrder(query.order);
+  if (normalizedOrder) {
+    cubeQuery.order = normalizedOrder;
   }
 
   return JSON.stringify(cubeQuery);
