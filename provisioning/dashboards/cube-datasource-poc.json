@@ -103,8 +103,12 @@
             "type": "grafana-cube-datasource",
             "uid": "cube-datasource"
           },
-          "dimensions": ["orders.raw_customers_first_name"],
-          "measures": ["orders.raw_payments_total_amount"],
+          "dimensions": [
+            "orders.raw_customers_first_name"
+          ],
+          "measures": [
+            "orders.raw_payments_total_amount"
+          ],
           "refId": "A"
         }
       ],
@@ -196,8 +200,12 @@
             "type": "grafana-cube-datasource",
             "uid": "cube-datasource"
           },
-          "dimensions": ["orders.raw_payments_payment_method"],
-          "measures": ["orders.raw_payments_total_amount"],
+          "dimensions": [
+            "orders.raw_payments_payment_method"
+          ],
+          "measures": [
+            "orders.raw_payments_total_amount"
+          ],
           "refId": "A"
         }
       ],
@@ -273,13 +281,123 @@
             "type": "grafana-cube-datasource",
             "uid": "cube-datasource"
           },
-          "dimensions": ["orders.raw_customers_first_name", "orders.raw_customers_last_name"],
-          "measures": ["orders.raw_payments_total_amount", "orders.raw_payments_count"],
+          "dimensions": [
+            "orders.raw_customers_first_name",
+            "orders.raw_customers_last_name"
+          ],
+          "measures": [
+            "orders.raw_payments_total_amount",
+            "orders.raw_payments_count"
+          ],
           "refId": "A"
         }
       ],
       "title": "Orders: Amount and Count, by First Name",
       "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-cube-datasource",
+        "uid": "cube-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 12,
+        "y": 11
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.2.0-17253726931",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-cube-datasource",
+            "uid": "cube-datasource"
+          },
+          "dimensions": [
+            "orders.raw_orders_order_date"
+          ],
+          "measures": [
+            "orders.raw_payments_count_with_discount",
+            "orders.raw_payments_count"
+          ],
+          "refId": "A"
+        }
+      ],
+      "title": "Order Amount by Payment Method",
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -350,9 +468,15 @@
             "type": "grafana-cube-datasource",
             "uid": "cube-datasource"
           },
+          "dimensions": [
+            "orders.raw_customers_first_name",
+            "orders.raw_customers_last_name"
+          ],
           "hide": true,
-          "dimensions": ["orders.raw_customers_first_name", "orders.raw_customers_last_name"],
-          "measures": ["orders.raw_payments_total_amount", "orders.raw_payments_count"],
+          "measures": [
+            "orders.raw_payments_total_amount",
+            "orders.raw_payments_count"
+          ],
           "refId": "A"
         },
         {
@@ -375,10 +499,37 @@
   "refresh": "",
   "schemaVersion": 41,
   "tags": [],
-  "templating": {},
+  "templating": {
+    "list": [
+      {
+        "allowCustomValue": false,
+        "current": {
+          "text": "orders.raw_orders_order_date",
+          "value": "orders.raw_orders_order_date"
+        },
+        "description": "This field will have the Dashboard Time-range applied to it as a filter",
+        "label": "Time-range filtering field",
+        "name": "cubeTimeDimension",
+        "options": [
+          {
+            "selected": true,
+            "text": "orders.raw_orders_order_date",
+            "value": "orders.raw_orders_order_date"
+          },
+          {
+            "selected": false,
+            "text": "not_a_real_date_field",
+            "value": "not_a_real_date_field"
+          }
+        ],
+        "query": "orders.raw_orders_order_date,not_a_real_date_field",
+        "type": "custom"
+      }
+    ]
+  },
   "time": {
-    "from": "now-6h",
-    "to": "now"
+    "from": "2018-02-20T13:19:26.734Z",
+    "to": "2018-04-14T08:31:36.641Z"
   },
   "timepicker": {},
   "timezone": "browser",
