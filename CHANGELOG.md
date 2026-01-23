@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.8.1 (2026-01-23)
+
+### Documentation
+
+- Rewrote changelog with complete version history
+
+**Full Changelog**: [v3.8.0...v3.8.1](https://github.com/grafana/grafana-cube-datasource/compare/v3.8.0...v3.8.1)
+
 ## 3.8.0 (2026-01-23)
 
 ### Features
