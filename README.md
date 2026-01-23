@@ -230,7 +230,7 @@ The GitHub Actions workflows in this repository (`push.yaml` and `publish.yaml`)
 
 If you're forking this repo, you should:
 
-1. **Revert to the previous CI workflows** that were removed in [this PR](https://github.com/grafana/grafana-cube-datasource/pull/9) - these contain the basic build, test, and packaging logic without Grafana-specific deployment steps
+1. **Revert to the previous CI workflows** that come with a newly bootstrapped plugin - these contain the basic build, test, and packaging logic without Grafana-specific deployment steps
 2. **Use manual plugin signing** for distribution to your own Grafana instances
 
 ### Manual Plugin Signing
