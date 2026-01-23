@@ -1,2 +1,0 @@
-{"dimensions":["orders.first_name"],"measures":["orders.count"]}
-{"dimensions":["orders.first_name"],"measures":["orders.count"],"order":{"orders.first_name":"asc"},"filters":[{"values":["A"],"member":"orders.first_name","operator":"startsWith"}]}
