@@ -12,14 +12,5 @@
       "automerge": true,
       "labels": ["automerge"]
     }
-  ],
-  "customManagers": [
-    {
-      "customType": "regex",
-      "managerFilePatterns": ["/^\\.github/workflows/.*\\.ya?ml$/"],
-      "matchStrings": ["go-version:\\s*[\"']?(?<currentValue>[\\d.]+)[\"']?"],
-      "depNameTemplate": "go",
-      "datasourceTemplate": "golang-version"
-    }
   ]
 }
