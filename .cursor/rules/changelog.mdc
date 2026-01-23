@@ -1,0 +1,47 @@
+---
+title: Changelog Maintenance
+description: Guidelines for maintaining CHANGELOG.md at release time
+globs:
+  - "**/package.json"
+---
+
+# Changelog Maintenance
+
+**Update CHANGELOG.md when bumping the version in package.json.**
+
+## When to Update
+
+When bumping the version in `package.json`, add a new section to CHANGELOG.md:
+
+1. Review commits/PRs since the last release tag
+2. Add a new section with the version number and today's date
+3. Summarize the notable changes (features, fixes, breaking changes)
+4. Add a "Full Changelog" comparison link
+
+## Format
+
+```markdown
+## X.Y.Z (YYYY-MM-DD)
+
+### Features
+
+- **Short description**: Longer explanation if needed (#PR)
+
+### Bug Fixes
+
+- **Short description**: Longer explanation if needed (#PR)
+
+**Full Changelog**: [vPREVIOUS...vX.Y.Z](https://github.com/grafana/grafana-cube-datasource/compare/vPREVIOUS...vX.Y.Z)
+```
+
+## What to Include
+
+- New features
+- Bug fixes
+- Breaking changes (with migration notes if applicable)
+
+## What to Skip
+
+- Dependency updates (handled by Renovate)
+- CI/infrastructure changes (unless they affect users)
+- Minor refactors that don't change behavior
