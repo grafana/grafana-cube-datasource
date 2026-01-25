@@ -4,7 +4,7 @@ go 1.25.5
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.0
-	github.com/grafana/grafana-plugin-sdk-go v0.285.0
+	github.com/grafana/grafana-plugin-sdk-go v0.286.0
 )
 
 require (
