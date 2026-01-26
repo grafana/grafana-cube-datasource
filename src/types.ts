@@ -1,13 +1,16 @@
 import { DataSourceJsonData } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
+import type { BinaryOperator, TimeDimension } from '@cubejs-client/core';
 
 export const DEFAULT_ORDER: Order = 'asc';
 export type Order = 'asc' | 'desc';
 
-export enum Operator {
-  Equals = 'equals',
-  NotEquals = 'notEquals',
-}
+export const Operator = {
+  Equals: 'equals',
+  NotEquals: 'notEquals',
+} as const satisfies Record<string, BinaryOperator>;
+
+export type Operator = (typeof Operator)[keyof typeof Operator];
 
 export interface CubeFilter {
   member: string;
@@ -18,7 +21,7 @@ export interface CubeFilter {
 export interface MyQuery extends DataQuery {
   dimensions?: string[];
   measures?: string[];
-  timeDimensions?: any[];
+  timeDimensions?: TimeDimension[];
   limit?: number;
   filters?: CubeFilter[];
   /** Order can be array format (new) or object format (legacy saved queries) */

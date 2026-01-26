@@ -1,4 +1,5 @@
 import { getTemplateSrv } from '@grafana/runtime';
+import type { BinaryFilter, Query as CubeQuery, TimeDimension } from '@cubejs-client/core';
 import { DataSource } from '../datasource';
 import { CubeFilter, MyQuery } from '../types';
 import { filterValidCubeFilters } from './filterValidation';
@@ -13,22 +14,13 @@ export function buildCubeQueryJson(query: MyQuery, datasource: DataSource): stri
     return '';
   }
 
-  const cubeQuery: Record<string, unknown> = {};
-
-  if (query.dimensions?.length) {
-    cubeQuery.dimensions = query.dimensions;
-  }
-
-  if (query.measures?.length) {
-    cubeQuery.measures = query.measures;
-  }
+  const templateSrv = getTemplateSrv();
 
   // Start with query-level time dimensions
-  let timeDimensions = query.timeDimensions?.length ? [...query.timeDimensions] : [];
+  let timeDimensions: TimeDimension[] = query.timeDimensions?.length ? [...query.timeDimensions] : [];
 
   // If no time dimensions in query, check for $cubeTimeDimension dashboard variable
   if (timeDimensions.length === 0) {
-    const templateSrv = getTemplateSrv();
     const dashboardTimeDimension = templateSrv.replace('$cubeTimeDimension', {});
 
     // Only add if the variable was actually replaced (not returned as literal '$cubeTimeDimension')
@@ -57,19 +49,10 @@ export function buildCubeQueryJson(query: MyQuery, datasource: DataSource): stri
     }
   }
 
-  if (timeDimensions.length > 0) {
-    cubeQuery.timeDimensions = timeDimensions;
-  }
-
-  if (query.limit) {
-    cubeQuery.limit = query.limit;
-  }
-
   // Combine query-level filters with AdHoc filters
   let filters: CubeFilter[] = query.filters?.length ? [...query.filters] : [];
 
   // Get AdHoc filters and convert to Cube format
-  const templateSrv = getTemplateSrv();
   const adHocFilters = (templateSrv as any).getAdhocFilters
     ? (templateSrv as any).getAdhocFilters(datasource.name)
     : [];
@@ -87,14 +70,21 @@ export function buildCubeQueryJson(query: MyQuery, datasource: DataSource): stri
 
   const validFilters = filterValidCubeFilters(filters);
 
-  if (validFilters.length > 0) {
-    cubeQuery.filters = validFilters;
-  }
+  const cubeFilters: BinaryFilter[] = validFilters.map((filter) => ({
+    member: filter.member,
+    operator: filter.operator,
+    values: filter.values,
+  }));
 
   const normalizedOrder = normalizeOrder(query.order);
-  if (normalizedOrder) {
-    cubeQuery.order = normalizedOrder;
-  }
+  const cubeQuery: CubeQuery = {
+    ...(query.dimensions?.length ? { dimensions: query.dimensions } : {}),
+    ...(query.measures?.length ? { measures: query.measures } : {}),
+    ...(timeDimensions.length > 0 ? { timeDimensions } : {}),
+    ...(query.limit ? { limit: query.limit } : {}),
+    ...(cubeFilters.length > 0 ? { filters: cubeFilters } : {}),
+    ...(normalizedOrder ? { order: normalizedOrder } : {}),
+  };
 
   return JSON.stringify(cubeQuery);
 }

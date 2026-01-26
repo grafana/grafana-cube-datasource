@@ -1,7 +1,7 @@
 import { DataSourceInstanceSettings, CoreApp, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 
-import { MyQuery, MyDataSourceOptions, DEFAULT_QUERY, CubeFilter } from './types';
+import { MyQuery, MyDataSourceOptions, DEFAULT_QUERY, CubeFilter, Operator } from './types';
 import { filterValidCubeFilters } from './utils/filterValidation';
 
 export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptions> {
@@ -105,24 +105,24 @@ export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptio
   }
 
   // Made public so QueryEditor can use this for SQL preview with AdHoc filters
-  mapOperator(grafanaOp: string): string {
+  mapOperator(grafanaOp: string): Operator {
     switch (grafanaOp) {
       case '=':
       case '=|': // "One of" - Cube's equals operator supports multiple values
-        return 'equals';
+        return Operator.Equals;
       case '!=':
       case '!=|': // "Not one of" - Cube's notEquals operator supports multiple values
-        return 'notEquals';
+        return Operator.NotEquals;
       // Note: =~ and !~ are Prometheus regex operators, not substring contains.
       // We intentionally don't (yet) map these to `contains` or `notContains` to avoid semantic confusion,
       // and because isValidCubeFilter doesn't support `contains` or `notContains` yet.
       // We don't yet test for the behaviour below because it's not desirable long term - it's a temporary workaround.
       case '=~':
-        return 'equals';
+        return Operator.Equals;
       case '!~':
-        return 'notEquals';
+        return Operator.NotEquals;
       default:
-        return 'equals';
+        return Operator.Equals;
     }
   }
 
