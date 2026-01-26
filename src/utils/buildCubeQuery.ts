@@ -1,19 +1,24 @@
+import type { BinaryFilter, Query as CubeQuery } from '@cubejs-client/core';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataSource } from '../datasource';
-import { CubeFilter, MyQuery } from '../types';
+import { CubeFilter, MyQuery, Operator } from '../types';
 import { filterValidCubeFilters } from './filterValidation';
 import { normalizeOrder } from './normalizeOrder';
 
 /**
  * Builds a Cube.js query JSON string from a Grafana query object.
  * Handles time dimensions, filters (including AdHoc filters), and ordering.
+ *
+ * This function uses @cubejs-client/core types to ensure compile-time
+ * compatibility with Cube's /load endpoint format.
  */
 export function buildCubeQueryJson(query: MyQuery, datasource: DataSource): string {
   if (!query.dimensions?.length && !query.measures?.length) {
     return '';
   }
 
-  const cubeQuery: Record<string, unknown> = {};
+  // Using CubeQuery type for compile-time checking against Cube's official API
+  const cubeQuery: CubeQuery = {};
 
   if (query.dimensions?.length) {
     cubeQuery.dimensions = query.dimensions;
@@ -87,8 +92,29 @@ export function buildCubeQueryJson(query: MyQuery, datasource: DataSource): stri
 
   const validFilters = filterValidCubeFilters(filters);
 
+  const toCubeBinaryOperator = (operator: Operator): BinaryFilter['operator'] => {
+    switch (operator) {
+      case Operator.Equals:
+        return 'equals';
+      case Operator.NotEquals:
+        return 'notEquals';
+      default: {
+        // Ensure we don't silently change semantics if new operators are added.
+        const _exhaustive: never = operator;
+        throw new Error(`Unsupported Cube filter operator: ${String(_exhaustive)}`);
+      }
+    }
+  };
+
   if (validFilters.length > 0) {
-    cubeQuery.filters = validFilters;
+    // Map to Cube's official filter type at the boundary to avoid drift.
+    const cubeFilters: BinaryFilter[] = validFilters.map((filter) => ({
+      member: filter.member,
+      operator: toCubeBinaryOperator(filter.operator),
+      values: filter.values,
+    }));
+
+    cubeQuery.filters = cubeFilters;
   }
 
   const normalizedOrder = normalizeOrder(query.order);

@@ -16,6 +16,7 @@
   "author": "Grafana",
   "license": "AGPL-3.0",
   "devDependencies": {
+    "@cubejs-client/core": "1.6.6",
     "@grafana/eslint-config": "9.0.0",
     "@grafana/plugin-e2e": "3.1.4",
     "@grafana/tsconfig": "2.0.1",
