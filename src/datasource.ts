@@ -1,22 +1,22 @@
 import { DataSourceInstanceSettings, CoreApp, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 
-import { MyQuery, MyDataSourceOptions, DEFAULT_QUERY, CubeFilter } from './types';
+import { CubeQuery, CubeDataSourceOptions, DEFAULT_QUERY, CubeFilter } from './types';
 import { filterValidCubeFilters } from './utils/filterValidation';
 
-export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptions> {
-  readonly instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>;
+export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceOptions> {
+  readonly instanceSettings: DataSourceInstanceSettings<CubeDataSourceOptions>;
 
-  constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
+  constructor(instanceSettings: DataSourceInstanceSettings<CubeDataSourceOptions>) {
     super(instanceSettings);
     this.instanceSettings = instanceSettings;
   }
 
-  getDefaultQuery(_: CoreApp): Partial<MyQuery> {
+  getDefaultQuery(_: CoreApp): Partial<CubeQuery> {
     return DEFAULT_QUERY;
   }
 
-  applyTemplateVariables(query: MyQuery, scopedVars: ScopedVars): MyQuery {
+  applyTemplateVariables(query: CubeQuery, scopedVars: ScopedVars): CubeQuery {
     const templateSrv = getTemplateSrv();
 
     // Apply template variable substitution to dimensions and measures
@@ -126,7 +126,7 @@ export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptio
     }
   }
 
-  filterQuery(query: MyQuery): boolean {
+  filterQuery(query: CubeQuery): boolean {
     // If no dimensions or measures have been provided, prevent the query from being executed
     return !!(query.dimensions?.length || query.measures?.length);
   }

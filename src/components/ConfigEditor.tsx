@@ -1,7 +1,7 @@
 import React, { ChangeEvent, useMemo } from 'react';
 import { InlineField, Input, SecretInput, RadioButtonGroup, Alert, Combobox, ComboboxOption } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { MyDataSourceOptions, MySecureJsonData } from '../types';
+import { CubeDataSourceOptions, CubeSecureJsonData } from '../types';
 import { useSqlDatasourcesQuery } from 'queries';
 
 // Constants
@@ -10,7 +10,7 @@ const FIELD_WIDTHS = {
   label: 20,
 } as const;
 
-interface ConfigEditorProps extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData> {}
+interface ConfigEditorProps extends DataSourcePluginOptionsEditorProps<CubeDataSourceOptions, CubeSecureJsonData> {}
 
 export function ConfigEditor({ onOptionsChange, options }: ConfigEditorProps) {
   const { jsonData, secureJsonFields, secureJsonData } = options;
@@ -29,10 +29,10 @@ export function ConfigEditor({ onOptionsChange, options }: ConfigEditorProps) {
     [sqlDatasources]
   );
 
-  const updateJsonData = (field: keyof MyDataSourceOptions, value: string | undefined) =>
+  const updateJsonData = (field: keyof CubeDataSourceOptions, value: string | undefined) =>
     onOptionsChange({ ...options, jsonData: { ...jsonData, [field]: value } });
 
-  const updateSecureData = (field: keyof MySecureJsonData, value: string) =>
+  const updateSecureData = (field: keyof CubeSecureJsonData, value: string) =>
     onOptionsChange({ ...options, secureJsonData: { [field]: value } });
 
   const resetApiKey = () =>

@@ -20,7 +20,7 @@ export interface CubeFilter {
   values: string[];
 }
 
-export interface MyQuery extends DataQuery {
+export interface CubeQuery extends DataQuery {
   dimensions?: string[];
   measures?: string[];
   timeDimensions?: TimeDimension[];
@@ -33,7 +33,7 @@ export interface MyQuery extends DataQuery {
   order?: TQueryOrderArray | TQueryOrderObject;
 }
 
-export const DEFAULT_QUERY: Partial<MyQuery> = {};
+export const DEFAULT_QUERY: Partial<CubeQuery> = {};
 
 export interface DataPoint {
   Time: number;
@@ -47,7 +47,7 @@ export interface DataSourceResponse {
 /**
  * These are options configured for each DataSource instance
  */
-export interface MyDataSourceOptions extends DataSourceJsonData {
+export interface CubeDataSourceOptions extends DataSourceJsonData {
   cubeApiUrl?: string;
   deploymentType?: 'cloud' | 'self-hosted' | 'self-hosted-dev';
   /** UID of the SQL datasource to use when clicking "Edit SQL in Explore" */
@@ -57,7 +57,7 @@ export interface MyDataSourceOptions extends DataSourceJsonData {
 /**
  * Value that is used in the backend, but never sent over HTTP to the frontend
  */
-export interface MySecureJsonData {
+export interface CubeSecureJsonData {
   apiKey?: string; // For Cube Cloud
   apiSecret?: string; // For self-hosted Cube (JWT generation)
 }
