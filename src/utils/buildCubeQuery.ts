@@ -1,7 +1,7 @@
-import type { Query as CubeQuery } from '@cubejs-client/core';
+import type { BinaryFilter, Query as CubeQuery } from '@cubejs-client/core';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataSource } from '../datasource';
-import { CubeFilter, MyQuery } from '../types';
+import { CubeFilter, MyQuery, Operator } from '../types';
 import { filterValidCubeFilters } from './filterValidation';
 import { normalizeOrder } from './normalizeOrder';
 
@@ -93,7 +93,15 @@ export function buildCubeQueryJson(query: MyQuery, datasource: DataSource): stri
   const validFilters = filterValidCubeFilters(filters);
 
   if (validFilters.length > 0) {
-    cubeQuery.filters = validFilters;
+    // Map to Cube's official filter type at the boundary to avoid drift.
+    const cubeFilters: BinaryFilter[] = validFilters.map((filter) => ({
+      member: filter.member,
+      // Use explicit mapping so our internal `Operator` enum doesn't silently drift from Cube.
+      operator: filter.operator === Operator.NotEquals ? 'notEquals' : 'equals',
+      values: filter.values,
+    }));
+
+    cubeQuery.filters = cubeFilters;
   }
 
   const normalizedOrder = normalizeOrder(query.order);
