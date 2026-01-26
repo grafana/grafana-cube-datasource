@@ -1,9 +1,19 @@
-import type { TimeDimension } from '@cubejs-client/core';
+import type { QueryOrder, TimeDimension, TQueryOrderArray, TQueryOrderObject } from '@cubejs-client/core';
 import { DataSourceJsonData } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
-export const DEFAULT_ORDER: Order = 'asc';
+/**
+ * Order direction for sorting. This is a subset of Cube's QueryOrder (excludes 'none')
+ * because our UI only supports ascending and descending.
+ */
 export type Order = 'asc' | 'desc';
+export const DEFAULT_ORDER: Order = 'asc';
+
+/**
+ * Re-export Cube's QueryOrder type for use in type guards.
+ * QueryOrder = 'asc' | 'desc' | 'none'
+ */
+export type { QueryOrder };
 
 export enum Operator {
   Equals = 'equals',
@@ -22,8 +32,11 @@ export interface MyQuery extends DataQuery {
   timeDimensions?: TimeDimension[];
   limit?: number;
   filters?: CubeFilter[];
-  /** Order can be array format (new) or object format (legacy saved queries) */
-  order?: Array<[string, Order]> | Record<string, Order>;
+  /**
+   * Order can be array format (new) or object format (legacy saved queries).
+   * Uses Cube's official order types for API compatibility.
+   */
+  order?: TQueryOrderArray | TQueryOrderObject;
 }
 
 export const DEFAULT_QUERY: Partial<MyQuery> = {};

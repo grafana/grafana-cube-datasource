@@ -1,7 +1,8 @@
+import type { TQueryOrderArray } from '@cubejs-client/core';
 import { ChangeEvent } from 'react';
 import { MyQuery, CubeFilter, Order, DEFAULT_ORDER } from '../types';
 import { SelectableValue } from '@grafana/data';
-import { normalizeOrder, OrderArray } from '../utils/normalizeOrder';
+import { normalizeOrder } from '../utils/normalizeOrder';
 
 export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery) => void, onRunQuery: () => void) {
   const updateQueryAndRun = (updates: Partial<MyQuery>) => {
@@ -38,7 +39,7 @@ export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery
 
   const onAddOrder = (field: string, direction: Order = DEFAULT_ORDER) => {
     const normalizedOrder = normalizeOrder(query.order);
-    const newOrder: OrderArray = [...(normalizedOrder || []), [field, direction]];
+    const newOrder: TQueryOrderArray = [...(normalizedOrder || []), [field, direction]];
     updateQueryAndRun({ order: newOrder });
   };
 
@@ -60,8 +61,10 @@ export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery
     if (index === -1) {
       return;
     }
-    const newDirection = normalizedOrder[index][1] === 'asc' ? 'desc' : 'asc';
-    const newOrder: OrderArray = [...normalizedOrder];
+    // Toggle between 'asc' and 'desc' - if current direction is 'none' or 'asc', switch to 'desc'
+    const currentDirection = normalizedOrder[index][1];
+    const newDirection: Order = currentDirection === 'asc' ? 'desc' : 'asc';
+    const newOrder: TQueryOrderArray = [...normalizedOrder];
     newOrder[index] = [field, newDirection];
     updateQueryAndRun({ order: newOrder });
   };

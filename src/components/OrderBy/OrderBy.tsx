@@ -16,10 +16,18 @@ interface OrderByProps {
   order?: OrderInput;
 }
 
+/**
+ * Represents an order entry with field and direction for display in the UI.
+ */
+interface OrderEntry {
+  field: string;
+  direction: 'asc' | 'desc' | 'none';
+}
+
 export function OrderBy({ availableOptions, onAdd, onRemove, onToggleDirection, onReorder, order }: OrderByProps) {
   const [selectedField, setSelectedField] = useState<string | null>(null);
   const styles = useStyles2(getStyles);
-  const orderEntries = useMemo(() => {
+  const orderEntries = useMemo((): OrderEntry[] => {
     const normalized = normalizeOrder(order);
     if (!normalized) {
       return [];

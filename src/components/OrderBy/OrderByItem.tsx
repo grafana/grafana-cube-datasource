@@ -1,13 +1,13 @@
 import React from 'react';
 import { IconButton, useStyles2, Text } from '@grafana/ui';
-import { Order } from 'types';
+import { QueryOrder } from 'types';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Draggable } from '@hello-pangea/dnd';
 
 interface OrderByItemProps {
   field: string;
-  direction: Order;
+  direction: QueryOrder;
   index: number;
   label: string;
   onRemove: (field: string) => void;
