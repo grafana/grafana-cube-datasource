@@ -1,4 +1,4 @@
-import type { BinaryFilter, Query as CubeQuery } from '@cubejs-client/core';
+import type { BinaryFilter, Query as CubeQuery, TimeDimension } from '@cubejs-client/core';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataSource } from '../datasource';
 import { CubeFilter, MyQuery, Operator } from '../types';
@@ -29,7 +29,7 @@ export function buildCubeQueryJson(query: MyQuery, datasource: DataSource): stri
   }
 
   // Start with query-level time dimensions
-  let timeDimensions = query.timeDimensions?.length ? [...query.timeDimensions] : [];
+  let timeDimensions: TimeDimension[] = query.timeDimensions?.length ? [...query.timeDimensions] : [];
 
   // If no time dimensions in query, check for $cubeTimeDimension dashboard variable
   if (timeDimensions.length === 0) {
