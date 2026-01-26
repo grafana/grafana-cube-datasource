@@ -92,12 +92,25 @@ export function buildCubeQueryJson(query: MyQuery, datasource: DataSource): stri
 
   const validFilters = filterValidCubeFilters(filters);
 
+  const toCubeBinaryOperator = (operator: Operator): BinaryFilter['operator'] => {
+    switch (operator) {
+      case Operator.Equals:
+        return 'equals';
+      case Operator.NotEquals:
+        return 'notEquals';
+      default: {
+        // Ensure we don't silently change semantics if new operators are added.
+        const _exhaustive: never = operator;
+        throw new Error(`Unsupported Cube filter operator: ${String(_exhaustive)}`);
+      }
+    }
+  };
+
   if (validFilters.length > 0) {
     // Map to Cube's official filter type at the boundary to avoid drift.
     const cubeFilters: BinaryFilter[] = validFilters.map((filter) => ({
       member: filter.member,
-      // Use explicit mapping so our internal `Operator` enum doesn't silently drift from Cube.
-      operator: filter.operator === Operator.NotEquals ? 'notEquals' : 'equals',
+      operator: toCubeBinaryOperator(filter.operator),
       values: filter.values,
     }));
 
