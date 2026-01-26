@@ -18,10 +18,11 @@ interface OrderByProps {
 
 /**
  * Represents an order entry with field and direction for display in the UI.
+ * Direction is 'asc' or 'desc' only - 'none' is filtered out by normalizeOrder.
  */
 interface OrderEntry {
   field: string;
-  direction: 'asc' | 'desc' | 'none';
+  direction: Order;
 }
 
 export function OrderBy({ availableOptions, onAdd, onRemove, onToggleDirection, onReorder, order }: OrderByProps) {

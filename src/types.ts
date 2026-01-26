@@ -1,4 +1,4 @@
-import type { QueryOrder, TimeDimension, TQueryOrderArray, TQueryOrderObject } from '@cubejs-client/core';
+import type { TimeDimension, TQueryOrderArray, TQueryOrderObject } from '@cubejs-client/core';
 import { DataSourceJsonData } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
@@ -8,12 +8,6 @@ import { DataQuery } from '@grafana/schema';
  */
 export type Order = 'asc' | 'desc';
 export const DEFAULT_ORDER: Order = 'asc';
-
-/**
- * Re-export Cube's QueryOrder type for use in type guards.
- * QueryOrder = 'asc' | 'desc' | 'none'
- */
-export type { QueryOrder };
 
 export enum Operator {
   Equals = 'equals',
