@@ -1,3 +1,4 @@
+import type { Query as CubeQuery } from '@cubejs-client/core';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataSource } from '../datasource';
 import { CubeFilter, MyQuery } from '../types';
@@ -7,13 +8,17 @@ import { normalizeOrder } from './normalizeOrder';
 /**
  * Builds a Cube.js query JSON string from a Grafana query object.
  * Handles time dimensions, filters (including AdHoc filters), and ordering.
+ *
+ * This function uses @cubejs-client/core types to ensure compile-time
+ * compatibility with Cube's /load endpoint format.
  */
 export function buildCubeQueryJson(query: MyQuery, datasource: DataSource): string {
   if (!query.dimensions?.length && !query.measures?.length) {
     return '';
   }
 
-  const cubeQuery: Record<string, unknown> = {};
+  // Using CubeQuery type for compile-time checking against Cube's official API
+  const cubeQuery: CubeQuery = {};
 
   if (query.dimensions?.length) {
     cubeQuery.dimensions = query.dimensions;
