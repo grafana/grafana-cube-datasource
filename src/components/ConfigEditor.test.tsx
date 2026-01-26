@@ -2,12 +2,12 @@ import React from 'react';
 import { screen, fireEvent } from '@testing-library/react';
 import { setup } from 'testUtils';
 import { ConfigEditor } from './ConfigEditor';
-import { MyDataSourceOptions, MySecureJsonData } from '../types';
+import { CubeDataSourceOptions, CubeSecureJsonData } from '../types';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 
 const createMockEditorProps = (
-  overrides?: Partial<DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData>>
-): DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData> => {
+  overrides?: Partial<DataSourcePluginOptionsEditorProps<CubeDataSourceOptions, CubeSecureJsonData>>
+): DataSourcePluginOptionsEditorProps<CubeDataSourceOptions, CubeSecureJsonData> => {
   return {
     options: {
       id: 1,
@@ -38,7 +38,7 @@ const createMockEditorProps = (
     },
     onOptionsChange: jest.fn(),
     ...overrides,
-  } as DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData>;
+  } as DataSourcePluginOptionsEditorProps<CubeDataSourceOptions, CubeSecureJsonData>;
 };
 
 describe('ConfigEditor', () => {

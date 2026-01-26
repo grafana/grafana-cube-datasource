@@ -1,5 +1,5 @@
 import { test, expect } from '@grafana/plugin-e2e';
-import { MyDataSourceOptions, MySecureJsonData } from '../src/types';
+import { CubeDataSourceOptions, CubeSecureJsonData } from '../src/types';
 
 test('smoke: should render config editor', async ({ createDataSourceConfigPage, readProvisionedDataSource, page }) => {
   const ds = await readProvisionedDataSource({ fileName: 'datasources.yml' });
@@ -11,7 +11,7 @@ test('"Save & test" should be successful when configuration is valid', async ({
   readProvisionedDataSource,
   page,
 }) => {
-  const ds = await readProvisionedDataSource<MyDataSourceOptions, MySecureJsonData>({ fileName: 'datasources.yml' });
+  const ds = await readProvisionedDataSource<CubeDataSourceOptions, CubeSecureJsonData>({ fileName: 'datasources.yml' });
 
   // This test expects the provisioned datasource to use self-hosted deployment
   expect(ds.jsonData.deploymentType).toBe('self-hosted');
@@ -29,7 +29,7 @@ test('"Save & test" should fail when configuration is invalid', async ({
   readProvisionedDataSource,
   page,
 }) => {
-  const ds = await readProvisionedDataSource<MyDataSourceOptions, MySecureJsonData>({ fileName: 'datasources.yml' });
+  const ds = await readProvisionedDataSource<CubeDataSourceOptions, CubeSecureJsonData>({ fileName: 'datasources.yml' });
   const configPage = await createDataSourceConfigPage({ type: ds.type });
   // Leave Cube API URL empty to trigger validation error
   await page.getByRole('textbox', { name: 'Cube API URL' }).fill('');

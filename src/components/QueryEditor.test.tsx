@@ -1,7 +1,7 @@
 import React, { act } from 'react';
 import { screen, waitFor, fireEvent } from '@testing-library/react';
 import { QueryEditor } from './QueryEditor';
-import { MyQuery, Operator } from '../types';
+import { CubeQuery, Operator } from '../types';
 import { getTemplateSrv } from '@grafana/runtime';
 import { createMockDataSource, setup } from 'testUtils';
 
@@ -18,7 +18,7 @@ jest.mock('@grafana/runtime', () => ({
 
 const mockGetTemplateSrv = getTemplateSrv as jest.Mock;
 
-const createMockQuery = (overrides: Partial<MyQuery> = {}): MyQuery => ({
+const createMockQuery = (overrides: Partial<CubeQuery> = {}): CubeQuery => ({
   refId: 'A',
   ...overrides,
 });
@@ -707,14 +707,14 @@ describe('QueryEditor', () => {
       datasource.getTagValues = jest.fn().mockResolvedValue(mockMemberValues);
 
       // Track all query states to detect duplicates
-      const queryHistory: MyQuery[] = [];
+      const queryHistory: CubeQuery[] = [];
       let currentQuery = createMockQuery();
 
       // Stateful wrapper that updates props like real Grafana does
       const StatefulWrapper = () => {
         const [query, setQuery] = React.useState(currentQuery);
 
-        const handleChange = (newQuery: MyQuery) => {
+        const handleChange = (newQuery: CubeQuery) => {
           queryHistory.push({ ...newQuery });
           currentQuery = newQuery;
           setQuery(newQuery);
