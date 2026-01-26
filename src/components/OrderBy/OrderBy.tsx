@@ -21,10 +21,13 @@ export function OrderBy({ availableOptions, onAdd, onRemove, onToggleDirection, 
   const styles = useStyles2(getStyles);
   const orderEntries = useMemo(() => {
     const normalized = normalizeOrder(order);
-    if (!normalized) {
+    if (!normalized || !Array.isArray(normalized)) {
       return [];
     }
-    return normalized.map(([field, direction]) => ({ field, direction }));
+    return normalized.map(([field, direction]): { field: string; direction: Order } => {
+      const coercedDirection: Order = direction === 'desc' ? 'desc' : 'asc';
+      return { field, direction: coercedDirection };
+    });
   }, [order]);
 
   const availableFieldsToAdd = useMemo(() => {

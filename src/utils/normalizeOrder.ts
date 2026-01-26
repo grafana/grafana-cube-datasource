@@ -1,4 +1,5 @@
 import { Order } from '../types';
+import type { Query as CubeQuery } from '@cubejs-client/core';
 
 export type OrderArray = Array<[string, Order]>;
 export type OrderRecord = Record<string, Order>;
@@ -11,7 +12,7 @@ export type OrderInput = OrderArray | OrderRecord | undefined;
  * Legacy format: { "orders.count": "desc" }
  * New format: [["orders.count", "desc"]]
  */
-export function normalizeOrder(order: OrderInput): OrderArray | undefined {
+export function normalizeOrder(order: OrderInput): CubeQuery['order'] | undefined {
   if (!order) {
     return undefined;
   }

@@ -17,7 +17,8 @@ export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery
     const validFields = new Set([...newValues, ...(query[otherType] || [])]);
 
     // Clean up order: remove any ordered fields that are no longer selected
-    const normalizedOrder = normalizeOrder(query.order);
+    const normalized = normalizeOrder(query.order);
+    const normalizedOrder: OrderArray | undefined = normalized && Array.isArray(normalized) ? (normalized as unknown as OrderArray) : undefined;
     const cleanedOrder = normalizedOrder ? normalizedOrder.filter(([field]) => validFields.has(field)) : undefined;
 
     updateQueryAndRun({
@@ -37,13 +38,15 @@ export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery
   };
 
   const onAddOrder = (field: string, direction: Order = DEFAULT_ORDER) => {
-    const normalizedOrder = normalizeOrder(query.order);
+    const normalized = normalizeOrder(query.order);
+    const normalizedOrder: OrderArray | undefined = normalized && Array.isArray(normalized) ? (normalized as unknown as OrderArray) : undefined;
     const newOrder: OrderArray = [...(normalizedOrder || []), [field, direction]];
     updateQueryAndRun({ order: newOrder });
   };
 
   const onRemoveOrder = (field: string) => {
-    const normalizedOrder = normalizeOrder(query.order);
+    const normalized = normalizeOrder(query.order);
+    const normalizedOrder: OrderArray | undefined = normalized && Array.isArray(normalized) ? (normalized as unknown as OrderArray) : undefined;
     if (!normalizedOrder) {
       return;
     }
@@ -52,7 +55,8 @@ export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery
   };
 
   const onToggleOrderDirection = (field: string) => {
-    const normalizedOrder = normalizeOrder(query.order);
+    const normalized = normalizeOrder(query.order);
+    const normalizedOrder: OrderArray | undefined = normalized && Array.isArray(normalized) ? (normalized as unknown as OrderArray) : undefined;
     if (!normalizedOrder) {
       return;
     }
@@ -67,7 +71,8 @@ export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery
   };
 
   const onReorderFields = (fromIndex: number, toIndex: number) => {
-    const normalizedOrder = normalizeOrder(query.order);
+    const normalized = normalizeOrder(query.order);
+    const normalizedOrder: OrderArray | undefined = normalized && Array.isArray(normalized) ? (normalized as unknown as OrderArray) : undefined;
     if (!normalizedOrder) {
       return;
     }
