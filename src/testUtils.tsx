@@ -4,7 +4,7 @@ import { render, waitFor } from '@testing-library/react';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
 import { select } from 'react-select-event';
-import { MyDataSourceOptions } from 'types';
+import { CubeDataSourceOptions } from 'types';
 import { DataSource } from 'datasource';
 
 export function setup(ui: React.ReactElement) {
@@ -29,7 +29,7 @@ export function setup(ui: React.ReactElement) {
 }
 
 export const createMockDataSource = (mockMetadata: any = null, mockSQLResponse: any = null) => {
-  const instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions> = {
+  const instanceSettings: DataSourceInstanceSettings<CubeDataSourceOptions> = {
     id: 1,
     uid: 'test-uid',
     type: 'cube-datasource',

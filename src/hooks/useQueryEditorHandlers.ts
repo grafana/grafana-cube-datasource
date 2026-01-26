@@ -1,11 +1,11 @@
 import type { TQueryOrderArray } from '@cubejs-client/core';
 import { ChangeEvent } from 'react';
-import { MyQuery, CubeFilter, Order, DEFAULT_ORDER } from '../types';
+import { CubeQuery, CubeFilter, Order, DEFAULT_ORDER } from '../types';
 import { SelectableValue } from '@grafana/data';
 import { normalizeOrder } from '../utils/normalizeOrder';
 
-export function useQueryEditorHandlers(query: MyQuery, onChange: (query: MyQuery) => void, onRunQuery: () => void) {
-  const updateQueryAndRun = (updates: Partial<MyQuery>) => {
+export function useQueryEditorHandlers(query: CubeQuery, onChange: (query: CubeQuery) => void, onRunQuery: () => void) {
+  const updateQueryAndRun = (updates: Partial<CubeQuery>) => {
     onChange({ ...query, ...updates });
     onRunQuery();
   };

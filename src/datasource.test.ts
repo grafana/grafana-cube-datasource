@@ -1,6 +1,6 @@
 import { DataSource } from './datasource';
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { MyDataSourceOptions, Operator } from './types';
+import { CubeDataSourceOptions, Operator } from './types';
 import { getTemplateSrv } from '@grafana/runtime';
 
 // Mock @grafana/runtime
@@ -14,8 +14,8 @@ const mockGetTemplateSrv = getTemplateSrv as jest.Mock;
 // Mock the getResource method
 const mockGetResource = jest.fn();
 
-const createDataSource = (options: Partial<MyDataSourceOptions> = {}) => {
-  const instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions> = {
+const createDataSource = (options: Partial<CubeDataSourceOptions> = {}) => {
+  const instanceSettings: DataSourceInstanceSettings<CubeDataSourceOptions> = {
     id: 1,
     uid: 'test-uid',
     type: 'cube-datasource',

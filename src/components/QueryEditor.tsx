@@ -3,7 +3,7 @@ import { InlineField, Input, Alert, MultiSelect, Text, Field, useStyles2 } from 
 import { css } from '@emotion/css';
 import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
-import { MyDataSourceOptions, MyQuery } from '../types';
+import { CubeDataSourceOptions, CubeQuery } from '../types';
 import { SQLPreview } from './SQLPreview';
 import { useMetadataQuery, useCompiledSqlQuery, MetadataOption } from 'queries';
 import { OrderBy } from './OrderBy/OrderBy';
@@ -16,7 +16,7 @@ export function QueryEditor({
   onChange,
   onRunQuery,
   datasource,
-}: QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>) {
+}: QueryEditorProps<DataSource, CubeQuery, CubeDataSourceOptions>) {
   const styles = useStyles2(getStyles);
   const cubeQueryJson = useMemo(() => buildCubeQueryJson(query, datasource), [query, datasource]);
 

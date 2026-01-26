@@ -1,7 +1,7 @@
-import type { BinaryFilter, Query as CubeQuery, TimeDimension } from '@cubejs-client/core';
+import type { BinaryFilter, Query as CubeJsQuery, TimeDimension } from '@cubejs-client/core';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataSource } from '../datasource';
-import { CubeFilter, MyQuery, Operator } from '../types';
+import { CubeFilter, CubeQuery, Operator } from '../types';
 import { filterValidCubeFilters } from './filterValidation';
 import { normalizeOrder } from './normalizeOrder';
 
@@ -12,13 +12,13 @@ import { normalizeOrder } from './normalizeOrder';
  * This function uses @cubejs-client/core types to ensure compile-time
  * compatibility with Cube's /load endpoint format.
  */
-export function buildCubeQueryJson(query: MyQuery, datasource: DataSource): string {
+export function buildCubeQueryJson(query: CubeQuery, datasource: DataSource): string {
   if (!query.dimensions?.length && !query.measures?.length) {
     return '';
   }
 
-  // Using CubeQuery type for compile-time checking against Cube's official API
-  const cubeQuery: CubeQuery = {};
+  // Using CubeJsQuery type for compile-time checking against Cube's official API
+  const cubeQuery: CubeJsQuery = {};
 
   if (query.dimensions?.length) {
     cubeQuery.dimensions = query.dimensions;
