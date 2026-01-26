@@ -1,3 +1,4 @@
+import type { TimeDimension } from '@cubejs-client/core';
 import { DataSourceJsonData } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
@@ -18,7 +19,7 @@ export interface CubeFilter {
 export interface MyQuery extends DataQuery {
   dimensions?: string[];
   measures?: string[];
-  timeDimensions?: any[];
+  timeDimensions?: TimeDimension[];
   limit?: number;
   filters?: CubeFilter[];
   /** Order can be array format (new) or object format (legacy saved queries) */
