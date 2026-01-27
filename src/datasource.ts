@@ -19,14 +19,17 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
   applyTemplateVariables(query: CubeQuery, scopedVars: ScopedVars): CubeQuery {
     const templateSrv = getTemplateSrv();
 
-    // Apply template variable substitution to dimensions and measures
-    const interpolatedDimensions = query.dimensions?.map((d) => templateSrv.replace(d, scopedVars));
-    const interpolatedMeasures = query.measures?.map((m) => templateSrv.replace(m, scopedVars));
+    // Dimensions and measures: pass through as-is (no interpolation of dashboard variables)
+    // Why? YAGNI - don't implement until we need them.
+    // They will likely be more complex to implement than filter-values, for two reasons:
+    // 1. Visual query builder likely fails to show the dash-var name, and needs updating.
+    //    Failing that, issue 58 will need to include them in a detectUnsupportedFeatures check.
+    // 2. More work may be required in general - Cube API might reject them anyway
 
-    // Apply template variable substitution to filters
+    // Apply template variable substitution to filter VALUES only (not member)
+    // Filter values with variables like $user_id work correctly and render in the visual builder
     const interpolatedFilters = query.filters?.map((filter) => ({
       ...filter,
-      member: templateSrv.replace(filter.member, scopedVars),
       values: filter.values.map((v) => templateSrv.replace(v, scopedVars)),
     }));
 
@@ -97,8 +100,6 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
 
     return {
       ...query,
-      dimensions: interpolatedDimensions,
-      measures: interpolatedMeasures,
       timeDimensions: interpolatedTimeDimensions,
       filters: validFilters.length > 0 ? validFilters : undefined,
     };
