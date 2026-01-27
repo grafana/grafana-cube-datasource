@@ -1,8 +1,8 @@
 # Cube Datasource Plugin for Grafana
 
-![Version Badge](https://img.shields.io/badge/dynamic/json?logo=grafana&query=$.version&url=https://grafana.com/api/plugins/grafana-cube-datasource&label=Marketplace&prefix=v&color=F47A20)
-![Grafana Dependency Badge](https://img.shields.io/badge/dynamic/json?logo=grafana&query=$.grafanaDependency&url=https://grafana.com/api/plugins/grafana-cube-datasource&label=Grafana&color=F47A20)
-![Downloads Badge](https://img.shields.io/badge/dynamic/json?logo=grafana&query=$.downloads&url=https://grafana.com/api/plugins/grafana-cube-datasource&label=Downloads&color=F47A20)
+[![Marketplace](https://img.shields.io/badge/dynamic/json?logo=grafana&query=$.version&url=https://grafana.com/api/plugins/grafana-cube-datasource&label=Marketplace&prefix=v&color=F47A20)](https://grafana.com/grafana/plugins/grafana-cube-datasource/)
+[![Grafana](https://img.shields.io/badge/dynamic/json?logo=grafana&query=$.grafanaDependency&url=https://grafana.com/api/plugins/grafana-cube-datasource&label=Grafana&color=F47A20)](https://grafana.com/grafana/plugins/grafana-cube-datasource/)
+[![Downloads](https://img.shields.io/badge/dynamic/json?logo=grafana&query=$.downloads&url=https://grafana.com/api/plugins/grafana-cube-datasource&label=Downloads&color=F47A20)](https://grafana.com/grafana/plugins/grafana-cube-datasource/)
 [![License](https://img.shields.io/github/license/grafana/grafana-cube-datasource)](LICENSE)
 
 

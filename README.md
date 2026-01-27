@@ -1,11 +1,13 @@
-# Grafana Cube Datasource
+# Cube Datasource Plugin for Grafana
 
 [![Marketplace](https://img.shields.io/badge/dynamic/json?logo=grafana&query=$.version&url=https://grafana.com/api/plugins/grafana-cube-datasource&label=Marketplace&prefix=v&color=F47A20)](https://grafana.com/grafana/plugins/grafana-cube-datasource/)
 [![Grafana](https://img.shields.io/badge/dynamic/json?logo=grafana&query=$.grafanaDependency&url=https://grafana.com/api/plugins/grafana-cube-datasource&label=Grafana&color=F47A20)](https://grafana.com/grafana/plugins/grafana-cube-datasource/)
+[![Downloads](https://img.shields.io/badge/dynamic/json?logo=grafana&query=$.downloads&url=https://grafana.com/api/plugins/grafana-cube-datasource&label=Downloads&color=F47A20)](https://grafana.com/grafana/plugins/grafana-cube-datasource/)
+[![License](https://img.shields.io/github/license/grafana/grafana-cube-datasource)](LICENSE)
 
-> **Experimental**: This plugin is experimental. Features may be incomplete or have known limitations. See [Experimental Status](#experimental-status) for details.
+> **Experimental**: This plugin is experimental. Features may be incomplete or have known limitations, and you should expect some rough edges. See [Experimental Status](#experimental-status) for details.
 
-A Grafana data source plugin that connects to [Cube](https://cube.dev/), the semantic layer for building data applications. Query measures and dimensions, apply filters, and visualize your data—without writing SQL.
+Connect Grafana to [Cube](https://cube.dev/) for semantic layer analytics. Query measures and dimensions, apply filters, and visualize your data—without writing SQL.
 
 ![Query Editor](src/img/screenshot-query-editor.png)
 
@@ -31,7 +33,7 @@ The visual query builder supports:
 |---------|-------------|
 | **Dimensions** | Select one or more dimensions to group your data |
 | **Measures** | Select one or more measures to aggregate |
-| **Limit** | Control the number of rows returned (defaults to 10,000; maximum 50,000). See [Cube's row limit documentation](https://cube.dev/docs/product/apis-integrations/core-data-apis/queries#row-limit). |
+| **Limit** | Control the number of rows returned (defaults to 10,000; maximum 50,000). See [Cube's row limit documentation](https://cube.dev/docs/product/apis-integrations/core-data-apis/queries#row-limit) for details. |
 | **Filters** | Filter your query before aggregation |
 | **Order** | Sort results by any selected dimension or measure |
 
@@ -70,8 +72,8 @@ This plugin is experimental. Current limitations include:
 | Limitation | Details |
 |------------|---------|
 | **Cube Cloud authentication** | Authentication does not yet work with Cube Cloud. Self-hosted Cube (dev and production mode) works correctly. |
-| **Technical field names** | Dimension and measure names use full technical identifiers (e.g., `orders.customer_name`) rather than human-readable labels. This is due to a dependency on how Grafana implements AdHoc filters. |
-| **Filter operators** | Only `equals` and `notEquals` are supported |
+| **Technical field names** | Dimension and measure names currently use full technical identifiers (e.g., `orders.customer_name`) rather than human-readable labels. This is due to a dependency on how Grafana implements AdHoc filters. |
+| **Filter operators** | Currently only `equals` and `notEquals` are supported |
 | **Filter members** | Only dimensions can be used as filter members (no measure filtering) |
 | **Cross-panel filtering** | Currently works with Table and Bar Chart panels only |
 
