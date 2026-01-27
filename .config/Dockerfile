@@ -1,4 +1,4 @@
-ARG grafana_version=latest@sha256:94740c095f0a3f4face7442dcc9bb38c8cc3fb4e159d6f6f1d63f09c57ba2ef9
+ARG grafana_version=latest@sha256:9dedb4a38c272933f7fb1033573a349bb06b181eadcda614bddc99bc5f75491e
 ARG grafana_image=grafana-enterprise
 
 FROM grafana/${grafana_image}:${grafana_version}
