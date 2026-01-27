@@ -1,5 +1,26 @@
 # Changelog
 
+## 3.9.0 (2026-01-27)
+
+### Features
+
+- **Cube type alignment**: Align timeDimensions and order typing with official `@cubejs-client/core` types (#64)
+- **Compile-time type checking**: Add type checking against `@cubejs-client/core` types for improved reliability (#59)
+
+### Refactoring
+
+- **Type naming conventions**: Rename types for consistency with Grafana plugin conventions (#66)
+
+### Documentation
+
+- **User documentation**: Add comprehensive user documentation to README and plugin overview (#75)
+
+### Housekeeping
+
+- Removed unused dashboard variable interpolation for dimensions/measures/filters (this was never documented or functional) (#73)
+
+**Full Changelog**: [v3.8.1...v3.9.0](https://github.com/grafana/grafana-cube-datasource/compare/v3.8.1...v3.9.0)
+
 ## 3.8.1 (2026-01-23)
 
 ### Documentation
