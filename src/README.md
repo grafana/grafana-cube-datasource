@@ -1,50 +1,125 @@
-<!-- This README file is going to be the one displayed on the Grafana.com website for your plugin. Uncomment and replace the content here before publishing.
+# Cube Datasource Plugin for Grafana
 
-Remove any remaining comments before publishing as these may be displayed on Grafana.com -->
+![Version Badge](https://img.shields.io/badge/dynamic/json?logo=grafana&query=$.version&url=https://grafana.com/api/plugins/grafana-cube-datasource&label=Marketplace&prefix=v&color=F47A20)
+![Grafana Dependency Badge](https://img.shields.io/badge/dynamic/json?logo=grafana&query=$.grafanaDependency&url=https://grafana.com/api/plugins/grafana-cube-datasource&label=Grafana&color=F47A20)
+![Downloads Badge](https://img.shields.io/badge/dynamic/json?logo=grafana&query=$.downloads&url=https://grafana.com/api/plugins/grafana-cube-datasource&label=Downloads&color=F47A20)
+[![License](https://img.shields.io/github/license/grafana/grafana-cube-datasource)](LICENSE)
 
-# Cube
 
-<!-- To help maximize the impact of your README and improve usability for users, we propose the following loose structure:
 
-**BEFORE YOU BEGIN**
-- Ensure all links are absolute URLs so that they will work when the README is displayed within Grafana and Grafana.com
-- Be inspired ✨
-  - [grafana-polystat-panel](https://github.com/grafana/grafana-polystat-panel)
-  - [volkovlabs-variable-panel](https://github.com/volkovlabs/volkovlabs-variable-panel)
+> **Experimental**: This plugin is experimental. Features may be incomplete or have known limitations, and you should expect some rough edges. See [Experimental Status](#experimental-status) for details.
 
-**ADD SOME BADGES**
+Connect Grafana to [Cube](https://cube.dev/) for semantic layer analytics. Query measures and dimensions, apply filters, and visualize your data—without writing SQL.
 
-Badges convey useful information at a glance for users whether in the Catalog or viewing the source code. You can use the generator on [Shields.io](https://shields.io/badges/dynamic-json-badge) together with the Grafana.com API
-to create dynamic badges that update automatically when you publish a new version to the marketplace.
+![Query Editor](https://raw.githubusercontent.com/grafana/grafana-cube-datasource/main/src/img/screenshot-query-editor.png)
 
-- For the URL parameter use `https://grafana.com/api/plugins/your-plugin-id`.
-- Example queries:
-  - Downloads: `$.downloads`
-  - Catalog Version: `$.version`
-  - Grafana Dependency: `$.grafanaDependency`
-  - Signature Type: `$.versionSignatureType`
-- Optionally, for the logo parameter use `grafana`.
+## Why Use This Plugin?
 
-Full example: ![Dynamic JSON Badge](https://img.shields.io/badge/dynamic/json?logo=grafana&query=$.version&url=https://grafana.com/api/plugins/grafana-polystat-panel&label=Marketplace&prefix=v&color=F47A20)
+This plugin brings a **true semantic layer** to Grafana for the first time. By connecting to Cube, you get:
 
-Consider other [badges](https://shields.io/badges) as you feel appropriate for your project.
+- **No more writing SQL** — Query your data using pre-defined measures and dimensions
+- **No more writing JOINs** — Cube handles the complexity of joining tables for you
+- **Single source of truth** — Business metrics are defined once in Cube and used consistently across all dashboards
+- **Lower barrier to entry** — Non-technical users can build dashboards without SQL knowledge
+- **Scalable complexity** — Start simple, but analytics queries can grow as sophisticated as you need
+- **More maintainable dashboards** — Panels require far less code when using semantic definitions
+- **Cross-panel filtering** — Use AdHoc filters to drill down across Table and Bar Chart panels, enabling data exploration for dashboard viewers
 
-## Overview / Introduction
-Provide one or more paragraphs as an introduction to your plugin to help users understand why they should use it.
+## Features
 
-Consider including screenshots:
-- in [plugin.json](https://grafana.com/developers/plugin-tools/reference/plugin-json#info) include them as relative links.
-- in the README ensure they are absolute URLs.
+### Query Builder
+
+The visual query builder supports:
+
+| Feature | Description |
+|---------|-------------|
+| **Dimensions** | Select one or more dimensions to group your data |
+| **Measures** | Select one or more measures to aggregate |
+| **Limit** | Control the number of rows returned (defaults to 10,000; maximum 50,000). See [Cube's row limit documentation](https://cube.dev/docs/product/apis-integrations/core-data-apis/queries#row-limit) for details. |
+| **Filters** | Filter your query before aggregation |
+| **Order** | Sort results by any selected dimension or measure |
+
+### Filtering
+
+Per-panel filters support:
+
+- **Filter members**: Dimensions only (measure filtering not yet supported)
+- **Operators**: `equals` and `notEquals`, each accepting multiple values
+- **Multiple filters**: Combine with AND (intersection)
+
+### Dashboard Variables
+
+#### AdHoc Filters
+
+Clicking a value in a **Table** or **Bar Chart** panel creates or updates an AdHoc dashboard variable scoped to the Cube datasource. This enables powerful cross-panel filtering and data exploration.
+
+AdHoc filters can also be edited directly in the dashboard UI to add additional filter members, operators, and values. The same operator limitations apply (`=` and `!=` only).
+
+**How filters combine:**
+- Multiple AdHoc filters combine with AND (intersection)
+- AdHoc filters combine with per-panel filters using AND (intersection)
+
+#### Time Range Filtering
+
+To filter all panels by the dashboard time picker:
+
+1. Create a dashboard variable with identifier `cubeTimeDimension`
+2. Set its value to the time dimension field you want to filter by (e.g., `order_date`)
+3. The dashboard's `$__from` and `$__to` variables will automatically apply to all panels
 
 ## Requirements
-List any requirements or dependencies they may need to run the plugin.
+
+- Grafana 12.1.0 or later
+- A running Cube instance (self-hosted*)
+
+*See [Known Limitations](#known-limitations) regarding using Cube Cloud.
 
 ## Getting Started
-Provide a quick start on how to configure and use the plugin.
+
+1. Install the plugin from the Grafana plugin catalog
+2. Go to **Connections** → **Data sources** → **Add data source**
+3. Search for "Cube" and select it
+4. Configure the connection:
+   - **URL**: Your Cube REST API endpoint (e.g., `http://localhost:4000`)
+   - **Deployment Type**: Select your Cube deployment type (self-hosted or self-hosted-dev)*
+   - **API Secret**: Your Cube API secret (if authentication is enabled)
+   - **SQL Datasource**: Select the SQL datasource to open when clicking "Edit SQL in Explore"
+5. Click **Save & test** to verify the connection
+
+*See [Known Limitations](#known-limitations) regarding using Cube Cloud.
+
+## Known Limitations
+
+This plugin is experimental. Current limitations include:
+
+| Limitation | Details |
+|------------|---------|
+| **Cube Cloud authentication** | Authentication does not yet work with Cube Cloud. Self-hosted Cube (dev and production mode) works correctly. |
+| **Technical field names** | Dimension and measure names currently use full technical identifiers (e.g., `orders.customer_name`) rather than human-readable labels. This is due to a dependency on how Grafana implements AdHoc filters. |
+| **Filter operators** | Currently only `equals` and `notEquals` are supported |
+| **Filter members** | Only dimensions can be used as filter members (no measure filtering) |
+| **Cross-panel filtering** | Currently works with Table and Bar Chart panels only |
+
+## Experimental Status
+
+This plugin is marked as **experimental**, meaning:
+
+- Features may be incomplete or have known limitations
+- Backward compatibility is not guaranteed between versions
+- The data model, configuration, or UI might change, potentially breaking dashboards
+- The plugin is primarily intended for testing, evaluation, and early feedback
+
+**Recommendations:**
+- Use in development or test environments before deploying to production
+- Test thoroughly, including upgrade paths
+- Avoid building hard production dependencies unless you're comfortable refactoring later
+- Track the [changelog](https://github.com/grafana/grafana-cube-datasource/blob/main/CHANGELOG.md) for breaking changes
 
 ## Documentation
-If your project has dedicated documentation available for users, provide links here. For help in following Grafana's style recommendations for technical documentation, refer to our [Writer's Toolkit](https://grafana.com/docs/writers-toolkit/).
+
+- [Cube Documentation](https://cube.dev/docs)
+- [GitHub Repository](https://github.com/grafana/grafana-cube-datasource)
 
 ## Contributing
-Do you want folks to contribute to the plugin or provide feedback through specific means? If so, tell them how!
--->
+
+We welcome contributions and feedback! Please open issues or pull requests on the [GitHub repository](https://github.com/grafana/grafana-cube-datasource).
