@@ -75,7 +75,7 @@ This plugin is experimental. Current limitations include:
 | **Technical field names** | Dimension and measure names currently use full technical identifiers (e.g., `orders.customer_name`) rather than human-readable labels. This is due to a dependency on how Grafana implements AdHoc filters. |
 | **Filter operators** | Currently only `equals` and `notEquals` are supported |
 | **Filter members** | Only dimensions can be used as filter members (no measure filtering) |
-| **Cross-panel filtering** | Currently works with Table and Bar Chart panels only |
+| **Cross-panel filtering** | Depends on Grafana AdHoc filters. Currently works with Table and Bar Chart panels only |
 
 ## Experimental Status
 
