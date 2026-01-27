@@ -10,6 +10,16 @@ jest.mock('./SQLPreview', () => ({
   SQLPreview: ({ sql }: { sql: string }) => <div data-testid="sql-preview">{sql}</div>,
 }));
 
+// Mock the JsonQueryEditor to avoid Monaco editor issues in tests
+jest.mock('./JsonQueryEditor', () => ({
+  JsonQueryEditor: ({ query, unsupportedFeatures }: any) => (
+    <div data-testid="json-query-editor">
+      <div data-testid="unsupported-features">{unsupportedFeatures.map((f: any) => f.description).join(', ')}</div>
+      <pre data-testid="query-json">{JSON.stringify(query)}</pre>
+    </div>
+  ),
+}));
+
 // Mock @grafana/runtime for getTemplateSrv
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -604,7 +614,8 @@ describe('QueryEditor', () => {
     });
 
     // Issue #147: Layered time dimension config (Panel Override → Dashboard Default → Datasource Default)
-    it('should use panel-specific timeDimensions over dashboard-wide $cubeTimeDimension', async () => {
+    // Note: Queries with timeDimensions now show the JSON editor instead of visual builder
+    it('should show JsonQueryEditor for queries with panel-specific timeDimensions', async () => {
       // Dashboard has $cubeTimeDimension set to orders.created_at
       mockGetTemplateSrv.mockReturnValue({
         replace: jest.fn((value: string) => {
@@ -616,13 +627,9 @@ describe('QueryEditor', () => {
         getAdhocFilters: jest.fn(() => []),
       });
 
-      const mockSQLResponse = {
-        sql: 'SELECT status FROM orders WHERE updated_at BETWEEN ...',
-      };
+      const datasource = createMockDataSource();
 
-      const datasource = createMockDataSource(null, mockSQLResponse);
-
-      // Panel has its own time dimension configured - this should take precedence
+      // Panel has its own time dimension configured - this triggers JSON view
       const query = createMockQuery({
         dimensions: ['orders.status'],
         measures: ['orders.count'],
@@ -631,18 +638,18 @@ describe('QueryEditor', () => {
 
       setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
+      // Should show JSON editor instead of visual builder
       await waitFor(() => {
-        expect(datasource.getResource).toHaveBeenCalled();
+        expect(screen.getByTestId('json-query-editor')).toBeInTheDocument();
       });
 
-      // Verify the panel's time dimension is used, not the dashboard variable
-      const callArg = (datasource.getResource as jest.Mock).mock.calls.find((call: unknown[]) => call[0] === 'sql')?.[1]
-        ?.query;
-      const parsedQuery = JSON.parse(callArg);
+      // Should indicate time dimensions as unsupported feature
+      expect(screen.getByTestId('unsupported-features')).toHaveTextContent('Time dimensions');
 
-      expect(parsedQuery.timeDimensions).toHaveLength(1);
+      // Should show the query JSON including the time dimension
+      const queryJson = screen.getByTestId('query-json').textContent || '';
+      const parsedQuery = JSON.parse(queryJson);
       expect(parsedQuery.timeDimensions[0].dimension).toBe('orders.updated_at');
-      expect(parsedQuery.timeDimensions[0].granularity).toBe('day');
     });
 
     it('should combine query filters with AdHoc filters', async () => {
@@ -767,6 +774,91 @@ describe('QueryEditor', () => {
         const filterCount = state.filters?.length ?? 0;
         expect(filterCount).toBeLessThanOrEqual(1);
       }
+    });
+  });
+
+  describe('JsonQueryEditor mode for unsupported features', () => {
+    it('should show JsonQueryEditor when query has dashboard variables in dimensions', async () => {
+      const datasource = createMockDataSource();
+      const query = createMockQuery({
+        dimensions: ['$selectedDimension'],
+        measures: ['orders.count'],
+      });
+
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      expect(screen.getByTestId('json-query-editor')).toBeInTheDocument();
+      expect(screen.getByTestId('unsupported-features')).toHaveTextContent('Dashboard variable in dimensions');
+    });
+
+    it('should show JsonQueryEditor when query has dashboard variables in measures', async () => {
+      const datasource = createMockDataSource();
+      const query = createMockQuery({
+        dimensions: ['orders.status'],
+        measures: ['$selectedMeasure'],
+      });
+
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      expect(screen.getByTestId('json-query-editor')).toBeInTheDocument();
+      expect(screen.getByTestId('unsupported-features')).toHaveTextContent('Dashboard variable in measures');
+    });
+
+    it('should show JsonQueryEditor when query has complex filter groups', async () => {
+      const datasource = createMockDataSource();
+      const query = createMockQuery({
+        dimensions: ['orders.status'],
+        filters: [
+          {
+            or: [
+              { member: 'orders.status', operator: 'equals', values: ['completed'] },
+              { member: 'orders.status', operator: 'equals', values: ['pending'] },
+            ],
+          } as any,
+        ],
+      });
+
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      expect(screen.getByTestId('json-query-editor')).toBeInTheDocument();
+      expect(screen.getByTestId('unsupported-features')).toHaveTextContent('Complex filter groups');
+    });
+
+    it('should show visual builder for queries without unsupported features', async () => {
+      const datasource = createMockDataSource();
+      const query = createMockQuery({
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+        filters: [{ member: 'orders.status', operator: Operator.Equals, values: ['completed'] }],
+      });
+
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      // Should NOT show JSON editor
+      expect(screen.queryByTestId('json-query-editor')).not.toBeInTheDocument();
+
+      // Should show visual builder elements
+      await waitFor(() => {
+        expect(screen.getByLabelText('Dimensions')).toBeInTheDocument();
+        expect(screen.getByLabelText('Measures')).toBeInTheDocument();
+      });
+    });
+
+    it('should show multiple unsupported features when query has several', async () => {
+      const datasource = createMockDataSource();
+      const query = createMockQuery({
+        dimensions: ['$dim'],
+        measures: ['$measure'],
+        timeDimensions: [{ dimension: 'orders.created_at', granularity: 'day' }],
+      });
+
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      expect(screen.getByTestId('json-query-editor')).toBeInTheDocument();
+      const features = screen.getByTestId('unsupported-features').textContent || '';
+      expect(features).toContain('Time dimensions');
+      expect(features).toContain('Dashboard variable in dimensions');
+      expect(features).toContain('Dashboard variable in measures');
     });
   });
 });
