@@ -1,10 +1,106 @@
-# Grafana Cube Datasource
+# Cube Datasource Plugin for Grafana
 
-A Grafana data source plugin that connects to [Cube](https://cube.dev/), the semantic layer for building data applications. This plugin allows you to query Cube's APIs directly from Grafana to create dashboards and visualizations.
+[![Marketplace](https://img.shields.io/badge/dynamic/json?logo=grafana&query=$.version&url=https://grafana.com/api/plugins/grafana-cube-datasource&label=Marketplace&prefix=v&color=F47A20)](https://grafana.com/grafana/plugins/grafana-cube-datasource/)
+[![Grafana](https://img.shields.io/badge/dynamic/json?logo=grafana&query=$.grafanaDependency&url=https://grafana.com/api/plugins/grafana-cube-datasource&label=Grafana&color=F47A20)](https://grafana.com/grafana/plugins/grafana-cube-datasource/)
+[![Downloads](https://img.shields.io/badge/dynamic/json?logo=grafana&query=$.downloads&url=https://grafana.com/api/plugins/grafana-cube-datasource&label=Downloads&color=F47A20)](https://grafana.com/grafana/plugins/grafana-cube-datasource/)
+[![License](https://img.shields.io/github/license/grafana/grafana-cube-datasource)](LICENSE)
+
+> **Experimental**: This plugin is experimental. Features may be incomplete or have known limitations, and you should expect some rough edges. See [Experimental Status](#experimental-status) for details.
+
+Connect Grafana to [Cube](https://cube.dev/) for semantic layer analytics. Query measures and dimensions, apply filters, and visualize your data—without writing SQL.
+
+![Query Editor](src/img/screenshot-query-editor.png)
+
+## Why Use This Plugin?
+
+This plugin brings a **true semantic layer** to Grafana for the first time. By connecting to Cube, you get:
+
+- **No more writing SQL** — Query your data using pre-defined measures and dimensions
+- **No more writing JOINs** — Cube handles the complexity of joining tables for you
+- **Single source of truth** — Business metrics are defined once in Cube and used consistently across all dashboards
+- **Lower barrier to entry** — Non-technical users can build dashboards without SQL knowledge
+- **Scalable complexity** — Start simple, but analytics queries can grow as sophisticated as you need
+- **More maintainable dashboards** — Panels require far less code when using semantic definitions
+- **Cross-panel filtering** — Use AdHoc filters to drill down across Table and Bar Chart panels, enabling data exploration for dashboard viewers
+
+## Features
+
+### Query Builder
+
+The visual query builder supports:
+
+| Feature | Description |
+|---------|-------------|
+| **Dimensions** | Select one or more dimensions to group your data |
+| **Measures** | Select one or more measures to aggregate |
+| **Limit** | Control the number of rows returned (defaults to 10,000; maximum 50,000). See [Cube's row limit documentation](https://cube.dev/docs/product/apis-integrations/core-data-apis/queries#row-limit) for details. |
+| **Filters** | Filter your query before aggregation |
+| **Order** | Sort results by any selected dimension or measure |
+
+### Filtering
+
+Per-panel filters support:
+
+- **Filter members**: Dimensions only (measure filtering not yet supported)
+- **Operators**: `equals` and `notEquals`, each accepting multiple values
+- **Multiple filters**: Combine with AND (intersection)
+
+### Dashboard Variables
+
+#### AdHoc Filters
+
+Clicking a value in a **Table** or **Bar Chart** panel creates or updates an AdHoc dashboard variable scoped to the Cube datasource. This enables powerful cross-panel filtering and data exploration.
+
+AdHoc filters can also be edited directly in the dashboard UI to add additional filter members, operators, and values. The same operator limitations apply (`=` and `!=` only).
+
+**How filters combine:**
+- Multiple AdHoc filters combine with AND (intersection)
+- AdHoc filters combine with per-panel filters using AND (intersection)
+
+#### Time Range Filtering
+
+To filter all panels by the dashboard time picker:
+
+1. Create a dashboard variable with identifier `cubeTimeDimension`
+2. Set its value to the time dimension field you want to filter by (e.g., `order_date`)
+3. The dashboard's `$__from` and `$__to` variables will automatically apply to all panels
+
+## Known Limitations
+
+This plugin is experimental. Current limitations include:
+
+| Limitation | Details |
+|------------|---------|
+| **Cube Cloud authentication** | Authentication does not yet work with Cube Cloud. Self-hosted Cube (dev and production mode) works correctly. |
+| **Technical field names** | Dimension and measure names currently use full technical identifiers (e.g., `orders.customer_name`) rather than human-readable labels. This is due to a dependency on how Grafana implements AdHoc filters. |
+| **Filter operators** | Currently only `equals` and `notEquals` are supported |
+| **Filter members** | Only dimensions can be used as filter members (no measure filtering) |
+| **Cross-panel filtering** | Depends on Grafana AdHoc filters. Currently works with Table and Bar Chart panels only |
+
+## Experimental Status
+
+This plugin is marked as **experimental**, meaning:
+
+- Features may be incomplete or have known limitations
+- Backward compatibility is not guaranteed between versions
+- The data model, configuration, or UI might change, potentially breaking dashboards
+- The plugin is primarily intended for testing, evaluation, and early feedback
+
+**Recommendations:**
+- Use in development or test environments before deploying to production
+- Test thoroughly, including upgrade paths
+- Avoid building hard production dependencies unless you're comfortable refactoring later
+- Track the [CHANGELOG](CHANGELOG.md) for breaking changes
+
+---
 
 ## About Cube
 
 Cube is a semantic layer that sits between your data warehouse and your applications. It provides a consistent API for querying data, handles caching, security, and pre-aggregations. This Grafana plugin enables you to leverage Cube's powerful data modeling capabilities directly in your Grafana dashboards.
+
+---
+
+# Development
 
 ## Getting started
 
