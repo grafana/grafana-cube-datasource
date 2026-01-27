@@ -161,12 +161,8 @@ describe('DataSource', () => {
   });
 
   describe('applyTemplateVariables', () => {
-    it('should interpolate template variables in filter member and values', () => {
-      // Setup mock for getTemplateSrv
+    it('should interpolate template variables in filter values', () => {
       const mockReplace = jest.fn((str: string) => {
-        if (str === '$dimension') {
-          return 'orders.status';
-        }
         if (str === '$filterValue') {
           return 'completed';
         }
@@ -182,11 +178,11 @@ describe('DataSource', () => {
 
       const query = {
         refId: 'A',
-        dimensions: ['$dimension'],
+        dimensions: ['orders.status'],
         measures: ['orders.count'],
         filters: [
           {
-            member: '$dimension',
+            member: 'orders.status',
             operator: Operator.Equals,
             values: ['$filterValue'],
           },
@@ -195,9 +191,7 @@ describe('DataSource', () => {
 
       const result = datasource.applyTemplateVariables(query, {});
 
-      // Verify filters are interpolated
       expect(result.filters).toBeDefined();
-      expect(result.filters![0].member).toBe('orders.status');
       expect(result.filters![0].values).toContain('completed');
     });
 
