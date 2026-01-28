@@ -102,18 +102,23 @@ This plugin is experimental. Current limitations include:
 
 ## Experimental Status
 
+> **Not for production use.** This plugin is experimental and is not meant to be used in production or critical environments.
+
 This plugin is marked as **experimental**, meaning:
 
 - Features may be incomplete or have known limitations
 - Backward compatibility is not guaranteed between versions
 - The data model, configuration, or UI might change, potentially breaking dashboards
-- The plugin is primarily intended for testing, evaluation, and early feedback
+- The risks are unknown and potentially high
+- Support is limited to GitHub issues; no SLA is provided
 
-**Recommendations:**
-- Use in development or test environments before deploying to production
-- Test thoroughly, including upgrade paths
-- Avoid building hard production dependencies unless you're comfortable refactoring later
-- Track the [changelog](https://github.com/grafana/grafana-cube-datasource/blob/main/CHANGELOG.md) for breaking changes
+**Do not use this plugin in production environments.** It is intended for:
+- Testing and evaluation
+- Development environments
+- Providing early feedback
+- Validating use cases before production readiness
+
+Track the [changelog](https://github.com/grafana/grafana-cube-datasource/blob/main/CHANGELOG.md) for breaking changes and stability updates.
 
 ## Documentation
 
