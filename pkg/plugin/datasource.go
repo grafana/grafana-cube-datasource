@@ -399,6 +399,9 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 	// Also adds missing fields (e.g., columns with all null values) as nullable fields
 	frame = d.reorderFrameFields(frame, cubeQuery, apiResponse.Annotation, len(apiResponse.Data))
 
+	// Set human-readable display names from annotation (for Ad Hoc filter keyLabel in panels)
+	d.setDisplayNamesFromAnnotation(frame, apiResponse.Annotation)
+
 	// Mark dimension fields as filterable to enable AdHoc filter buttons
 	d.markFieldsAsFilterable(frame, cubeQuery)
 
@@ -558,6 +561,27 @@ func (d *Datasource) createNullField(fieldName string, rowCount int, annotation 
 		// Default to nullable string
 		values := make([]*string, rowCount)
 		return data.NewField(fieldName, nil, values)
+	}
+}
+
+// setDisplayNamesFromAnnotation sets DisplayNameFromDS on frame fields when the Cube
+// annotation provides a Title, so panels can show human-readable keyLabel in Ad Hoc filters.
+func (d *Datasource) setDisplayNamesFromAnnotation(frame *data.Frame, annotation CubeAnnotation) {
+	for _, field := range frame.Fields {
+		var title string
+		if info, ok := annotation.Dimensions[field.Name]; ok && info.Title != "" {
+			title = info.Title
+		} else if info, ok := annotation.Measures[field.Name]; ok && info.Title != "" {
+			title = info.Title
+		} else if info, ok := annotation.TimeDimensions[field.Name]; ok && info.Title != "" {
+			title = info.Title
+		}
+		if title != "" {
+			if field.Config == nil {
+				field.Config = &data.FieldConfig{}
+			}
+			field.Config.DisplayNameFromDS = title
+		}
 	}
 }
 

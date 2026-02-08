@@ -170,6 +170,11 @@ func TestQueryDataWithCubeQuery(t *testing.T) {
 	if len(frame.Fields) != 2 || frame.Fields[0].Name != "orders.users_age" || frame.Fields[1].Name != "orders.count" {
 		t.Fatal("Expected 2 columns: orders.users_age and orders.count")
 	}
+	// Human-readable display name for Ad Hoc filter keyLabel (Grafana PR 117640)
+	if frame.Fields[0].Config == nil || frame.Fields[0].Config.DisplayNameFromDS != "Orders Users Age" {
+		t.Fatalf("Expected dimension field DisplayNameFromDS 'Orders Users Age', got %v",
+			frame.Fields[0].Config.DisplayNameFromDS)
+	}
 
 	// Get the actual values - they should now be float64, not strings
 	val0 := frame.Fields[0].At(0)
