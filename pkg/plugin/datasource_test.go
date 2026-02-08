@@ -171,7 +171,10 @@ func TestQueryDataWithCubeQuery(t *testing.T) {
 		t.Fatal("Expected 2 columns: orders.users_age and orders.count")
 	}
 	// Human-readable display name for Ad Hoc filter keyLabel (Grafana PR 117640)
-	if frame.Fields[0].Config == nil || frame.Fields[0].Config.DisplayNameFromDS != "Orders Users Age" {
+	if frame.Fields[0].Config == nil {
+		t.Fatal("Expected dimension field Config to be set, got nil")
+	}
+	if frame.Fields[0].Config.DisplayNameFromDS != "Orders Users Age" {
 		t.Fatalf("Expected dimension field DisplayNameFromDS 'Orders Users Age', got %v",
 			frame.Fields[0].Config.DisplayNameFromDS)
 	}
