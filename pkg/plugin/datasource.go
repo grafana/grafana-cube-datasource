@@ -853,8 +853,12 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 		// Collect dimensions
 		for _, dimension := range item.Dimensions {
 			if !processedDimensions[dimension.Name] {
+				label := dimension.Name
+				if dimension.Title != "" {
+					label = dimension.Title
+				}
 				dimensions = append(dimensions, SelectOption{
-					Label: dimension.Name,
+					Label: label,
 					Value: dimension.Name,
 					Type:  dimension.Type,
 				})
@@ -865,8 +869,12 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 		// Collect measures
 		for _, measure := range item.Measures {
 			if !processedMeasures[measure.Name] {
+				label := measure.Name
+				if measure.Title != "" {
+					label = measure.Title
+				}
 				measures = append(measures, SelectOption{
-					Label: measure.Name,
+					Label: label,
 					Value: measure.Name,
 					Type:  measure.Type,
 				})

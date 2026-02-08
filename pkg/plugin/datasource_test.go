@@ -726,13 +726,14 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 		t.Fatalf("Expected 2 dimensions, got %d", len(result.Dimensions))
 	}
 
+	// Label should be human-readable Title when present (for Ad Hoc key picker)
 	expectedDimensions := []struct {
 		Value string
 		Label string
 		Type  string
 	}{
-		{"orders.status", "orders.status", "string"},
-		{"orders.customer", "orders.customer", "string"},
+		{"orders.status", "Order Status", "string"},
+		{"orders.customer", "Customer Name", "string"},
 	}
 	for i, expected := range expectedDimensions {
 		if result.Dimensions[i].Value != expected.Value {
@@ -751,13 +752,14 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 		t.Fatalf("Expected 2 measures, got %d", len(result.Measures))
 	}
 
+	// Label should be human-readable Title when present
 	expectedMeasures := []struct {
 		Value string
 		Label string
 		Type  string
 	}{
-		{"orders.count", "orders.count", "number"},
-		{"orders.total", "orders.total", "number"},
+		{"orders.count", "Orders Count", "number"},
+		{"orders.total", "Orders Total", "number"},
 	}
 	for i, expected := range expectedMeasures {
 		if result.Measures[i].Value != expected.Value {
@@ -932,13 +934,13 @@ func TestHandleMetadata(t *testing.T) {
 		t.Fatalf("Expected %d measures, got %d", expectedMeasureCount, len(metadata.Measures))
 	}
 
-	// Verify the dimensions contain expected values from the view (not raw cubes)
+	// Verify the dimensions contain expected values from the view (human-readable labels from Title)
 	expectedDimensions := map[string]struct {
 		Label string
 		Type  string
 	}{
-		"orders.status":               {"orders.status", "string"},
-		"orders.customers_first_name": {"orders.customers_first_name", "string"},
+		"orders.status":               {"Order Status", "string"},
+		"orders.customers_first_name": {"Customer First Name", "string"},
 	}
 
 	actualDimensions := make(map[string]struct {
@@ -976,12 +978,12 @@ func TestHandleMetadata(t *testing.T) {
 		}
 	}
 
-	// Verify the measures contain expected values
+	// Verify the measures contain expected values (human-readable labels from Title)
 	expectedMeasures := map[string]struct {
 		Label string
 		Type  string
 	}{
-		"count": {"count", "number"},
+		"count": {"Orders Count", "number"},
 	}
 
 	actualMeasures := make(map[string]struct {
