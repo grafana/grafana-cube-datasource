@@ -564,19 +564,42 @@ func (d *Datasource) createNullField(fieldName string, rowCount int, annotation 
 	}
 }
 
+// displayLabel returns the label to show for a member: Title if present, else ShortTitle, else empty.
+// For this first version we use Title everywhere (query builder, Ad Hoc key picker, frame column headers).
+func displayLabel(title, shortTitle string) string {
+	if title != "" {
+		return title
+	}
+	return shortTitle
+}
+
+// titleFromAnnotation returns the display label for a field from the Cube load annotation.
+// Prefers Title when set, else ShortTitle. Cube schema can omit both, so we only return non-empty.
+func titleFromAnnotation(fieldName string, annotation CubeAnnotation) string {
+	if info, ok := annotation.Dimensions[fieldName]; ok {
+		if label := displayLabel(info.Title, info.ShortTitle); label != "" {
+			return label
+		}
+	}
+	if info, ok := annotation.Measures[fieldName]; ok {
+		if label := displayLabel(info.Title, info.ShortTitle); label != "" {
+			return label
+		}
+	}
+	if info, ok := annotation.TimeDimensions[fieldName]; ok {
+		if label := displayLabel(info.Title, info.ShortTitle); label != "" {
+			return label
+		}
+	}
+	return ""
+}
+
 // setDisplayNamesFromAnnotation sets DisplayNameFromDS on frame fields when the Cube
-// annotation provides a Title, so panels can show human-readable keyLabel in Ad Hoc filters.
+// annotation provides a Title, so panels and visualisations show human-readable labels
+// (e.g. in Ad Hoc filter keyLabel and in query result column headers).
 func (d *Datasource) setDisplayNamesFromAnnotation(frame *data.Frame, annotation CubeAnnotation) {
 	for _, field := range frame.Fields {
-		var title string
-		if info, ok := annotation.Dimensions[field.Name]; ok && info.Title != "" {
-			title = info.Title
-		} else if info, ok := annotation.Measures[field.Name]; ok && info.Title != "" {
-			title = info.Title
-		} else if info, ok := annotation.TimeDimensions[field.Name]; ok && info.Title != "" {
-			title = info.Title
-		}
-		if title != "" {
+		if title := titleFromAnnotation(field.Name, annotation); title != "" {
 			if field.Config == nil {
 				field.Config = &data.FieldConfig{}
 			}
@@ -878,8 +901,8 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 		for _, dimension := range item.Dimensions {
 			if !processedDimensions[dimension.Name] {
 				label := dimension.Name
-				if dimension.Title != "" {
-					label = dimension.Title
+				if l := displayLabel(dimension.Title, dimension.ShortTitle); l != "" {
+					label = l
 				}
 				dimensions = append(dimensions, SelectOption{
 					Label: label,
@@ -894,8 +917,8 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 		for _, measure := range item.Measures {
 			if !processedMeasures[measure.Name] {
 				label := measure.Name
-				if measure.Title != "" {
-					label = measure.Title
+				if l := displayLabel(measure.Title, measure.ShortTitle); l != "" {
+					label = l
 				}
 				measures = append(measures, SelectOption{
 					Label: label,

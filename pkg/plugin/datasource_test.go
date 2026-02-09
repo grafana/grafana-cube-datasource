@@ -170,7 +170,7 @@ func TestQueryDataWithCubeQuery(t *testing.T) {
 	if len(frame.Fields) != 2 || frame.Fields[0].Name != "orders.users_age" || frame.Fields[1].Name != "orders.count" {
 		t.Fatal("Expected 2 columns: orders.users_age and orders.count")
 	}
-	// Human-readable display name for Ad Hoc filter keyLabel (Grafana PR 117640)
+	// Human-readable display name (e.g. Ad Hoc keyLabel, column headers)
 	if frame.Fields[0].Config == nil {
 		t.Fatal("Expected dimension field Config to be set, got nil")
 	}
@@ -705,7 +705,7 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 					{
 						Name:       "orders.customer",
 						Title:      "Customer Name",
-						ShortTitle: "Customer",
+						ShortTitle: "Name",
 						Type:       "string",
 					},
 				},
@@ -729,12 +729,11 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 
 	result := ds.extractMetadataFromResponse(metaResponse)
 
-	// Check dimensions
+	// Check dimensions: we show Title when present (first version: human-readable everywhere)
 	if len(result.Dimensions) != 2 {
 		t.Fatalf("Expected 2 dimensions, got %d", len(result.Dimensions))
 	}
 
-	// Label should be human-readable Title when present (for Ad Hoc key picker)
 	expectedDimensions := []struct {
 		Value string
 		Label string
@@ -760,7 +759,7 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 		t.Fatalf("Expected 2 measures, got %d", len(result.Measures))
 	}
 
-	// Label should be human-readable Title when present
+	// We show Title when present (first version: human-readable everywhere)
 	expectedMeasures := []struct {
 		Value string
 		Label string
@@ -942,7 +941,7 @@ func TestHandleMetadata(t *testing.T) {
 		t.Fatalf("Expected %d measures, got %d", expectedMeasureCount, len(metadata.Measures))
 	}
 
-	// Verify the dimensions contain expected values from the view (human-readable labels from Title)
+	// Verify the dimensions contain expected values from the view (labels from Title)
 	expectedDimensions := map[string]struct {
 		Label string
 		Type  string
@@ -986,7 +985,7 @@ func TestHandleMetadata(t *testing.T) {
 		}
 	}
 
-	// Verify the measures contain expected values (human-readable labels from Title)
+	// Verify the measures contain expected values (labels from Title)
 	expectedMeasures := map[string]struct {
 		Label string
 		Type  string
