@@ -1,6 +1,7 @@
 package plugin
 
 import (
+	"maps"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -564,46 +565,29 @@ func (d *Datasource) createNullField(fieldName string, rowCount int, annotation 
 	}
 }
 
-// displayLabel returns the label to show for a member: Title if present, else ShortTitle, else empty.
-// For this first version we use Title everywhere (query builder, Ad Hoc key picker, frame column headers).
-func displayLabel(title, shortTitle string) string {
-	if title != "" {
-		return title
-	}
-	return shortTitle
+// annotationFieldMap returns a single map of field name -> CubeFieldInfo by merging
+// Dimensions, Measures, and TimeDimensions from the annotation. Enables a single lookup
+// instead of checking each map separately.
+func annotationFieldMap(a CubeAnnotation) map[string]CubeFieldInfo {
+	n := len(a.Dimensions) + len(a.Measures) + len(a.TimeDimensions)
+	m := make(map[string]CubeFieldInfo, n)
+	maps.Copy(m, a.Dimensions)
+	maps.Copy(m, a.Measures)
+	maps.Copy(m, a.TimeDimensions)
+	return m
 }
 
-// titleFromAnnotation returns the display label for a field from the Cube load annotation.
-// Prefers Title when set, else ShortTitle. Cube schema can omit both, so we only return non-empty.
-func titleFromAnnotation(fieldName string, annotation CubeAnnotation) string {
-	if info, ok := annotation.Dimensions[fieldName]; ok {
-		if label := displayLabel(info.Title, info.ShortTitle); label != "" {
-			return label
-		}
-	}
-	if info, ok := annotation.Measures[fieldName]; ok {
-		if label := displayLabel(info.Title, info.ShortTitle); label != "" {
-			return label
-		}
-	}
-	if info, ok := annotation.TimeDimensions[fieldName]; ok {
-		if label := displayLabel(info.Title, info.ShortTitle); label != "" {
-			return label
-		}
-	}
-	return ""
-}
-
-// setDisplayNamesFromAnnotation sets DisplayNameFromDS on frame fields when the Cube
-// annotation provides a Title, so panels and visualisations show human-readable labels
+// setDisplayNamesFromAnnotation sets DisplayNameFromDS on frame fields from the Cube
+// annotation (Cube always provides Title). Panels and visualisations show these human-readable labels
 // (e.g. in Ad Hoc filter keyLabel and in query result column headers).
 func (d *Datasource) setDisplayNamesFromAnnotation(frame *data.Frame, annotation CubeAnnotation) {
+	fieldMap := annotationFieldMap(annotation)
 	for _, field := range frame.Fields {
-		if title := titleFromAnnotation(field.Name, annotation); title != "" {
+		if info, ok := fieldMap[field.Name]; ok && info.Title != "" {
 			if field.Config == nil {
 				field.Config = &data.FieldConfig{}
 			}
-			field.Config.DisplayNameFromDS = title
+			field.Config.DisplayNameFromDS = info.Title
 		}
 	}
 }
@@ -795,10 +779,11 @@ type CubeAnnotation struct {
 	TimeDimensions map[string]CubeFieldInfo `json:"timeDimensions"`
 }
 
-// CubeFieldInfo represents the metadata for a field
+// CubeFieldInfo represents the metadata for a field (from Cube load annotation).
+// We use Title only; ShortTitle is kept for API response unmarshalling.
 type CubeFieldInfo struct {
 	Title      string `json:"title"`
-	ShortTitle string `json:"shortTitle"`
+	ShortTitle string `json:"shortTitle"` // unmarshalled from API only; not used
 	Type       string `json:"type"`
 }
 
@@ -900,12 +885,8 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 		// Collect dimensions
 		for _, dimension := range item.Dimensions {
 			if !processedDimensions[dimension.Name] {
-				label := dimension.Name
-				if l := displayLabel(dimension.Title, dimension.ShortTitle); l != "" {
-					label = l
-				}
 				dimensions = append(dimensions, SelectOption{
-					Label: label,
+					Label: dimension.Title,
 					Value: dimension.Name,
 					Type:  dimension.Type,
 				})
@@ -916,12 +897,8 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 		// Collect measures
 		for _, measure := range item.Measures {
 			if !processedMeasures[measure.Name] {
-				label := measure.Name
-				if l := displayLabel(measure.Title, measure.ShortTitle); l != "" {
-					label = l
-				}
 				measures = append(measures, SelectOption{
-					Label: label,
+					Label: measure.Title,
 					Value: measure.Name,
 					Type:  measure.Type,
 				})
@@ -1385,20 +1362,22 @@ type CubeMeta struct {
 	Measures   []CubeMeasure   `json:"measures"`
 }
 
-// CubeDimension represents a dimension in a cube
+// CubeDimension represents a dimension in a cube (from Cube /v1/meta).
+// We use Title only; ShortTitle is kept for API response unmarshalling.
 type CubeDimension struct {
 	Name       string `json:"name"`
 	Title      string `json:"title"`
 	Type       string `json:"type"`
-	ShortTitle string `json:"shortTitle"`
+	ShortTitle string `json:"shortTitle"` // unmarshalled from API only; not used
 }
 
-// CubeMeasure represents a measure in a cube
+// CubeMeasure represents a measure in a cube (from Cube /v1/meta).
+// We use Title only; ShortTitle is kept for API response unmarshalling.
 type CubeMeasure struct {
 	Name       string `json:"name"`
 	Title      string `json:"title"`
 	Type       string `json:"type"`
-	ShortTitle string `json:"shortTitle"`
+	ShortTitle string `json:"shortTitle"` // unmarshalled from API only; not used
 }
 
 // TagKey represents a tag key for AdHoc filtering

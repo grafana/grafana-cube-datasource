@@ -104,16 +104,14 @@ func TestQueryDataWithCubeQuery(t *testing.T) {
 			Annotation: CubeAnnotation{
 				Measures: map[string]CubeFieldInfo{
 					"orders.count": {
-						Title:      "Orders Count",
-						ShortTitle: "Count",
-						Type:       "number",
+						Title: "Orders Count",
+						Type:  "number",
 					},
 				},
 				Dimensions: map[string]CubeFieldInfo{
 					"orders.users_age": {
-						Title:      "Orders Users Age",
-						ShortTitle: "Age",
-						Type:       "number",
+						Title: "Orders Users Age",
+						Type:  "number",
 					},
 				},
 				Segments:       map[string]CubeFieldInfo{},
@@ -243,21 +241,18 @@ func TestQueryDataWithMultipleDimensions(t *testing.T) {
 			Annotation: CubeAnnotation{
 				Measures: map[string]CubeFieldInfo{
 					"orders.count": {
-						Title:      "Orders Count",
-						ShortTitle: "Count",
-						Type:       "number",
+						Title: "Orders Count",
+						Type:  "number",
 					},
 				},
 				Dimensions: map[string]CubeFieldInfo{
 					"orders.users_city": {
-						Title:      "Orders Users City",
-						ShortTitle: "City",
-						Type:       "string",
+						Title: "Orders Users City",
+						Type:  "string",
 					},
 					"orders.users_age": {
-						Title:      "Orders Users Age",
-						ShortTitle: "Age",
-						Type:       "number",
+						Title: "Orders Users Age",
+						Type:  "number",
 					},
 				},
 				Segments:       map[string]CubeFieldInfo{},
@@ -362,14 +357,12 @@ func TestQueryDataWithAllNullColumn(t *testing.T) {
 						Measures: map[string]CubeFieldInfo{},
 						Dimensions: map[string]CubeFieldInfo{
 							"orders.name": {
-								Title:      "Name",
-								ShortTitle: "Name",
-								Type:       "string",
+								Title: "Name",
+								Type:  "string",
 							},
 							"orders.null_field": {
-								Title:      "Null Field",
-								ShortTitle: "Null",
-								Type:       tc.cubeType,
+								Title: "Null Field",
+								Type:  tc.cubeType,
 							},
 						},
 						Segments:       map[string]CubeFieldInfo{},
@@ -445,9 +438,8 @@ func TestQueryDataWithAllColumnsNull(t *testing.T) {
 				Measures: map[string]CubeFieldInfo{},
 				Dimensions: map[string]CubeFieldInfo{
 					"orders.name": {
-						Title:      "Name",
-						ShortTitle: "Name",
-						Type:       "string",
+						Title: "Name",
+						Type:  "string",
 					},
 				},
 				Segments:       map[string]CubeFieldInfo{},
@@ -685,6 +677,18 @@ func TestHandleSQLCompilationMissingQuery(t *testing.T) {
 	}
 }
 
+// NewTestDimension builds a CubeDimension with Name, Title, and Type. Cube's meta API always
+// provides Title; use this helper so test mocks match.
+func NewTestDimension(name, title, typ string) CubeDimension {
+	return CubeDimension{Name: name, Title: title, Type: typ}
+}
+
+// NewTestMeasure builds a CubeMeasure with Name, Title, and Type. Cube's meta API always
+// provides Title; use this helper so test mocks match.
+func NewTestMeasure(name, title, typ string) CubeMeasure {
+	return CubeMeasure{Name: name, Title: title, Type: typ}
+}
+
 func TestExtractMetadataFromResponse(t *testing.T) {
 	// Test the metadata extraction logic separately
 	ds := &Datasource{}
@@ -696,32 +700,12 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 				Title: "Orders View",
 				Type:  "view",
 				Dimensions: []CubeDimension{
-					{
-						Name:       "orders.status",
-						Title:      "Order Status",
-						ShortTitle: "Status",
-						Type:       "string",
-					},
-					{
-						Name:       "orders.customer",
-						Title:      "Customer Name",
-						ShortTitle: "Name",
-						Type:       "string",
-					},
+					NewTestDimension("orders.status", "Order Status", "string"),
+					NewTestDimension("orders.customer", "Customer Name", "string"),
 				},
 				Measures: []CubeMeasure{
-					{
-						Name:       "orders.count",
-						Title:      "Orders Count",
-						ShortTitle: "Count",
-						Type:       "number",
-					},
-					{
-						Name:       "orders.total",
-						Title:      "Orders Total",
-						ShortTitle: "Total",
-						Type:       "number",
-					},
+					NewTestMeasure("orders.count", "Orders Count", "number"),
+					NewTestMeasure("orders.total", "Orders Total", "number"),
 				},
 			},
 		},
@@ -801,26 +785,11 @@ func TestHandleMetadata(t *testing.T) {
 					Title: "Raw Orders",
 					Type:  "cube",
 					Dimensions: []CubeDimension{
-						{
-							Name:       "status",
-							Title:      "Raw Order Status",
-							ShortTitle: "Raw Status",
-							Type:       "string",
-						},
-						{
-							Name:       "user_id",
-							Title:      "Raw User ID",
-							ShortTitle: "Raw User ID",
-							Type:       "number",
-						},
+						NewTestDimension("status", "Raw Order Status", "string"),
+						NewTestDimension("user_id", "Raw User ID", "number"),
 					},
 					Measures: []CubeMeasure{
-						{
-							Name:       "count",
-							Title:      "Raw Orders Count",
-							ShortTitle: "Raw Count",
-							Type:       "number",
-						},
+						NewTestMeasure("count", "Raw Orders Count", "number"),
 					},
 				},
 				{
@@ -828,20 +797,10 @@ func TestHandleMetadata(t *testing.T) {
 					Title: "Raw Customers",
 					Type:  "cube",
 					Dimensions: []CubeDimension{
-						{
-							Name:       "first_name",
-							Title:      "Raw Customer First Name",
-							ShortTitle: "Raw First Name",
-							Type:       "string",
-						},
+						NewTestDimension("first_name", "Raw Customer First Name", "string"),
 					},
 					Measures: []CubeMeasure{
-						{
-							Name:       "count",
-							Title:      "Raw Customers Count",
-							ShortTitle: "Raw Count",
-							Type:       "number",
-						},
+						NewTestMeasure("count", "Raw Customers Count", "number"),
 					},
 				},
 				// View - this should be used for tag keys
@@ -850,26 +809,11 @@ func TestHandleMetadata(t *testing.T) {
 					Title: "Orders View",
 					Type:  "view",
 					Dimensions: []CubeDimension{
-						{
-							Name:       "orders.status",
-							Title:      "Order Status",
-							ShortTitle: "Status",
-							Type:       "string",
-						},
-						{
-							Name:       "orders.customers_first_name",
-							Title:      "Customer First Name",
-							ShortTitle: "First Name",
-							Type:       "string",
-						},
+						NewTestDimension("orders.status", "Order Status", "string"),
+						NewTestDimension("orders.customers_first_name", "Customer First Name", "string"),
 					},
 					Measures: []CubeMeasure{
-						{
-							Name:       "count",
-							Title:      "Orders Count",
-							ShortTitle: "Count",
-							Type:       "number",
-						},
+						NewTestMeasure("count", "Orders Count", "number"),
 					},
 				},
 			},
@@ -3459,18 +3403,16 @@ func TestConvertTimeDimensionsIntegration(t *testing.T) {
 			Annotation: CubeAnnotation{
 				Measures: map[string]CubeFieldInfo{
 					"orders.count": {
-						Title:      "Orders Count",
-						ShortTitle: "Count",
-						Type:       "number",
+						Title: "Orders Count",
+						Type:  "number",
 					},
 				},
 				Dimensions: map[string]CubeFieldInfo{},
 				Segments:   map[string]CubeFieldInfo{},
 				TimeDimensions: map[string]CubeFieldInfo{
 					"orders.created_at": {
-						Title:      "Created At",
-						ShortTitle: "Created",
-						Type:       "time",
+						Title: "Created At",
+						Type:  "time",
 					},
 				},
 			},
