@@ -400,7 +400,7 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 	// Also adds missing fields (e.g., columns with all null values) as nullable fields
 	frame = d.reorderFrameFields(frame, cubeQuery, apiResponse.Annotation, len(apiResponse.Data))
 
-	// Set human-readable display names from annotation (for Ad Hoc filter keyLabel in panels)
+	// Set human-readable display names from annotation (e.g. Ad Hoc filter keyLabel and query result column headers)
 	d.setDisplayNamesFromAnnotation(frame, apiResponse.Annotation)
 
 	// Mark dimension fields as filterable to enable AdHoc filter buttons
