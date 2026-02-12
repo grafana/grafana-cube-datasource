@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.2 (2026-02-12)
+
+### Fixed in 0.1.2
+
+- Handle Cube "Continue wait" polling protocol correctly for long-running queries
+- Update non-major dependencies, including security-related updates
+
+### Changed in 0.1.2
+
+- Simplify backend test interaction patterns for better maintainability
+
+### Documentation in 0.1.2
+
+- Add Cube SDK parity guidance for backend protocol behavior
+
 ## 0.1.1 (2026-01-28)
 
 ### Fixed
