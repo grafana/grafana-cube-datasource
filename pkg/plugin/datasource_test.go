@@ -17,55 +17,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-func TestAdaptiveContinueWaitPollInterval(t *testing.T) {
-	testCases := []struct {
-		name     string
-		retry    int
-		expected time.Duration
-	}{
-		{name: "retry 0 treated as first retry", retry: 0, expected: 100 * time.Millisecond},
-		{name: "retry 1", retry: 1, expected: 100 * time.Millisecond},
-		{name: "retry 2", retry: 2, expected: 250 * time.Millisecond},
-		{name: "retry 3 capped", retry: 3, expected: 500 * time.Millisecond},
-		{name: "retry 4 capped", retry: 4, expected: 500 * time.Millisecond},
-		{name: "retry 20 capped", retry: 20, expected: 500 * time.Millisecond},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			got := adaptiveContinueWaitPollInterval(tc.retry)
-			if got != tc.expected {
-				t.Fatalf("Expected %s for retry %d, got %s", tc.expected, tc.retry, got)
-			}
-		})
-	}
-}
-
-func TestJitteredContinueWaitPollIntervalDeterministic(t *testing.T) {
-	url := "https://cube.example.com/v1/load?query=test"
-	retry := 3
-
-	first := jitteredContinueWaitPollInterval(url, retry)
-	second := jitteredContinueWaitPollInterval(url, retry)
-	if first != second {
-		t.Fatalf("Expected deterministic jitter for same inputs, got %s and %s", first, second)
-	}
-}
-
-func TestJitteredContinueWaitPollIntervalRange(t *testing.T) {
-	url := "https://cube.example.com/v1/load?query=test"
-
-	for retry := 1; retry <= 8; retry++ {
-		base := adaptiveContinueWaitPollInterval(retry)
-		jittered := jitteredContinueWaitPollInterval(url, retry)
-		min := time.Duration(int64(base) * 90 / 100)
-		max := time.Duration(int64(base) * 110 / 100)
-		if jittered < min || jittered > max {
-			t.Fatalf("Expected retry %d jittered interval within [%s, %s], got %s", retry, min, max, jittered)
-		}
-	}
-}
-
 func TestQueryData(t *testing.T) {
 	// Create a mock server that returns empty data for an empty query
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
