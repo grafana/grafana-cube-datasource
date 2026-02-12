@@ -23,13 +23,12 @@ func TestAdaptiveContinueWaitPollInterval(t *testing.T) {
 		retry    int
 		expected time.Duration
 	}{
-		{name: "retry 0 treated as first retry", retry: 0, expected: 500 * time.Millisecond},
-		{name: "retry 1", retry: 1, expected: 500 * time.Millisecond},
-		{name: "retry 2", retry: 2, expected: 1 * time.Second},
-		{name: "retry 3", retry: 3, expected: 2 * time.Second},
-		{name: "retry 4", retry: 4, expected: 3 * time.Second},
-		{name: "retry 5 capped", retry: 5, expected: 5 * time.Second},
-		{name: "retry 20 capped", retry: 20, expected: 5 * time.Second},
+		{name: "retry 0 treated as first retry", retry: 0, expected: 100 * time.Millisecond},
+		{name: "retry 1", retry: 1, expected: 100 * time.Millisecond},
+		{name: "retry 2", retry: 2, expected: 250 * time.Millisecond},
+		{name: "retry 3 capped", retry: 3, expected: 500 * time.Millisecond},
+		{name: "retry 4 capped", retry: 4, expected: 500 * time.Millisecond},
+		{name: "retry 20 capped", retry: 20, expected: 500 * time.Millisecond},
 	}
 
 	for _, tc := range testCases {
