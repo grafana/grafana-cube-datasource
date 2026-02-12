@@ -752,19 +752,19 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, requestURL string, c
 		if err != nil {
 			if errors.Is(err, context.DeadlineExceeded) {
 				elapsed := time.Since(pollStart).Round(time.Millisecond)
-				return nil, fmt.Errorf("Cube API request timed out after %s (the upstream warehouse may still be computing)", elapsed)
+				return nil, fmt.Errorf("request to Cube API timed out after %s (the upstream warehouse may still be computing)", elapsed)
 			}
 			return nil, fmt.Errorf("failed to make API request: %w", err)
 		}
 
 		if resp.StatusCode != http.StatusOK {
 			errorBody, _ := io.ReadAll(resp.Body)
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			return nil, &CubeAPIError{StatusCode: resp.StatusCode, Body: errorBody}
 		}
 
 		body, err := io.ReadAll(resp.Body)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if err != nil {
 			return nil, fmt.Errorf("failed to read response body: %w", err)
 		}

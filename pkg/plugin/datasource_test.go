@@ -209,14 +209,14 @@ func TestQueryDataContinueWaitThenSuccess(t *testing.T) {
 
 		if requestCount <= 2 {
 			// First two requests: Cube is still computing
-			json.NewEncoder(w).Encode(map[string]interface{}{
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
 				"error": "Continue wait",
 			})
 			return
 		}
 
 		// Third request: data is ready
-		json.NewEncoder(w).Encode(CubeAPIResponse{
+		_ = json.NewEncoder(w).Encode(CubeAPIResponse{
 			Data: []map[string]interface{}{
 				{"orders.count": "42"},
 			},
@@ -274,7 +274,7 @@ func TestQueryDataContinueWaitContextCancelled(t *testing.T) {
 	// rather than hanging forever.
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"error": "Continue wait",
 		})
 	}))
@@ -321,7 +321,7 @@ func TestQueryDataHTTPTimeoutWrapped(t *testing.T) {
 		// Simulate a slow response that will exceed the context deadline
 		time.Sleep(200 * time.Millisecond)
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(CubeAPIResponse{
+		_ = json.NewEncoder(w).Encode(CubeAPIResponse{
 			Data: []map[string]interface{}{{"orders.count": "5"}},
 		})
 	}))
@@ -373,7 +373,7 @@ func TestQueryDataContinueWaitCancelledIncludesElapsedTime(t *testing.T) {
 	// how long the upstream warehouse had been computing.
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintln(w, `{"error": "Continue wait", "stage": "Executing query", "timeElapsed": 25}`)
+		_, _ = fmt.Fprintln(w, `{"error": "Continue wait", "stage": "Executing query", "timeElapsed": 25}`)
 	}))
 	defer server.Close()
 
@@ -1871,7 +1871,7 @@ func TestHandleTagValuesContinueWaitThenSuccess(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		if requestCount <= 2 {
 			// First two requests: Cube is still computing
-			fmt.Fprintln(w, `{"error": "Continue wait"}`)
+			_, _ = fmt.Fprintln(w, `{"error": "Continue wait"}`)
 			return
 		}
 		// Third request: data is ready
@@ -1939,7 +1939,7 @@ func TestHandleTagValuesContinueWaitContextCancelled(t *testing.T) {
 	// return an error response to the sender, not hang forever.
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintln(w, `{"error": "Continue wait"}`)
+		_, _ = fmt.Fprintln(w, `{"error": "Continue wait"}`)
 	}))
 	defer server.Close()
 
