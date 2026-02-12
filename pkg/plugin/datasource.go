@@ -920,10 +920,12 @@ func (d *Datasource) fetchCubeMetadata(ctx context.Context, pluginContext backen
 	return &metaResponse, nil
 }
 
-// extractMetadataFromResponse extracts dimensions and measures from Cube metadata
+// extractMetadataFromResponse extracts dimensions, measures, views, and cubes from Cube metadata
 func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse) MetadataResponse {
 	var dimensions []SelectOption
 	var measures []SelectOption
+	var viewOptions []SelectOption
+	var cubeOptions []SelectOption
 
 	// Filter to only include views from the cubes array
 	var views []CubeMeta
@@ -931,8 +933,20 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 	for _, cube := range metaResponse.Cubes {
 		if cube.Type == "view" {
 			views = append(views, cube)
+			// Add view to the views list
+			viewOptions = append(viewOptions, SelectOption{
+				Label: cube.Title,
+				Value: cube.Name,
+				Type:  "view",
+			})
 		} else {
 			cubes = append(cubes, cube)
+			// Add cube to the cubes list
+			cubeOptions = append(cubeOptions, SelectOption{
+				Label: cube.Title,
+				Value: cube.Name,
+				Type:  "cube",
+			})
 		}
 	}
 
@@ -977,11 +991,13 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 		}
 	}
 
-	backend.Logger.Debug("Extracted metadata", "dimensions", len(dimensions), "measures", len(measures))
+	backend.Logger.Debug("Extracted metadata", "dimensions", len(dimensions), "measures", len(measures), "views", len(viewOptions), "cubes", len(cubeOptions))
 
 	return MetadataResponse{
 		Dimensions: dimensions,
 		Measures:   measures,
+		Views:      viewOptions,
+		Cubes:      cubeOptions,
 	}
 }
 
@@ -1423,6 +1439,8 @@ type TagValue struct {
 type MetadataResponse struct {
 	Dimensions []SelectOption `json:"dimensions"`
 	Measures   []SelectOption `json:"measures"`
+	Views      []SelectOption `json:"views"`
+	Cubes      []SelectOption `json:"cubes"`
 }
 
 // SelectOption represents an option for select components

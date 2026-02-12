@@ -21,6 +21,7 @@ export interface CubeFilter {
 }
 
 export interface CubeQuery extends DataQuery {
+  views?: string[];
   dimensions?: string[];
   measures?: string[];
   timeDimensions?: TimeDimension[];
@@ -60,4 +61,17 @@ export interface CubeDataSourceOptions extends DataSourceJsonData {
 export interface CubeSecureJsonData {
   apiKey?: string; // For Cube Cloud
   apiSecret?: string; // For self-hosted Cube (JWT generation)
+}
+
+export interface SelectOption {
+  label: string;
+  value: string;
+  type?: string;
+}
+
+export interface MetadataResponse {
+  dimensions: SelectOption[];
+  measures: SelectOption[];
+  views: SelectOption[];
+  cubes: SelectOption[];
 }
