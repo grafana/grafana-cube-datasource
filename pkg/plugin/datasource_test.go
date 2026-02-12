@@ -748,6 +748,95 @@ func TestCreateNullFieldWithTimeDimension(t *testing.T) {
 	}
 }
 
+func TestQueryDataWithOrderField(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query().Get("query")
+		var cubeQuery CubeQuery
+		if err := json.Unmarshal([]byte(query), &cubeQuery); err != nil {
+			t.Errorf("Failed to parse cube query: %v", err)
+			http.Error(w, "Invalid query", http.StatusBadRequest)
+			return
+		}
+
+		if len(cubeQuery.Dimensions) != 1 || cubeQuery.Dimensions[0] != "orders.status" {
+			t.Errorf("Expected dimensions [orders.status], got %v", cubeQuery.Dimensions)
+		}
+		if len(cubeQuery.Measures) != 1 || cubeQuery.Measures[0] != "orders.count" {
+			t.Errorf("Expected measures [orders.count], got %v", cubeQuery.Measures)
+		}
+
+		orderMap, ok := cubeQuery.Order.(map[string]interface{})
+		if !ok {
+			t.Errorf("Expected order field as object, got %T", cubeQuery.Order)
+			http.Error(w, "Invalid order", http.StatusBadRequest)
+			return
+		}
+		if len(orderMap) != 2 {
+			t.Errorf("Expected 2 order entries, got %v", orderMap)
+			http.Error(w, "Invalid order", http.StatusBadRequest)
+			return
+		}
+		if orderMap["orders.count"] != "desc" {
+			t.Errorf("Expected orders.count sort direction desc, got %v", orderMap["orders.count"])
+		}
+		if orderMap["orders.status"] != "asc" {
+			t.Errorf("Expected orders.status sort direction asc, got %v", orderMap["orders.status"])
+		}
+
+		response := CubeAPIResponse{
+			Data: []map[string]interface{}{
+				{"orders.status": "completed", "orders.count": "500"},
+				{"orders.status": "pending", "orders.count": "300"},
+				{"orders.status": "shipped", "orders.count": "200"},
+			},
+			Annotation: CubeAnnotation{
+				Measures: map[string]CubeFieldInfo{
+					"orders.count": {Type: "number"},
+				},
+				Dimensions: map[string]CubeFieldInfo{
+					"orders.status": {Type: "string"},
+				},
+				Segments:       map[string]CubeFieldInfo{},
+				TimeDimensions: map[string]CubeFieldInfo{},
+			},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Errorf("Failed to encode response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL}
+	queryJSON, _ := json.Marshal(map[string]interface{}{
+		"refId":      "A",
+		"dimensions": []string{"orders.status"},
+		"measures":   []string{"orders.count"},
+		"order": map[string]string{
+			"orders.count":  "desc",
+			"orders.status": "asc",
+		},
+	})
+
+	resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+				JSONData: []byte(`{"cubeApiUrl":"` + server.URL + `","deploymentType":"self-hosted-dev"}`),
+			},
+		},
+		Queries: []backend.DataQuery{{RefID: "A", JSON: queryJSON}},
+	})
+	if err != nil {
+		t.Fatalf("QueryData failed: %v", err)
+	}
+
+	frame := resp.Responses["A"].Frames[0]
+	if frame.Fields[0].Len() != 3 {
+		t.Fatalf("Expected 3 rows, got %d", frame.Fields[0].Len())
+	}
+}
+
 func TestHandleSQLCompilation(t *testing.T) {
 	// Create a mock server that returns SQL compilation response
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
