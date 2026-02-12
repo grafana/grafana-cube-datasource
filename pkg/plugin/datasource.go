@@ -349,77 +349,11 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 	// Debug: Log what we're sending to the API
 	backend.Logger.Debug("Making API request", "url", u.String(), "cubeQuery", string(cubeAPIQueryJSON))
 
-	// Poll Cube API, retrying on "Continue wait" responses.
-	// Cube returns {"error": "Continue wait"} (HTTP 200) when query results aren't
-	// cached yet (e.g. BigQuery is still computing). The client must poll until the
-	// data is ready, matching the behavior of the official @cubejs-client/core SDK.
-	pollInterval := d.ContinueWaitPollInterval
-	if pollInterval == 0 {
-		pollInterval = defaultContinueWaitPollInterval
+	// Use shared helper to make the request with "Continue wait" polling
+	body, err := d.doCubeLoadRequest(ctx, u.String(), apiReq.Config)
+	if err != nil {
+		return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
 	}
-
-	var body []byte
-	pollStart := time.Now()
-	pollRetries := 0
-	for {
-		// Create a fresh HTTP request for each attempt (reusing a request after
-		// the body has been read is not safe).
-		req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
-		if err != nil {
-			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("Failed to create request: %v", err))
-		}
-
-		if err := d.addAuthHeaders(req, apiReq.Config); err != nil {
-			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("Failed to add auth headers: %v", err))
-		}
-		req.Header.Set("Content-Type", "application/json")
-
-		// Make the HTTP request
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("Failed to make API request: %v", err))
-		}
-
-		// Check response status
-		if resp.StatusCode != http.StatusOK {
-			errorBody, _ := io.ReadAll(resp.Body)
-			resp.Body.Close()
-			backend.Logger.Error("API request failed", "status", resp.StatusCode, "response", string(errorBody), "url", u.String())
-			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("API request failed with status: %d, response: %s", resp.StatusCode, string(errorBody)))
-		}
-
-		// Read response body
-		body, err = io.ReadAll(resp.Body)
-		resp.Body.Close()
-		if err != nil {
-			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("Failed to read response body: %v", err))
-		}
-
-		// Check for Cube's "Continue wait" response
-		if isContinueWait(body) {
-			if pollRetries == 0 {
-				backend.Logger.Info("Cube query not yet ready, polling for results", "refId", query.RefID)
-			}
-			pollRetries++
-			backend.Logger.Debug("Cube returned 'Continue wait', polling again", "refId", query.RefID, "attempt", pollRetries)
-			select {
-			case <-ctx.Done():
-				return backend.ErrDataResponse(backend.StatusInternal, "Query cancelled while waiting for Cube to compute results")
-			case <-time.After(pollInterval):
-				continue
-			}
-		}
-
-		// Got actual data — break out of the polling loop
-		break
-	}
-
-	if pollRetries > 0 {
-		backend.Logger.Info("Cube query results ready after polling", "refId", query.RefID, "retries", pollRetries, "duration", time.Since(pollStart).Round(time.Millisecond))
-	}
-
-	// cubeQuery was already parsed earlier for validation
 
 	// Parse the API response
 	var apiResponse CubeAPIResponse
@@ -776,6 +710,70 @@ func (d *Datasource) convertToNumber(value interface{}) interface{} {
 	}
 }
 
+// doCubeLoadRequest makes a GET request to Cube's /v1/load endpoint, handling the
+// "Continue wait" polling protocol. Cube returns {"error": "Continue wait"} (HTTP 200)
+// when query results aren't cached yet (e.g. the upstream warehouse is still computing).
+// This method polls until actual data arrives or the context is cancelled, matching the
+// behavior of the official @cubejs-client/core SDK.
+func (d *Datasource) doCubeLoadRequest(ctx context.Context, requestURL string, config *models.PluginSettings) ([]byte, error) {
+	pollInterval := d.ContinueWaitPollInterval
+	if pollInterval == 0 {
+		pollInterval = defaultContinueWaitPollInterval
+	}
+
+	pollStart := time.Now()
+	pollRetries := 0
+	for {
+		req, err := http.NewRequestWithContext(ctx, "GET", requestURL, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create request: %w", err)
+		}
+
+		if err := d.addAuthHeaders(req, config); err != nil {
+			return nil, fmt.Errorf("failed to add auth headers: %w", err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("failed to make API request: %w", err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			errorBody, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(errorBody))
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			return nil, fmt.Errorf("failed to read response body: %w", err)
+		}
+
+		if isContinueWait(body) {
+			if pollRetries == 0 {
+				backend.Logger.Info("Cube query not yet ready, polling for results", "url", requestURL)
+			}
+			pollRetries++
+			backend.Logger.Debug("Cube returned 'Continue wait', polling again", "url", requestURL, "attempt", pollRetries)
+			select {
+			case <-ctx.Done():
+				return nil, fmt.Errorf("query cancelled while waiting for Cube to compute results")
+			case <-time.After(pollInterval):
+				continue
+			}
+		}
+
+		if pollRetries > 0 {
+			backend.Logger.Info("Cube query results ready after polling", "url", requestURL, "retries", pollRetries, "duration", time.Since(pollStart).Round(time.Millisecond))
+		}
+
+		return body, nil
+	}
+}
+
 // isContinueWait checks whether a Cube API response body is a "Continue wait"
 // polling response. Cube returns {"error": "Continue wait"} (HTTP 200) when
 // the query result is not yet ready (e.g. the upstream warehouse is still
@@ -1086,66 +1084,13 @@ func (d *Datasource) handleTagValues(ctx context.Context, req *backend.CallResou
 	params.Add("query", string(cubeQueryJSON))
 	u.RawQuery = params.Encode()
 
-	// Create HTTP request
-	httpReq, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
-	if err != nil {
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(`{"error": "failed to create request"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
-	}
-
-	if err := d.addAuthHeaders(httpReq, apiReq.Config); err != nil {
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(fmt.Sprintf(`{"error": "failed to add auth headers: %s"}`, err.Error())),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
-	}
-	httpReq.Header.Set("Content-Type", "application/json")
-
-	// Make the HTTP request
-	client := &http.Client{}
-	resp, err := client.Do(httpReq)
+	// Use shared helper to make the request with "Continue wait" polling
+	body, err := d.doCubeLoadRequest(ctx, u.String(), apiReq.Config)
 	if err != nil {
 		backend.Logger.Error("Failed to fetch tag values from Cube API", "error", err)
 		return sender.Send(&backend.CallResourceResponse{
 			Status: 500,
-			Body:   []byte(fmt.Sprintf(`{"error": "failed to fetch tag values: %s"}`, err.Error())),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			backend.Logger.Warn("Failed to close response body", "error", err)
-		}
-	}()
-
-	// Read response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(`{"error": "failed to read response body"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
-	}
-
-	// Check response status
-	if resp.StatusCode != http.StatusOK {
-		backend.Logger.Error("Cube API returned error for tag values", "status", resp.StatusCode, "response", string(body))
-		return sender.Send(&backend.CallResourceResponse{
-			Status: resp.StatusCode,
-			Body:   body,
+			Body:   []byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())),
 			Headers: map[string][]string{
 				"Content-Type": {"application/json"},
 			},
