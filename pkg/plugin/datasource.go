@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"io"
 	"net/http"
 	"net/url"
@@ -46,6 +47,15 @@ type jwtCacheEntry struct {
 	expiration time.Time
 }
 
+const (
+	// defaultContinueWaitPollInterval is the maximum poll interval used for
+	// Cube "Continue wait" retries after adaptive backoff ramps up.
+	defaultContinueWaitPollInterval = 500 * time.Millisecond
+	// initialContinueWaitPollInterval is the first poll interval used when
+	// no explicit override is configured.
+	initialContinueWaitPollInterval = 100 * time.Millisecond
+)
+
 // Datasource is an example datasource which can respond to data queries, reports
 // its health and has streaming skills.
 type Datasource struct {
@@ -53,8 +63,7 @@ type Datasource struct {
 	BaseURL string
 
 	// ContinueWaitPollInterval overrides the polling interval for "Continue wait"
-	// responses. Zero means retry immediately (SDK-compatible behavior).
-	// Intended for testing.
+	// responses. Zero means use the default adaptive interval. Intended for testing.
 	ContinueWaitPollInterval time.Duration
 
 	// JWT cache keyed by API secret
@@ -770,29 +779,13 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, requestURL string, c
 				backend.Logger.Info("Cube query not yet ready, polling for results", "url", requestURL)
 			}
 			pollRetries++
+			waitInterval := d.ContinueWaitPollInterval
+			if waitInterval == 0 {
+				waitInterval = jitteredContinueWaitPollInterval(requestURL, pollRetries)
+			}
 			backend.Logger.Debug("Cube returned 'Continue wait', polling again",
 				"url", requestURL, "attempt", pollRetries,
-				"stage", progress.Stage, "cubeTimeElapsed", progress.TimeElapsed)
-
-			waitInterval := d.ContinueWaitPollInterval
-			if waitInterval <= 0 {
-				select {
-				case <-ctx.Done():
-					var msg string
-					if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-						msg = "Cube API request timed out while waiting for results to be computed"
-					} else {
-						msg = "query cancelled while waiting for Cube to compute results"
-					}
-					if progress.Stage != "" || progress.TimeElapsed > 0 {
-						msg = fmt.Sprintf("%s (stage: %s, Cube timeElapsed: %ds)", msg, progress.Stage, int(progress.TimeElapsed))
-					}
-					return nil, fmt.Errorf("%s", msg)
-				default:
-					continue
-				}
-			}
-
+				"stage", progress.Stage, "cubeTimeElapsed", progress.TimeElapsed, "waitInterval", waitInterval)
 			select {
 			case <-ctx.Done():
 				var msg string
@@ -816,6 +809,37 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, requestURL string, c
 
 		return body, nil
 	}
+}
+
+// adaptiveContinueWaitPollInterval returns the base backoff interval for a
+// given retry number (1-indexed), capped at 500 milliseconds.
+func adaptiveContinueWaitPollInterval(retry int) time.Duration {
+	switch {
+	case retry <= 1:
+		return initialContinueWaitPollInterval
+	case retry == 2:
+		return 250 * time.Millisecond
+	default:
+		return defaultContinueWaitPollInterval
+	}
+}
+
+// jitteredContinueWaitPollInterval applies deterministic jitter (+/-10%) to
+// the adaptive poll interval to avoid synchronized polling across high-fan-out
+// dashboards while keeping tests deterministic.
+func jitteredContinueWaitPollInterval(requestURL string, retry int) time.Duration {
+	base := adaptiveContinueWaitPollInterval(retry)
+	// Map hash into [-10, 10] percentage points.
+	jitterPercent := deterministicJitterPercent(requestURL, retry)
+	return time.Duration(int64(base) * int64(100+jitterPercent) / 100)
+}
+
+func deterministicJitterPercent(requestURL string, retry int) int {
+	hasher := fnv.New32a()
+	_, _ = hasher.Write([]byte(requestURL))
+	_, _ = hasher.Write([]byte("#"))
+	_, _ = hasher.Write([]byte(strconv.Itoa(retry)))
+	return int(hasher.Sum32()%21) - 10
 }
 
 // isContinueWait checks whether a Cube API response body is a "Continue wait"
