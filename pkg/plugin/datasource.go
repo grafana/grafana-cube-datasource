@@ -1086,70 +1086,106 @@ func (d *Datasource) handleTagValues(ctx context.Context, req *backend.CallResou
 	params.Add("query", string(cubeQueryJSON))
 	u.RawQuery = params.Encode()
 
-	// Create HTTP request
-	httpReq, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
-	if err != nil {
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(`{"error": "failed to create request"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+	// Poll Cube API, retrying on "Continue wait" responses.
+	// Cube returns {"error": "Continue wait"} (HTTP 200) when query results aren't
+	// cached yet (e.g. BigQuery is still computing). The client must poll until the
+	// data is ready, matching the behavior of the official @cubejs-client/core SDK.
+	pollInterval := d.ContinueWaitPollInterval
+	if pollInterval == 0 {
+		pollInterval = defaultContinueWaitPollInterval
 	}
 
-	if err := d.addAuthHeaders(httpReq, apiReq.Config); err != nil {
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(fmt.Sprintf(`{"error": "failed to add auth headers: %s"}`, err.Error())),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
-	}
-	httpReq.Header.Set("Content-Type", "application/json")
-
-	// Make the HTTP request
-	client := &http.Client{}
-	resp, err := client.Do(httpReq)
-	if err != nil {
-		backend.Logger.Error("Failed to fetch tag values from Cube API", "error", err)
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(fmt.Sprintf(`{"error": "failed to fetch tag values: %s"}`, err.Error())),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			backend.Logger.Warn("Failed to close response body", "error", err)
+	var body []byte
+	pollRetries := 0
+	for {
+		// Create a fresh HTTP request for each attempt (reusing a request after
+		// the body has been read is not safe).
+		httpReq, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
+		if err != nil {
+			return sender.Send(&backend.CallResourceResponse{
+				Status: 500,
+				Body:   []byte(`{"error": "failed to create request"}`),
+				Headers: map[string][]string{
+					"Content-Type": {"application/json"},
+				},
+			})
 		}
-	}()
 
-	// Read response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(`{"error": "failed to read response body"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
-	}
+		if err := d.addAuthHeaders(httpReq, apiReq.Config); err != nil {
+			return sender.Send(&backend.CallResourceResponse{
+				Status: 500,
+				Body:   []byte(fmt.Sprintf(`{"error": "failed to add auth headers: %s"}`, err.Error())),
+				Headers: map[string][]string{
+					"Content-Type": {"application/json"},
+				},
+			})
+		}
+		httpReq.Header.Set("Content-Type", "application/json")
 
-	// Check response status
-	if resp.StatusCode != http.StatusOK {
-		backend.Logger.Error("Cube API returned error for tag values", "status", resp.StatusCode, "response", string(body))
-		return sender.Send(&backend.CallResourceResponse{
-			Status: resp.StatusCode,
-			Body:   body,
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		// Make the HTTP request
+		client := &http.Client{}
+		resp, err := client.Do(httpReq)
+		if err != nil {
+			backend.Logger.Error("Failed to fetch tag values from Cube API", "error", err)
+			return sender.Send(&backend.CallResourceResponse{
+				Status: 500,
+				Body:   []byte(fmt.Sprintf(`{"error": "failed to fetch tag values: %s"}`, err.Error())),
+				Headers: map[string][]string{
+					"Content-Type": {"application/json"},
+				},
+			})
+		}
+
+		// Check response status
+		if resp.StatusCode != http.StatusOK {
+			errorBody, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			backend.Logger.Error("Cube API returned error for tag values", "status", resp.StatusCode, "response", string(errorBody))
+			return sender.Send(&backend.CallResourceResponse{
+				Status: resp.StatusCode,
+				Body:   errorBody,
+				Headers: map[string][]string{
+					"Content-Type": {"application/json"},
+				},
+			})
+		}
+
+		// Read response body
+		body, err = io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			return sender.Send(&backend.CallResourceResponse{
+				Status: 500,
+				Body:   []byte(`{"error": "failed to read response body"}`),
+				Headers: map[string][]string{
+					"Content-Type": {"application/json"},
+				},
+			})
+		}
+
+		// Check for Cube's "Continue wait" response
+		if isContinueWait(body) {
+			if pollRetries == 0 {
+				backend.Logger.Info("Cube tag values query not yet ready, polling for results", "key", key)
+			}
+			pollRetries++
+			backend.Logger.Debug("Cube returned 'Continue wait', polling again", "key", key, "attempt", pollRetries)
+			select {
+			case <-ctx.Done():
+				return sender.Send(&backend.CallResourceResponse{
+					Status: 500,
+					Body:   []byte(`{"error": "request cancelled while waiting for Cube to compute results"}`),
+					Headers: map[string][]string{
+						"Content-Type": {"application/json"},
+					},
+				})
+			case <-time.After(pollInterval):
+				continue
+			}
+		}
+
+		// Got actual data — break out of the polling loop
+		break
 	}
 
 	// Parse the Cube API response
