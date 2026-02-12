@@ -1987,6 +1987,50 @@ func TestHandleTagValuesContinueWaitContextCancelled(t *testing.T) {
 	}
 }
 
+func TestHandleTagValuesForwardsCubeErrorStatusAndBody(t *testing.T) {
+	// Non-200 responses from Cube /v1/load should be forwarded as-is so the
+	// frontend receives the original status and error payload.
+	expectedBody := `{"error":"Too many requests"}`
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusTooManyRequests)
+		_, _ = fmt.Fprintln(w, expectedBody)
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL}
+
+	req := &backend.CallResourceRequest{
+		Path:   "tag-values",
+		Method: "GET",
+		URL:    "/tag-values?key=orders.status",
+		PluginContext: backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+				JSONData:                []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				DecryptedSecureJSONData: map[string]string{},
+			},
+		},
+	}
+
+	var capturedResponse *backend.CallResourceResponse
+	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+		capturedResponse = res
+		return nil
+	})
+
+	err := ds.handleTagValues(context.Background(), req, sender)
+	if err != nil {
+		t.Fatalf("Handler returned error: %v", err)
+	}
+
+	if capturedResponse.Status != http.StatusTooManyRequests {
+		t.Fatalf("Expected status %d, got %d. Body: %s", http.StatusTooManyRequests, capturedResponse.Status, string(capturedResponse.Body))
+	}
+	if strings.TrimSpace(string(capturedResponse.Body)) != expectedBody {
+		t.Fatalf("Expected body %s, got %s", expectedBody, string(capturedResponse.Body))
+	}
+}
+
 func TestFetchCubeMetadataWithInvalidURL(t *testing.T) {
 	ds := &Datasource{}
 
