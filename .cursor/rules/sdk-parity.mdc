@@ -1,0 +1,38 @@
+---
+title: Cube SDK Parity Rules
+description: Keep Go backend behavior aligned with Cube JS SDK semantics
+globs:
+  - "pkg/plugin/**/*.go"
+alwaysApply: true
+---
+
+## Cube SDK Parity Rules
+
+This datasource backend is implemented in Go, but protocol semantics are primarily
+defined by Cube's JavaScript SDK (`@cubejs-client/core`) and Cube REST docs.
+
+## Default policy
+
+**Mirror Cube SDK behavior by default** for protocol-level behavior unless there is
+a clear Grafana/backend reason to diverge.
+
+## Required checks before implementing protocol changes
+
+When changing behavior around Cube API calls (for example `/v1/load`, retries,
+timeouts, cancellation, status/error handling, progress fields):
+
+1. Check current behavior in:
+   - Cube JS SDK (`packages/cubejs-client-core/src/index.ts` in `../cube`)
+   - Cube REST API docs (`../cube/docs/pages/product/apis-integrations/rest-api.mdx`)
+2. Compare existing plugin behavior in `pkg/plugin/datasource.go`.
+3. If intentionally diverging from SDK behavior, document:
+   - why divergence is needed,
+   - expected user impact,
+   - test coverage proving the intended behavior.
+
+## Testing expectations
+
+- Prefer behavior-focused tests (success/error/cancel paths), not timing-sensitive assertions.
+- Keep protocol tests deterministic and minimal.
+- If SDK behavior changes implementation choices, update comments so they explicitly state
+  SDK alignment or intentional divergence.

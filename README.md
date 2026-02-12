@@ -124,6 +124,20 @@ Cube is a semantic layer that sits between your data warehouse and your applicat
    go mod tidy
    ```
 
+### Cube SDK parity guidance
+
+This plugin backend is written in Go, but Cube protocol semantics are primarily
+defined by Cube's JavaScript SDK (`@cubejs-client/core`) and Cube REST docs.
+
+When changing protocol-level behavior (for example `/v1/load` handling, retry
+behavior, timeout/cancellation semantics, status/error mapping, progress fields):
+
+- Check Cube JS SDK behavior first (local path: `../cube/packages/cubejs-client-core/src/index.ts`)
+- Check Cube REST docs (local path: `../cube/docs/pages/product/apis-integrations/rest-api.mdx`)
+- Mirror SDK behavior by default unless there is a clear Grafana/backend reason to diverge
+- If intentionally diverging, document rationale and user impact in the PR and add tests
+  that explicitly cover the divergence
+
 ### Development Workflow (Recommended)
 
 For the best development experience with automatic reloading of both frontend and backend changes:
