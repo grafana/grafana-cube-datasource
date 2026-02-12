@@ -359,6 +359,8 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 	}
 
 	var body []byte
+	pollStart := time.Now()
+	pollRetries := 0
 	for {
 		// Create a fresh HTTP request for each attempt (reusing a request after
 		// the body has been read is not safe).
@@ -396,7 +398,11 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 
 		// Check for Cube's "Continue wait" response
 		if isContinueWait(body) {
-			backend.Logger.Debug("Cube returned 'Continue wait', polling again", "refId", query.RefID)
+			if pollRetries == 0 {
+				backend.Logger.Info("Cube query not yet ready, polling for results", "refId", query.RefID)
+			}
+			pollRetries++
+			backend.Logger.Debug("Cube returned 'Continue wait', polling again", "refId", query.RefID, "attempt", pollRetries)
 			select {
 			case <-ctx.Done():
 				return backend.ErrDataResponse(backend.StatusInternal, "Query cancelled while waiting for Cube to compute results")
@@ -407,6 +413,10 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 
 		// Got actual data — break out of the polling loop
 		break
+	}
+
+	if pollRetries > 0 {
+		backend.Logger.Info("Cube query results ready after polling", "refId", query.RefID, "retries", pollRetries, "duration", time.Since(pollStart).Round(time.Millisecond))
 	}
 
 	// cubeQuery was already parsed earlier for validation
