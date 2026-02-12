@@ -51,20 +51,24 @@ export function QueryEditor({
     .filter((option): option is MetadataOption => option !== undefined);
 
   const filteredDimensions = useMemo(() => {
-    if (!query.views?.length) {
+    if (!selectedViews.length) {
       return metadata.dimensions;
     }
 
-    return metadata.dimensions.filter((option) => query.views?.some((view) => option.value.startsWith(`${view}.`)));
-  }, [metadata.dimensions, query.views]);
+    return metadata.dimensions.filter((option) =>
+      selectedViews.some((view) => option.value.startsWith(`${view.value}.`))
+    );
+  }, [metadata.dimensions, selectedViews]);
 
   const filteredMeasures = useMemo(() => {
-    if (!query.views?.length) {
+    if (!selectedViews.length) {
       return metadata.measures;
     }
 
-    return metadata.measures.filter((option) => query.views?.some((view) => option.value.startsWith(`${view}.`)));
-  }, [metadata.measures, query.views]);
+    return metadata.measures.filter((option) =>
+      selectedViews.some((view) => option.value.startsWith(`${view.value}.`))
+    );
+  }, [metadata.measures, selectedViews]);
   const currentLimit = query.limit ?? '';
 
   // All selected dimensions and measures with their labels (for OrderBy component)
