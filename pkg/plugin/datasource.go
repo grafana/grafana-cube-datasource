@@ -50,10 +50,10 @@ type jwtCacheEntry struct {
 const (
 	// defaultContinueWaitPollInterval is the maximum poll interval used for
 	// Cube "Continue wait" retries after adaptive backoff ramps up.
-	defaultContinueWaitPollInterval = 500 * time.Millisecond
+	defaultContinueWaitPollInterval = 5 * time.Second
 	// initialContinueWaitPollInterval is the first poll interval used when
 	// no explicit override is configured.
-	initialContinueWaitPollInterval = 100 * time.Millisecond
+	initialContinueWaitPollInterval = 500 * time.Millisecond
 )
 
 // Datasource is an example datasource which can respond to data queries, reports
@@ -812,15 +812,20 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, requestURL string, c
 }
 
 // adaptiveContinueWaitPollInterval returns the base backoff interval for a
-// given retry number (1-indexed), capped at 500 milliseconds.
+// given retry number (1-indexed), capped at 5 seconds.
+// Schedule: 500ms, 1s, 2s, 3s, then 5s cap.
 func adaptiveContinueWaitPollInterval(retry int) time.Duration {
 	switch {
 	case retry <= 1:
-		return initialContinueWaitPollInterval
+		return initialContinueWaitPollInterval // 500ms
 	case retry == 2:
-		return 250 * time.Millisecond
+		return 1 * time.Second
+	case retry == 3:
+		return 2 * time.Second
+	case retry == 4:
+		return 3 * time.Second
 	default:
-		return defaultContinueWaitPollInterval
+		return defaultContinueWaitPollInterval // 5s
 	}
 }
 
