@@ -230,7 +230,7 @@ func TestQueryDataContinueWaitThenSuccess(t *testing.T) {
 	}))
 	defer server.Close()
 
-	ds := Datasource{BaseURL: server.URL, ContinueWaitPollInterval: 10 * time.Millisecond}
+	ds := Datasource{BaseURL: server.URL, continueWaitPollIntervalOverride: 10 * time.Millisecond}
 
 	queryJSON, _ := json.Marshal(map[string]interface{}{
 		"refId":    "A",
@@ -280,7 +280,7 @@ func TestQueryDataContinueWaitContextCancelled(t *testing.T) {
 	}))
 	defer server.Close()
 
-	ds := Datasource{BaseURL: server.URL, ContinueWaitPollInterval: 10 * time.Millisecond}
+	ds := Datasource{BaseURL: server.URL, continueWaitPollIntervalOverride: 10 * time.Millisecond}
 
 	queryJSON, _ := json.Marshal(map[string]interface{}{
 		"refId":    "A",
@@ -377,7 +377,7 @@ func TestQueryDataContinueWaitCancelledIncludesElapsedTime(t *testing.T) {
 	}))
 	defer server.Close()
 
-	ds := Datasource{BaseURL: server.URL, ContinueWaitPollInterval: 10 * time.Millisecond}
+	ds := Datasource{BaseURL: server.URL, continueWaitPollIntervalOverride: 10 * time.Millisecond}
 
 	queryJSON, _ := json.Marshal(map[string]interface{}{
 		"refId":    "A",
@@ -1889,7 +1889,7 @@ func TestHandleTagValuesContinueWaitThenSuccess(t *testing.T) {
 
 	ds := Datasource{
 		BaseURL:                  server.URL,
-		ContinueWaitPollInterval: 10 * time.Millisecond,
+		continueWaitPollIntervalOverride: 10 * time.Millisecond,
 	}
 
 	req := &backend.CallResourceRequest{
@@ -1945,7 +1945,7 @@ func TestHandleTagValuesContinueWaitContextCancelled(t *testing.T) {
 
 	ds := Datasource{
 		BaseURL:                  server.URL,
-		ContinueWaitPollInterval: 10 * time.Millisecond,
+		continueWaitPollIntervalOverride: 10 * time.Millisecond,
 	}
 
 	req := &backend.CallResourceRequest{

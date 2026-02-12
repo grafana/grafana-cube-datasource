@@ -52,10 +52,10 @@ type Datasource struct {
 	// BaseURL allows overriding the Cube API URL for testing
 	BaseURL string
 
-	// ContinueWaitPollInterval overrides the polling interval for "Continue wait"
-	// responses. Zero means retry immediately (SDK-compatible behavior).
-	// Intended for testing.
-	ContinueWaitPollInterval time.Duration
+	// continueWaitPollIntervalOverride is an internal test hook for controlling
+	// the wait between "Continue wait" retries. Zero means retry immediately
+	// (SDK-compatible behavior).
+	continueWaitPollIntervalOverride time.Duration
 
 	// JWT cache keyed by API secret
 	jwtCache      map[string]jwtCacheEntry
@@ -774,7 +774,7 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, requestURL string, c
 				"url", requestURL, "attempt", pollRetries,
 				"stage", progress.Stage, "cubeTimeElapsed", progress.TimeElapsed)
 
-			waitInterval := d.ContinueWaitPollInterval
+			waitInterval := d.continueWaitPollIntervalOverride
 			if waitInterval <= 0 {
 				select {
 				case <-ctx.Done():
