@@ -313,6 +313,60 @@ func TestQueryDataContinueWaitContextCancelled(t *testing.T) {
 	}
 }
 
+func TestQueryDataHTTPTimeoutWrapped(t *testing.T) {
+	// When an HTTP request to Cube times out (context deadline exceeded), the
+	// error message should be wrapped with helpful context rather than showing
+	// a raw Go error like "context deadline exceeded".
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Simulate a slow response that will exceed the context deadline
+		time.Sleep(200 * time.Millisecond)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(CubeAPIResponse{
+			Data: []map[string]interface{}{{"orders.count": "5"}},
+		})
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL}
+
+	queryJSON, _ := json.Marshal(map[string]interface{}{
+		"refId":    "A",
+		"measures": []string{"orders.count"},
+	})
+
+	// Context that expires before the server responds
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+
+	resp, err := ds.QueryData(
+		ctx,
+		&backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				},
+			},
+			Queries: []backend.DataQuery{
+				{RefID: "A", JSON: queryJSON},
+			},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result := resp.Responses["A"]
+	if result.Error == nil {
+		t.Fatal("Expected an error when HTTP request times out")
+	}
+
+	// The error should mention "timed out" — not just raw "context deadline exceeded"
+	errMsg := result.Error.Error()
+	if !strings.Contains(errMsg, "timed out") {
+		t.Errorf("Expected timeout error to mention 'timed out', got: %s", errMsg)
+	}
+}
+
 func TestQueryDataWithMultipleDimensions(t *testing.T) {
 	// Create a mock server that returns expected test data with multiple dimensions
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

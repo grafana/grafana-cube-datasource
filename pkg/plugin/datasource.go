@@ -3,6 +3,7 @@ package plugin
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -737,6 +738,10 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, requestURL string, c
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				elapsed := time.Since(pollStart).Round(time.Millisecond)
+				return nil, fmt.Errorf("Cube API request timed out after %s (the upstream warehouse may still be computing)", elapsed)
+			}
 			return nil, fmt.Errorf("failed to make API request: %w", err)
 		}
 
