@@ -3,6 +3,7 @@ package plugin
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -195,6 +196,227 @@ func TestQueryDataWithCubeQuery(t *testing.T) {
 
 	if actualAge != float64(26) || actualCount != float64(514) {
 		t.Fatalf("Expected values: orders.users_age=26, orders.count=514, got: orders.users_age=%f, orders.count=%f", actualAge, actualCount)
+	}
+}
+
+func TestQueryDataContinueWaitThenSuccess(t *testing.T) {
+	// Cube returns {"error": "Continue wait"} (HTTP 200) when query results
+	// aren't cached yet. The plugin must poll until data is ready.
+	requestCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount++
+		w.Header().Set("Content-Type", "application/json")
+
+		if requestCount <= 2 {
+			// First two requests: Cube is still computing
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+				"error": "Continue wait",
+			})
+			return
+		}
+
+		// Third request: data is ready
+		_ = json.NewEncoder(w).Encode(CubeAPIResponse{
+			Data: []map[string]interface{}{
+				{"orders.count": "42"},
+			},
+			Annotation: CubeAnnotation{
+				Measures:       map[string]CubeFieldInfo{"orders.count": {Title: "Count", ShortTitle: "Count", Type: "number"}},
+				Dimensions:     map[string]CubeFieldInfo{},
+				Segments:       map[string]CubeFieldInfo{},
+				TimeDimensions: map[string]CubeFieldInfo{},
+			},
+		})
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL, ContinueWaitPollInterval: 10 * time.Millisecond}
+
+	queryJSON, _ := json.Marshal(map[string]interface{}{
+		"refId":    "A",
+		"measures": []string{"orders.count"},
+	})
+
+	resp, err := ds.QueryData(
+		context.Background(),
+		&backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				},
+			},
+			Queries: []backend.DataQuery{
+				{RefID: "A", JSON: queryJSON},
+			},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result := resp.Responses["A"]
+	if result.Error != nil {
+		t.Fatalf("Expected no error, got: %v", result.Error)
+	}
+	if len(result.Frames) != 1 {
+		t.Fatalf("Expected 1 frame, got %d", len(result.Frames))
+	}
+	if result.Frames[0].Fields[0].Len() != 1 {
+		t.Fatalf("Expected 1 row, got %d", result.Frames[0].Fields[0].Len())
+	}
+	if requestCount != 3 {
+		t.Fatalf("Expected 3 requests (2 continue-wait + 1 success), got %d", requestCount)
+	}
+}
+
+func TestQueryDataContinueWaitContextCancelled(t *testing.T) {
+	// If the context is cancelled while polling, the plugin should return an error
+	// rather than hanging forever.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"error": "Continue wait",
+		})
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL, ContinueWaitPollInterval: 10 * time.Millisecond}
+
+	queryJSON, _ := json.Marshal(map[string]interface{}{
+		"refId":    "A",
+		"measures": []string{"orders.count"},
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+
+	resp, err := ds.QueryData(
+		ctx,
+		&backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				},
+			},
+			Queries: []backend.DataQuery{
+				{RefID: "A", JSON: queryJSON},
+			},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result := resp.Responses["A"]
+	if result.Error == nil {
+		t.Fatal("Expected an error when context is cancelled during continue-wait polling")
+	}
+}
+
+func TestQueryDataHTTPTimeoutWrapped(t *testing.T) {
+	// When an HTTP request to Cube times out (context deadline exceeded), the
+	// error message should be wrapped with helpful context rather than showing
+	// a raw Go error like "context deadline exceeded".
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Simulate a slow response that will exceed the context deadline
+		time.Sleep(200 * time.Millisecond)
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(CubeAPIResponse{
+			Data: []map[string]interface{}{{"orders.count": "5"}},
+		})
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL}
+
+	queryJSON, _ := json.Marshal(map[string]interface{}{
+		"refId":    "A",
+		"measures": []string{"orders.count"},
+	})
+
+	// Context that expires before the server responds
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+
+	resp, err := ds.QueryData(
+		ctx,
+		&backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				},
+			},
+			Queries: []backend.DataQuery{
+				{RefID: "A", JSON: queryJSON},
+			},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result := resp.Responses["A"]
+	if result.Error == nil {
+		t.Fatal("Expected an error when HTTP request times out")
+	}
+
+	// The error should mention "timed out" — not just raw "context deadline exceeded"
+	errMsg := result.Error.Error()
+	if !strings.Contains(errMsg, "timed out") {
+		t.Errorf("Expected timeout error to mention 'timed out', got: %s", errMsg)
+	}
+}
+
+func TestQueryDataContinueWaitCancelledIncludesElapsedTime(t *testing.T) {
+	// When the context is cancelled during "Continue wait" polling, the error
+	// should include the timeElapsed from the last Cube response so users know
+	// how long the upstream warehouse had been computing.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprintln(w, `{"error": "Continue wait", "stage": "Executing query", "timeElapsed": 25}`)
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL, ContinueWaitPollInterval: 10 * time.Millisecond}
+
+	queryJSON, _ := json.Marshal(map[string]interface{}{
+		"refId":    "A",
+		"measures": []string{"orders.count"},
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+
+	resp, err := ds.QueryData(
+		ctx,
+		&backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				},
+			},
+			Queries: []backend.DataQuery{
+				{RefID: "A", JSON: queryJSON},
+			},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result := resp.Responses["A"]
+	if result.Error == nil {
+		t.Fatal("Expected an error when context is cancelled during continue-wait polling")
+	}
+
+	errMsg := result.Error.Error()
+	// Should mention the elapsed time from Cube's response
+	if !strings.Contains(errMsg, "25") {
+		t.Errorf("Expected error to include timeElapsed (25), got: %s", errMsg)
+	}
+	// Should mention the stage
+	if !strings.Contains(errMsg, "Executing query") {
+		t.Errorf("Expected error to include stage ('Executing query'), got: %s", errMsg)
 	}
 }
 
@@ -1636,6 +1858,176 @@ func TestHandleTagValuesEmptyResponse(t *testing.T) {
 
 	if len(tagValues) != 0 {
 		t.Errorf("Expected 0 tag values, got %d", len(tagValues))
+	}
+}
+
+func TestHandleTagValuesContinueWaitThenSuccess(t *testing.T) {
+	// Cube returns {"error": "Continue wait"} (HTTP 200) when query results
+	// aren't cached yet. The shared doCubeLoadRequest helper should poll until
+	// data arrives, meaning handleTagValues should also retry transparently.
+	requestCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount++
+		w.Header().Set("Content-Type", "application/json")
+		if requestCount <= 2 {
+			// First two requests: Cube is still computing
+			_, _ = fmt.Fprintln(w, `{"error": "Continue wait"}`)
+			return
+		}
+		// Third request: data is ready
+		response := CubeAPIResponse{
+			Data: []map[string]interface{}{
+				{"orders.status": "completed"},
+				{"orders.status": "pending"},
+			},
+		}
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Errorf("Failed to encode response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	ds := Datasource{
+		BaseURL:                  server.URL,
+		ContinueWaitPollInterval: 10 * time.Millisecond,
+	}
+
+	req := &backend.CallResourceRequest{
+		Path:   "tag-values",
+		Method: "GET",
+		URL:    "/tag-values?key=orders.status",
+		PluginContext: backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+				JSONData:                []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				DecryptedSecureJSONData: map[string]string{},
+			},
+		},
+	}
+
+	var capturedResponse *backend.CallResourceResponse
+	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+		capturedResponse = res
+		return nil
+	})
+
+	err := ds.handleTagValues(context.Background(), req, sender)
+	if err != nil {
+		t.Fatalf("Handler returned error: %v", err)
+	}
+
+	if capturedResponse.Status != 200 {
+		t.Fatalf("Expected status 200, got %d. Body: %s", capturedResponse.Status, string(capturedResponse.Body))
+	}
+
+	// Verify we actually polled (3 requests total)
+	if requestCount != 3 {
+		t.Errorf("Expected 3 requests (2 continue-wait + 1 success), got %d", requestCount)
+	}
+
+	// Verify correct tag values were returned
+	var tagValues []TagValue
+	if err := json.Unmarshal(capturedResponse.Body, &tagValues); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+	if len(tagValues) != 2 {
+		t.Errorf("Expected 2 tag values, got %d", len(tagValues))
+	}
+}
+
+func TestHandleTagValuesContinueWaitContextCancelled(t *testing.T) {
+	// If the context is cancelled while polling, handleTagValues should
+	// return an error response to the sender, not hang forever.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprintln(w, `{"error": "Continue wait"}`)
+	}))
+	defer server.Close()
+
+	ds := Datasource{
+		BaseURL:                  server.URL,
+		ContinueWaitPollInterval: 10 * time.Millisecond,
+	}
+
+	req := &backend.CallResourceRequest{
+		Path:   "tag-values",
+		Method: "GET",
+		URL:    "/tag-values?key=orders.status",
+		PluginContext: backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+				JSONData:                []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				DecryptedSecureJSONData: map[string]string{},
+			},
+		},
+	}
+
+	var capturedResponse *backend.CallResourceResponse
+	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+		capturedResponse = res
+		return nil
+	})
+
+	// Create a context that cancels after a short time
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+
+	err := ds.handleTagValues(ctx, req, sender)
+	if err != nil {
+		t.Fatalf("Handler returned error: %v", err)
+	}
+
+	// The response should be an error because we cancelled while waiting
+	if capturedResponse.Status != 500 {
+		t.Fatalf("Expected status 500 (context cancelled), got %d. Body: %s", capturedResponse.Status, string(capturedResponse.Body))
+	}
+
+	// The context expired via WithTimeout (deadline), so the message should say "timed out"
+	responseBody := string(capturedResponse.Body)
+	if !strings.Contains(responseBody, "timed out") {
+		t.Errorf("Expected error about timeout, got: %s", responseBody)
+	}
+}
+
+func TestHandleTagValuesForwardsCubeErrorStatusAndBody(t *testing.T) {
+	// Non-200 responses from Cube /v1/load should be forwarded as-is so the
+	// frontend receives the original status and error payload.
+	expectedBody := `{"error":"Too many requests"}`
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusTooManyRequests)
+		_, _ = fmt.Fprintln(w, expectedBody)
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL}
+
+	req := &backend.CallResourceRequest{
+		Path:   "tag-values",
+		Method: "GET",
+		URL:    "/tag-values?key=orders.status",
+		PluginContext: backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+				JSONData:                []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				DecryptedSecureJSONData: map[string]string{},
+			},
+		},
+	}
+
+	var capturedResponse *backend.CallResourceResponse
+	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+		capturedResponse = res
+		return nil
+	})
+
+	err := ds.handleTagValues(context.Background(), req, sender)
+	if err != nil {
+		t.Fatalf("Handler returned error: %v", err)
+	}
+
+	if capturedResponse.Status != http.StatusTooManyRequests {
+		t.Fatalf("Expected status %d, got %d. Body: %s", http.StatusTooManyRequests, capturedResponse.Status, string(capturedResponse.Body))
+	}
+	if strings.TrimSpace(string(capturedResponse.Body)) != expectedBody {
+		t.Fatalf("Expected body %s, got %s", expectedBody, string(capturedResponse.Body))
 	}
 }
 
