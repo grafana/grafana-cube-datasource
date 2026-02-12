@@ -229,7 +229,7 @@ func TestQueryDataContinueWaitThenSuccess(t *testing.T) {
 	}))
 	defer server.Close()
 
-	ds := Datasource{BaseURL: server.URL}
+	ds := Datasource{BaseURL: server.URL, ContinueWaitPollInterval: 10 * time.Millisecond}
 
 	queryJSON, _ := json.Marshal(map[string]interface{}{
 		"refId":    "A",
@@ -279,14 +279,14 @@ func TestQueryDataContinueWaitContextCancelled(t *testing.T) {
 	}))
 	defer server.Close()
 
-	ds := Datasource{BaseURL: server.URL}
+	ds := Datasource{BaseURL: server.URL, ContinueWaitPollInterval: 10 * time.Millisecond}
 
 	queryJSON, _ := json.Marshal(map[string]interface{}{
 		"refId":    "A",
 		"measures": []string{"orders.count"},
 	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
 
 	resp, err := ds.QueryData(

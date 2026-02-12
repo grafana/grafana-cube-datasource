@@ -70,11 +70,20 @@ type jwtCacheEntry struct {
 	expiration time.Time
 }
 
+// defaultContinueWaitPollInterval is the default time to wait between retries
+// when Cube returns a "Continue wait" response.  Matches the @cubejs-client/core
+// default of 5 seconds.
+const defaultContinueWaitPollInterval = 5 * time.Second
+
 // Datasource is an example datasource which can respond to data queries, reports
 // its health and has streaming skills.
 type Datasource struct {
 	// BaseURL allows overriding the Cube API URL for testing
 	BaseURL string
+
+	// ContinueWaitPollInterval overrides the polling interval for "Continue wait"
+	// responses.  Zero means use the default (5s).  Intended for testing.
+	ContinueWaitPollInterval time.Duration
 
 	// JWT cache keyed by API secret
 	jwtCache      map[string]jwtCacheEntry
@@ -374,56 +383,79 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 	})
 	// #endregion
 
-	// Create HTTP request
-	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
-	if err != nil {
-		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("Failed to create request: %v", err))
+	// Poll Cube API, retrying on "Continue wait" responses.
+	// Cube returns {"error": "Continue wait"} (HTTP 200) when query results aren't
+	// cached yet (e.g. BigQuery is still computing). The client must poll until the
+	// data is ready, matching the behavior of the official @cubejs-client/core SDK.
+	pollInterval := d.ContinueWaitPollInterval
+	if pollInterval == 0 {
+		pollInterval = defaultContinueWaitPollInterval
 	}
 
-	if err := d.addAuthHeaders(req, apiReq.Config); err != nil {
-		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("Failed to add auth headers: %v", err))
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	// Make the HTTP request
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("Failed to make API request: %v", err))
-	}
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			backend.Logger.Warn("Failed to close response body", "error", err)
+	var body []byte
+	for {
+		// Create a fresh HTTP request for each attempt (reusing a request after
+		// the body has been read is not safe).
+		req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
+		if err != nil {
+			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("Failed to create request: %v", err))
 		}
-	}()
 
-	// Check response status
-	if resp.StatusCode != http.StatusOK {
-		// Read the error response body for debugging
-		errorBody, _ := io.ReadAll(resp.Body)
-		backend.Logger.Error("API request failed", "status", resp.StatusCode, "response", string(errorBody), "url", u.String())
-		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("API request failed with status: %d, response: %s", resp.StatusCode, string(errorBody)))
-	}
+		if err := d.addAuthHeaders(req, apiReq.Config); err != nil {
+			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("Failed to add auth headers: %v", err))
+		}
+		req.Header.Set("Content-Type", "application/json")
 
-	// Read response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("Failed to read response body: %v", err))
-	}
+		// Make the HTTP request
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("Failed to make API request: %v", err))
+		}
 
-	// #region agent log
-	bodyPreview := string(body)
-	if len(bodyPreview) > 500 {
-		bodyPreview = bodyPreview[:500] + "...(truncated)"
+		// Check response status
+		if resp.StatusCode != http.StatusOK {
+			errorBody, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			backend.Logger.Error("API request failed", "status", resp.StatusCode, "response", string(errorBody), "url", u.String())
+			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("API request failed with status: %d, response: %s", resp.StatusCode, string(errorBody)))
+		}
+
+		// Read response body
+		body, err = io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("Failed to read response body: %v", err))
+		}
+
+		// #region agent log
+		bodyPreview := string(body)
+		if len(bodyPreview) > 500 {
+			bodyPreview = bodyPreview[:500] + "...(truncated)"
+		}
+		debugLog("datasource.go:raw-response", "Raw response from Cube API", map[string]interface{}{
+			"hypothesisId": "H1-H4",
+			"httpStatus":   resp.StatusCode,
+			"bodyLength":   len(body),
+			"bodyPreview":  bodyPreview,
+			"refId":        query.RefID,
+		})
+		// #endregion
+
+		// Check for Cube's "Continue wait" response
+		if isContinueWait(body) {
+			backend.Logger.Debug("Cube returned 'Continue wait', polling again", "refId", query.RefID)
+			select {
+			case <-ctx.Done():
+				return backend.ErrDataResponse(backend.StatusInternal, "Query cancelled while waiting for Cube to compute results")
+			case <-time.After(pollInterval):
+				continue
+			}
+		}
+
+		// Got actual data — break out of the polling loop
+		break
 	}
-	debugLog("datasource.go:raw-response", "Raw response from Cube API", map[string]interface{}{
-		"hypothesisId":   "H1-H4",
-		"httpStatus":     resp.StatusCode,
-		"bodyLength":     len(body),
-		"bodyPreview":    bodyPreview,
-		"refId":          query.RefID,
-	})
-	// #endregion
 
 	// cubeQuery was already parsed earlier for validation
 
@@ -804,6 +836,20 @@ func (d *Datasource) convertToNumber(value interface{}) interface{} {
 		// For any other type, return as is
 		return v
 	}
+}
+
+// isContinueWait checks whether a Cube API response body is a "Continue wait"
+// polling response. Cube returns {"error": "Continue wait"} (HTTP 200) when
+// the query result is not yet ready (e.g. the upstream warehouse is still
+// computing). The caller is expected to retry until actual data arrives.
+func isContinueWait(body []byte) bool {
+	var probe struct {
+		Error string `json:"error"`
+	}
+	if err := json.Unmarshal(body, &probe); err != nil {
+		return false
+	}
+	return probe.Error == "Continue wait"
 }
 
 // CubeAPIResponse represents the response structure from Cube API
