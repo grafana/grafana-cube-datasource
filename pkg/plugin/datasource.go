@@ -718,7 +718,7 @@ func (e *CubeAPIError) Error() string {
 // doCubeLoadRequest makes a GET request to Cube's /v1/load endpoint, handling the
 // "Continue wait" polling protocol. Cube returns {"error": "Continue wait"} (HTTP 200)
 // when query results aren't cached yet (e.g. the upstream warehouse is still computing).
-// This method polls until actual data arrives or the context is cancelled, matching the
+// This method retries immediately until actual data arrives or the context is cancelled, matching the
 // behavior of the official @cubejs-client/core SDK.
 func (d *Datasource) doCubeLoadRequest(ctx context.Context, requestURL string, config *models.PluginSettings) ([]byte, error) {
 	pollStart := time.Now()
