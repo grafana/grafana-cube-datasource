@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.3 (2026-02-12)
+
+### Fixed in 0.1.3
+
+- Externalize `react/jsx-runtime` and `react/jsx-dev-runtime` to keep frontend bundle behavior compatible with React 19
+- Remove invalid alerting receiver from local provisioning to unblock React 19 preview startup during validation
+
+### Changed in 0.1.3
+
+- Upgrade shared `plugin-ci-workflows` to `v6.0.0` so React 19 preview checks are included in CI by default
+
 ## 0.1.2 (2026-02-12)
 
 ### Fixed in 0.1.2
