@@ -1008,19 +1008,28 @@ func (d *Datasource) CallResource(ctx context.Context, req *backend.CallResource
 	}
 }
 
+func jsonErrorResponse(status int, err error) *backend.CallResourceResponse {
+	body, marshalErr := json.Marshal(map[string]string{"error": err.Error()})
+	if marshalErr != nil {
+		body = []byte(`{"error":"internal server error"}`)
+	}
+
+	return &backend.CallResourceResponse{
+		Status: status,
+		Body:   body,
+		Headers: map[string][]string{
+			"Content-Type": {"application/json"},
+		},
+	}
+}
+
 // handleMetadata returns dimensions and measures for the query builder
 func (d *Datasource) handleMetadata(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	// Fetch metadata from Cube API
 	metaResponse, err := d.fetchCubeMetadata(ctx, req.PluginContext)
 	if err != nil {
 		backend.Logger.Error("Failed to fetch cube metadata", "error", err)
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(`{"error": "failed to fetch metadata from Cube API"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(500, errors.New("failed to fetch metadata from Cube API")))
 	}
 
 	// Extract dimensions and measures from metadata
@@ -1030,13 +1039,7 @@ func (d *Datasource) handleMetadata(ctx context.Context, req *backend.CallResour
 	body, err := json.Marshal(metadata)
 	if err != nil {
 		backend.Logger.Error("Failed to marshal metadata response", "error", err)
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(`{"error": "failed to marshal response"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(500, errors.New("failed to marshal response")))
 	}
 
 	return sender.Send(&backend.CallResourceResponse{
@@ -1054,24 +1057,12 @@ func (d *Datasource) handleTagValues(ctx context.Context, req *backend.CallResou
 	// Parse the URL to get the key parameter
 	parsedURL, err := url.Parse(req.URL)
 	if err != nil {
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 400,
-			Body:   []byte(`{"error": "invalid URL"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(400, errors.New("invalid URL")))
 	}
 
 	key := parsedURL.Query().Get("key")
 	if key == "" {
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 400,
-			Body:   []byte(`{"error": "key parameter is required"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(400, errors.New("key parameter is required")))
 	}
 
 	// Build a Cube query to get distinct values for this dimension
@@ -1094,38 +1085,20 @@ func (d *Datasource) handleTagValues(ctx context.Context, req *backend.CallResou
 
 	cubeQueryJSON, err := json.Marshal(cubeQuery)
 	if err != nil {
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(`{"error": "failed to marshal query"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(500, errors.New("failed to marshal query")))
 	}
 
 	// Build API URL
 	apiReq, err := d.buildAPIURL(req.PluginContext, "load")
 	if err != nil {
 		backend.Logger.Error("Failed to build API URL for tag values", "error", err)
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(fmt.Sprintf(`{"error": "failed to build API URL: %s"}`, err.Error())),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(500, fmt.Errorf("failed to build API URL: %w", err)))
 	}
 
 	// Add query parameter
 	u, err := url.Parse(apiReq.URL.String())
 	if err != nil {
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(`{"error": "failed to parse API URL"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(500, errors.New("failed to parse API URL")))
 	}
 
 	params := url.Values{}
@@ -1148,27 +1121,14 @@ func (d *Datasource) handleTagValues(ctx context.Context, req *backend.CallResou
 			})
 		}
 		// For other errors (timeouts, network, etc.), return 500 with safely encoded JSON
-		errBody, _ := json.Marshal(map[string]string{"error": err.Error()})
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   errBody,
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(500, err))
 	}
 
 	// Parse the Cube API response
 	var apiResponse CubeAPIResponse
 	if err := json.Unmarshal(body, &apiResponse); err != nil {
 		backend.Logger.Error("Failed to parse Cube API response for tag values", "error", err, "body", string(body))
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(`{"error": "failed to parse API response"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(500, errors.New("failed to parse API response")))
 	}
 
 	// Extract unique values from the response data
@@ -1202,13 +1162,7 @@ func (d *Datasource) handleTagValues(ctx context.Context, req *backend.CallResou
 	// Marshal response
 	responseBody, err := json.Marshal(tagValues)
 	if err != nil {
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(`{"error": "failed to marshal response"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(500, errors.New("failed to marshal response")))
 	}
 
 	return sender.Send(&backend.CallResourceResponse{
@@ -1225,55 +1179,26 @@ func (d *Datasource) handleSQLCompilation(ctx context.Context, req *backend.Call
 	// Parse the URL to get query parameters
 	parsedURL, err := url.Parse(req.URL)
 	if err != nil {
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 400,
-			Body:   []byte(`{"error": "invalid URL"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(400, errors.New("invalid URL")))
 	}
 
 	// Get the query from URL parameters
 	queryParam := parsedURL.Query().Get("query")
 	if queryParam == "" {
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 400,
-			Body:   []byte(`{"error": "query parameter is required"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(400, errors.New("query parameter is required")))
 	}
 
 	// Validate that it's valid JSON
 	var cubeQuery CubeQuery
 	if err := json.Unmarshal([]byte(queryParam), &cubeQuery); err != nil {
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 400,
-			Body:   []byte(`{"error": "invalid query JSON"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(400, errors.New("invalid query JSON")))
 	}
 
 	// Fetch SQL from Cube API
 	sqlString, err := d.fetchCubeSQL(ctx, req.PluginContext, queryParam)
 	if err != nil {
 		backend.Logger.Error("Failed to fetch SQL from Cube", "error", err)
-		errorResponse := map[string]string{"error": err.Error()}
-		errorBody, marshalErr := json.Marshal(errorResponse)
-		if marshalErr != nil {
-			errorBody = []byte(`{"error": "internal server error"}`)
-		}
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   errorBody,
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(500, err))
 	}
 
 	// Return the SQL string
@@ -1281,13 +1206,7 @@ func (d *Datasource) handleSQLCompilation(ctx context.Context, req *backend.Call
 	responseBody, err := json.Marshal(sqlJSON)
 	if err != nil {
 		backend.Logger.Error("Failed to marshal SQL response", "error", err)
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(`{"error": "failed to marshal response"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(500, errors.New("failed to marshal response")))
 	}
 
 	return sender.Send(&backend.CallResourceResponse{
@@ -1449,26 +1368,14 @@ func (d *Datasource) handleModelFiles(ctx context.Context, req *backend.CallReso
 	modelFiles, err := d.fetchCubeModelFiles(ctx, req.PluginContext)
 	if err != nil {
 		backend.Logger.Error("Failed to fetch cube model files", "error", err)
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(`{"error": "failed to fetch model files from Cube API"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(500, errors.New("failed to fetch model files from Cube API")))
 	}
 
 	// Marshal response
 	body, err := json.Marshal(modelFiles)
 	if err != nil {
 		backend.Logger.Error("Failed to marshal model files response", "error", err)
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(`{"error": "failed to marshal response"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(500, errors.New("failed to marshal response")))
 	}
 
 	return sender.Send(&backend.CallResourceResponse{
@@ -1588,26 +1495,14 @@ func (d *Datasource) handleDbSchema(ctx context.Context, req *backend.CallResour
 	dbSchema, err := d.fetchCubeDbSchema(ctx, req.PluginContext)
 	if err != nil {
 		backend.Logger.Error("Failed to fetch cube database schema", "error", err)
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(`{"error": "failed to fetch database schema from Cube API"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(500, errors.New("failed to fetch database schema from Cube API")))
 	}
 
 	// Marshal response
 	body, err := json.Marshal(dbSchema)
 	if err != nil {
 		backend.Logger.Error("Failed to marshal database schema response", "error", err)
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(`{"error": "failed to marshal response"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(500, errors.New("failed to marshal response")))
 	}
 
 	return sender.Send(&backend.CallResourceResponse{
@@ -1690,52 +1585,28 @@ func (d *Datasource) fetchCubeDbSchema(ctx context.Context, pluginContext backen
 func (d *Datasource) handleGenerateSchema(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	// Only allow POST requests
 	if req.Method != "POST" {
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 405,
-			Body:   []byte(`{"error": "method not allowed"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(405, errors.New("method not allowed")))
 	}
 
 	// Parse request body
 	var generateSchemaReq GenerateSchemaRequest
 	if err := json.Unmarshal(req.Body, &generateSchemaReq); err != nil {
 		backend.Logger.Error("Failed to parse generate schema request", "error", err)
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 400,
-			Body:   []byte(`{"error": "invalid request body"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(400, errors.New("invalid request body")))
 	}
 
 	// Generate schema using Cube API
 	schemaResponse, err := d.fetchCubeGenerateSchema(ctx, req.PluginContext, &generateSchemaReq)
 	if err != nil {
 		backend.Logger.Error("Failed to generate cube schema", "error", err)
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(`{"error": "failed to generate schema from Cube API"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(500, errors.New("failed to generate schema from Cube API")))
 	}
 
 	// Marshal response
 	body, err := json.Marshal(schemaResponse)
 	if err != nil {
 		backend.Logger.Error("Failed to marshal generate schema response", "error", err)
-		return sender.Send(&backend.CallResourceResponse{
-			Status: 500,
-			Body:   []byte(`{"error": "failed to marshal response"}`),
-			Headers: map[string][]string{
-				"Content-Type": {"application/json"},
-			},
-		})
+		return sender.Send(jsonErrorResponse(500, errors.New("failed to marshal response")))
 	}
 
 	return sender.Send(&backend.CallResourceResponse{

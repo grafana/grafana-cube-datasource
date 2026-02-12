@@ -3,6 +3,7 @@ package plugin
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +17,29 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
+
+func TestJSONErrorResponseEscapesSpecialCharacters(t *testing.T) {
+	specialErr := errors.New("error with \"quotes\", backslash \\\\, and newline\nhere")
+	response := jsonErrorResponse(http.StatusInternalServerError, specialErr)
+
+	if response.Status != http.StatusInternalServerError {
+		t.Fatalf("Expected status %d, got %d", http.StatusInternalServerError, response.Status)
+	}
+
+	var payload map[string]string
+	if err := json.Unmarshal(response.Body, &payload); err != nil {
+		t.Fatalf("Expected valid JSON error body, got unmarshal error: %v (body: %s)", err, string(response.Body))
+	}
+
+	if payload["error"] != specialErr.Error() {
+		t.Fatalf("Expected error %q, got %q", specialErr.Error(), payload["error"])
+	}
+
+	contentType, ok := response.Headers["Content-Type"]
+	if !ok || len(contentType) != 1 || contentType[0] != "application/json" {
+		t.Fatalf("Expected Content-Type application/json, got %#v", response.Headers["Content-Type"])
+	}
+}
 
 func TestQueryData(t *testing.T) {
 	// Create a mock server that returns empty data for an empty query
