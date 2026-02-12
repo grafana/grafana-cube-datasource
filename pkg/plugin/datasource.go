@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -19,6 +20,30 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/framestruct"
 )
+
+// #region agent log
+const debugLogPath = "/root/grafana-cube-datasource/.cursor/debug.log"
+
+func debugLog(location, message string, data map[string]interface{}) {
+	entry := map[string]interface{}{
+		"timestamp":  time.Now().UnixMilli(),
+		"location":   location,
+		"message":    message,
+		"data":       data,
+	}
+	line, err := json.Marshal(entry)
+	if err != nil {
+		return
+	}
+	line = append(line, '\n')
+	f, err := os.OpenFile(debugLogPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	f.Write(line)
+}
+// #endregion
 
 // Make sure Datasource implements required interfaces. This is important to do
 // since otherwise we will only get a not implemented error response from plugin in
@@ -340,6 +365,15 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 	// Debug: Log what we're sending to the API
 	backend.Logger.Debug("Making API request", "url", u.String(), "cubeQuery", string(cubeAPIQueryJSON))
 
+	// #region agent log
+	debugLog("datasource.go:request", "Sending request to Cube API", map[string]interface{}{
+		"hypothesisId": "H1-H4",
+		"cubeQuery":    string(cubeAPIQueryJSON),
+		"url":          u.String(),
+		"refId":        query.RefID,
+	})
+	// #endregion
+
 	// Create HTTP request
 	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
 	if err != nil {
@@ -377,6 +411,20 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("Failed to read response body: %v", err))
 	}
 
+	// #region agent log
+	bodyPreview := string(body)
+	if len(bodyPreview) > 500 {
+		bodyPreview = bodyPreview[:500] + "...(truncated)"
+	}
+	debugLog("datasource.go:raw-response", "Raw response from Cube API", map[string]interface{}{
+		"hypothesisId":   "H1-H4",
+		"httpStatus":     resp.StatusCode,
+		"bodyLength":     len(body),
+		"bodyPreview":    bodyPreview,
+		"refId":          query.RefID,
+	})
+	// #endregion
+
 	// cubeQuery was already parsed earlier for validation
 
 	// Parse the API response
@@ -385,6 +433,14 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("Failed to parse API response: %v", err))
 	}
+
+	// #region agent log
+	debugLog("datasource.go:parsed-response", "Parsed Cube API response", map[string]interface{}{
+		"hypothesisId": "H1-H2",
+		"dataRowCount": len(apiResponse.Data),
+		"refId":        query.RefID,
+	})
+	// #endregion
 
 	// Convert string values to numbers based on type annotations
 	convertedData := d.convertDataTypes(apiResponse.Data, apiResponse.Annotation)
@@ -404,6 +460,22 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 
 	// Convert time dimension strings to proper time.Time values for better UI display
 	d.convertTimeDimensions(frame, apiResponse.Annotation)
+
+	// #region agent log
+	fieldLengths := make([]int, len(frame.Fields))
+	fieldNames := make([]string, len(frame.Fields))
+	for i, f := range frame.Fields {
+		fieldLengths[i] = f.Len()
+		fieldNames[i] = f.Name
+	}
+	debugLog("datasource.go:final-frame", "Final DataFrame returned to Grafana", map[string]interface{}{
+		"hypothesisId":  "H3-H4",
+		"fieldCount":    len(frame.Fields),
+		"fieldNames":    fieldNames,
+		"fieldLengths":  fieldLengths,
+		"refId":         query.RefID,
+	})
+	// #endregion
 
 	// add the frames to the response.
 	response.Frames = append(response.Frames, frame)
