@@ -198,6 +198,120 @@ func TestQueryDataWithCubeQuery(t *testing.T) {
 	}
 }
 
+func TestQueryDataContinueWaitThenSuccess(t *testing.T) {
+	// Cube returns {"error": "Continue wait"} (HTTP 200) when query results
+	// aren't cached yet. The plugin must poll until data is ready.
+	requestCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount++
+		w.Header().Set("Content-Type", "application/json")
+
+		if requestCount <= 2 {
+			// First two requests: Cube is still computing
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"error": "Continue wait",
+			})
+			return
+		}
+
+		// Third request: data is ready
+		json.NewEncoder(w).Encode(CubeAPIResponse{
+			Data: []map[string]interface{}{
+				{"orders.count": "42"},
+			},
+			Annotation: CubeAnnotation{
+				Measures:       map[string]CubeFieldInfo{"orders.count": {Title: "Count", ShortTitle: "Count", Type: "number"}},
+				Dimensions:     map[string]CubeFieldInfo{},
+				Segments:       map[string]CubeFieldInfo{},
+				TimeDimensions: map[string]CubeFieldInfo{},
+			},
+		})
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL}
+
+	queryJSON, _ := json.Marshal(map[string]interface{}{
+		"refId":    "A",
+		"measures": []string{"orders.count"},
+	})
+
+	resp, err := ds.QueryData(
+		context.Background(),
+		&backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				},
+			},
+			Queries: []backend.DataQuery{
+				{RefID: "A", JSON: queryJSON},
+			},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result := resp.Responses["A"]
+	if result.Error != nil {
+		t.Fatalf("Expected no error, got: %v", result.Error)
+	}
+	if len(result.Frames) != 1 {
+		t.Fatalf("Expected 1 frame, got %d", len(result.Frames))
+	}
+	if result.Frames[0].Fields[0].Len() != 1 {
+		t.Fatalf("Expected 1 row, got %d", result.Frames[0].Fields[0].Len())
+	}
+	if requestCount != 3 {
+		t.Fatalf("Expected 3 requests (2 continue-wait + 1 success), got %d", requestCount)
+	}
+}
+
+func TestQueryDataContinueWaitContextCancelled(t *testing.T) {
+	// If the context is cancelled while polling, the plugin should return an error
+	// rather than hanging forever.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"error": "Continue wait",
+		})
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL}
+
+	queryJSON, _ := json.Marshal(map[string]interface{}{
+		"refId":    "A",
+		"measures": []string{"orders.count"},
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+
+	resp, err := ds.QueryData(
+		ctx,
+		&backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				},
+			},
+			Queries: []backend.DataQuery{
+				{RefID: "A", JSON: queryJSON},
+			},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result := resp.Responses["A"]
+	if result.Error == nil {
+		t.Fatal("Expected an error when context is cancelled during continue-wait polling")
+	}
+}
+
 func TestQueryDataWithMultipleDimensions(t *testing.T) {
 	// Create a mock server that returns expected test data with multiple dimensions
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
