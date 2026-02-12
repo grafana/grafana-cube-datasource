@@ -76,7 +76,7 @@
       "options": {
         "barRadius": 0.05,
         "barWidth": 0.83,
-        "colorByField": "orders.raw_customers_first_name",
+        "colorByField": "raw_customers_first_name",
         "fullHighlight": false,
         "groupWidth": 0.7,
         "legend": {
@@ -373,7 +373,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "orders.raw_payments_total_amount"
+              "options": "measure(orders.raw_payments_total_amount)"
             },
             "properties": [
               {
