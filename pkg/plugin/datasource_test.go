@@ -1980,10 +1980,10 @@ func TestHandleTagValuesContinueWaitContextCancelled(t *testing.T) {
 		t.Fatalf("Expected status 500 (context cancelled), got %d. Body: %s", capturedResponse.Status, string(capturedResponse.Body))
 	}
 
-	// Verify the error message indicates cancellation
+	// The context expired via WithTimeout (deadline), so the message should say "timed out"
 	responseBody := string(capturedResponse.Body)
-	if !strings.Contains(responseBody, "cancelled") {
-		t.Errorf("Expected error about cancellation, got: %s", responseBody)
+	if !strings.Contains(responseBody, "timed out") {
+		t.Errorf("Expected error about timeout, got: %s", responseBody)
 	}
 }
 

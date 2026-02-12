@@ -711,6 +711,18 @@ func (d *Datasource) convertToNumber(value interface{}) interface{} {
 	}
 }
 
+// CubeAPIError represents a non-200 HTTP response from the Cube API.
+// It preserves the original status code and body so callers (e.g. handleTagValues)
+// can forward them to the frontend instead of collapsing everything to 500.
+type CubeAPIError struct {
+	StatusCode int
+	Body       []byte
+}
+
+func (e *CubeAPIError) Error() string {
+	return fmt.Sprintf("API request failed with status %d: %s", e.StatusCode, string(e.Body))
+}
+
 // doCubeLoadRequest makes a GET request to Cube's /v1/load endpoint, handling the
 // "Continue wait" polling protocol. Cube returns {"error": "Continue wait"} (HTTP 200)
 // when query results aren't cached yet (e.g. the upstream warehouse is still computing).
@@ -748,7 +760,7 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, requestURL string, c
 		if resp.StatusCode != http.StatusOK {
 			errorBody, _ := io.ReadAll(resp.Body)
 			resp.Body.Close()
-			return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(errorBody))
+			return nil, &CubeAPIError{StatusCode: resp.StatusCode, Body: errorBody}
 		}
 
 		body, err := io.ReadAll(resp.Body)
@@ -769,13 +781,18 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, requestURL string, c
 			backend.Logger.Debug("Cube returned 'Continue wait', polling again",
 				"url", requestURL, "attempt", pollRetries,
 				"stage", progress.Stage, "cubeTimeElapsed", progress.TimeElapsed)
-			select {
-			case <-ctx.Done():
-				msg := "query cancelled while waiting for Cube to compute results"
-				if progress.Stage != "" || progress.TimeElapsed > 0 {
-					msg = fmt.Sprintf("%s (stage: %s, Cube timeElapsed: %ds)", msg, progress.Stage, int(progress.TimeElapsed))
-				}
-				return nil, fmt.Errorf("%s", msg)
+		select {
+		case <-ctx.Done():
+			var msg string
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				msg = "Cube API request timed out while waiting for results to be computed"
+			} else {
+				msg = "query cancelled while waiting for Cube to compute results"
+			}
+			if progress.Stage != "" || progress.TimeElapsed > 0 {
+				msg = fmt.Sprintf("%s (stage: %s, Cube timeElapsed: %ds)", msg, progress.Stage, int(progress.TimeElapsed))
+			}
+			return nil, fmt.Errorf("%s", msg)
 			case <-time.After(pollInterval):
 				continue
 			}
@@ -1117,9 +1134,22 @@ func (d *Datasource) handleTagValues(ctx context.Context, req *backend.CallResou
 	body, err := d.doCubeLoadRequest(ctx, u.String(), apiReq.Config)
 	if err != nil {
 		backend.Logger.Error("Failed to fetch tag values from Cube API", "error", err)
+		// If this is a Cube API error (non-200), forward the original status code and body
+		var cubeErr *CubeAPIError
+		if errors.As(err, &cubeErr) {
+			return sender.Send(&backend.CallResourceResponse{
+				Status: cubeErr.StatusCode,
+				Body:   cubeErr.Body,
+				Headers: map[string][]string{
+					"Content-Type": {"application/json"},
+				},
+			})
+		}
+		// For other errors (timeouts, network, etc.), return 500 with safely encoded JSON
+		errBody, _ := json.Marshal(map[string]string{"error": err.Error()})
 		return sender.Send(&backend.CallResourceResponse{
 			Status: 500,
-			Body:   []byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())),
+			Body:   errBody,
 			Headers: map[string][]string{
 				"Content-Type": {"application/json"},
 			},
