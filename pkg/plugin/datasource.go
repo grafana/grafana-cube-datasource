@@ -747,6 +747,13 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, requestURL string, c
 				}
 				return nil, fmt.Errorf("%s", msg)
 			}
+			if errors.Is(err, context.Canceled) {
+				msg := "query cancelled while waiting for Cube to compute results"
+				if haveContinueWaitProgress && (lastContinueWaitProgress.Stage != "" || lastContinueWaitProgress.TimeElapsed > 0) {
+					msg = fmt.Sprintf("%s (stage: %s, Cube timeElapsed: %ds)", msg, lastContinueWaitProgress.Stage, int(lastContinueWaitProgress.TimeElapsed))
+				}
+				return nil, fmt.Errorf("%s", msg)
+			}
 			return nil, fmt.Errorf("failed to make API request: %w", err)
 		}
 
