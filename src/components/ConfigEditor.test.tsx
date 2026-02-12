@@ -113,12 +113,12 @@ describe('ConfigEditor', () => {
       ).not.toBeInTheDocument();
     });
 
-    it('should call onOptionsChange when deployment type changes', () => {
+    it('should call onOptionsChange when deployment type changes', async () => {
       const props = createMockEditorProps();
-      setup(<ConfigEditor {...props} />);
+      const { user } = setup(<ConfigEditor {...props} />);
 
       const cloudButton = screen.getByText('Cube Cloud (API Key)');
-      fireEvent.click(cloudButton);
+      await user.click(cloudButton);
 
       expect(props.onOptionsChange).toHaveBeenCalledWith({
         ...props.options,
@@ -206,7 +206,7 @@ describe('ConfigEditor', () => {
       });
     });
 
-    it('should reset API key when reset button is clicked', () => {
+    it('should reset API key when reset button is clicked', async () => {
       const props = createMockEditorProps({
         options: {
           ...createMockEditorProps().options,
@@ -220,10 +220,10 @@ describe('ConfigEditor', () => {
           },
         },
       });
-      setup(<ConfigEditor {...props} />);
+      const { user } = setup(<ConfigEditor {...props} />);
 
       const resetButton = screen.getByRole('button', { name: /reset/i });
-      fireEvent.click(resetButton);
+      await user.click(resetButton);
 
       expect(props.onOptionsChange).toHaveBeenCalledWith({
         ...props.options,
@@ -315,7 +315,7 @@ describe('ConfigEditor', () => {
       });
     });
 
-    it('should reset API secret when reset button is clicked', () => {
+    it('should reset API secret when reset button is clicked', async () => {
       const props = createMockEditorProps({
         options: {
           ...createMockEditorProps().options,
@@ -329,10 +329,10 @@ describe('ConfigEditor', () => {
           },
         },
       });
-      setup(<ConfigEditor {...props} />);
+      const { user } = setup(<ConfigEditor {...props} />);
 
       const resetButton = screen.getByRole('button', { name: /reset/i });
-      fireEvent.click(resetButton);
+      await user.click(resetButton);
 
       expect(props.onOptionsChange).toHaveBeenCalledWith({
         ...props.options,
