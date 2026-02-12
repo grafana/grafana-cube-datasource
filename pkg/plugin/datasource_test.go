@@ -367,6 +367,59 @@ func TestQueryDataHTTPTimeoutWrapped(t *testing.T) {
 	}
 }
 
+func TestQueryDataContinueWaitCancelledIncludesElapsedTime(t *testing.T) {
+	// When the context is cancelled during "Continue wait" polling, the error
+	// should include the timeElapsed from the last Cube response so users know
+	// how long the upstream warehouse had been computing.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintln(w, `{"error": "Continue wait", "stage": "Executing query", "timeElapsed": 25}`)
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL, ContinueWaitPollInterval: 10 * time.Millisecond}
+
+	queryJSON, _ := json.Marshal(map[string]interface{}{
+		"refId":    "A",
+		"measures": []string{"orders.count"},
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+
+	resp, err := ds.QueryData(
+		ctx,
+		&backend.QueryDataRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				},
+			},
+			Queries: []backend.DataQuery{
+				{RefID: "A", JSON: queryJSON},
+			},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result := resp.Responses["A"]
+	if result.Error == nil {
+		t.Fatal("Expected an error when context is cancelled during continue-wait polling")
+	}
+
+	errMsg := result.Error.Error()
+	// Should mention the elapsed time from Cube's response
+	if !strings.Contains(errMsg, "25") {
+		t.Errorf("Expected error to include timeElapsed (25), got: %s", errMsg)
+	}
+	// Should mention the stage
+	if !strings.Contains(errMsg, "Executing query") {
+		t.Errorf("Expected error to include stage ('Executing query'), got: %s", errMsg)
+	}
+}
+
 func TestQueryDataWithMultipleDimensions(t *testing.T) {
 	// Create a mock server that returns expected test data with multiple dimensions
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

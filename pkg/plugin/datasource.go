@@ -758,14 +758,24 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, requestURL string, c
 		}
 
 		if isContinueWait(body) {
+			// Parse progress info from the response for logging and error messages.
+			// Cube returns {"error": "Continue wait", "stage": "...", "timeElapsed": N}
+			progress := parseContinueWaitProgress(body)
+
 			if pollRetries == 0 {
 				backend.Logger.Info("Cube query not yet ready, polling for results", "url", requestURL)
 			}
 			pollRetries++
-			backend.Logger.Debug("Cube returned 'Continue wait', polling again", "url", requestURL, "attempt", pollRetries)
+			backend.Logger.Debug("Cube returned 'Continue wait', polling again",
+				"url", requestURL, "attempt", pollRetries,
+				"stage", progress.Stage, "cubeTimeElapsed", progress.TimeElapsed)
 			select {
 			case <-ctx.Done():
-				return nil, fmt.Errorf("query cancelled while waiting for Cube to compute results")
+				msg := "query cancelled while waiting for Cube to compute results"
+				if progress.Stage != "" || progress.TimeElapsed > 0 {
+					msg = fmt.Sprintf("%s (stage: %s, Cube timeElapsed: %ds)", msg, progress.Stage, int(progress.TimeElapsed))
+				}
+				return nil, fmt.Errorf("%s", msg)
 			case <-time.After(pollInterval):
 				continue
 			}
@@ -791,6 +801,20 @@ func isContinueWait(body []byte) bool {
 		return false
 	}
 	return probe.Error == "Continue wait"
+}
+
+// continueWaitProgress holds progress information from a Cube "Continue wait" response.
+type continueWaitProgress struct {
+	Stage       string  `json:"stage"`
+	TimeElapsed float64 `json:"timeElapsed"`
+}
+
+// parseContinueWaitProgress extracts stage and timeElapsed from a Cube
+// "Continue wait" response body. Returns zero values if fields are missing.
+func parseContinueWaitProgress(body []byte) continueWaitProgress {
+	var progress continueWaitProgress
+	_ = json.Unmarshal(body, &progress)
+	return progress
 }
 
 // CubeAPIResponse represents the response structure from Cube API
