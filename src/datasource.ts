@@ -168,16 +168,4 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
   getMetadata(): Promise<MetadataResponse> {
     return this.getResource('metadata');
   }
-
-  // Get available views
-  async getViews() {
-    const metadata = await this.getMetadata();
-    return (metadata as any).views || [];
-  }
-
-  // Get available cubes
-  async getCubes() {
-    const metadata = await this.getMetadata();
-    return (metadata as any).cubes || [];
-  }
 }
