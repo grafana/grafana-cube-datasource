@@ -711,6 +711,18 @@ func (d *Datasource) convertToNumber(value interface{}) interface{} {
 	}
 }
 
+// CubeAPIError represents an error response from the Cube API with HTTP status code preserved.
+// This allows callers to distinguish between different error types (e.g., 401 vs 500) and
+// return the original response body to the frontend.
+type CubeAPIError struct {
+	StatusCode int
+	Body       []byte
+}
+
+func (e *CubeAPIError) Error() string {
+	return fmt.Sprintf("API request failed with status %d: %s", e.StatusCode, string(e.Body))
+}
+
 // doCubeLoadRequest makes a GET request to Cube's /v1/load endpoint, handling the
 // "Continue wait" polling protocol. Cube returns {"error": "Continue wait"} (HTTP 200)
 // when query results aren't cached yet (e.g. the upstream warehouse is still computing).
@@ -748,7 +760,7 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, requestURL string, c
 		if resp.StatusCode != http.StatusOK {
 			errorBody, _ := io.ReadAll(resp.Body)
 			resp.Body.Close()
-			return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(errorBody))
+			return nil, &CubeAPIError{StatusCode: resp.StatusCode, Body: errorBody}
 		}
 
 		body, err := io.ReadAll(resp.Body)
@@ -1117,9 +1129,24 @@ func (d *Datasource) handleTagValues(ctx context.Context, req *backend.CallResou
 	body, err := d.doCubeLoadRequest(ctx, u.String(), apiReq.Config)
 	if err != nil {
 		backend.Logger.Error("Failed to fetch tag values from Cube API", "error", err)
+		// Check if this is a Cube API error with a specific status code
+		var cubeErr *CubeAPIError
+		if errors.As(err, &cubeErr) {
+			// Return the original status code and body from Cube API
+			return sender.Send(&backend.CallResourceResponse{
+				Status: cubeErr.StatusCode,
+				Body:   cubeErr.Body,
+				Headers: map[string][]string{
+					"Content-Type": {"application/json"},
+				},
+			})
+		}
+		// For other errors, properly encode as JSON to avoid malformed responses
+		errorResponse := map[string]string{"error": err.Error()}
+		errorBody, _ := json.Marshal(errorResponse)
 		return sender.Send(&backend.CallResourceResponse{
 			Status: 500,
-			Body:   []byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())),
+			Body:   errorBody,
 			Headers: map[string][]string{
 				"Content-Type": {"application/json"},
 			},
