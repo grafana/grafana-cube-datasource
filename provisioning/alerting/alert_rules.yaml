@@ -87,5 +87,3 @@ groups:
           __panelId__: '2'
         labels: {}
         isPaused: false
-        notification_settings:
-          receiver: grafana-default-email
