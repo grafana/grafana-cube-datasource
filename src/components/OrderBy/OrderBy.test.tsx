@@ -1,6 +1,6 @@
 import React from 'react';
 import { screen } from '@testing-library/react';
-import { setup, selectOptionInTest } from 'testUtils';
+import { setup } from 'testUtils';
 import { OrderBy } from './OrderBy';
 import { DEFAULT_ORDER } from 'types';
 
@@ -54,7 +54,7 @@ describe('OrderBy', () => {
   });
 
   it('should add a new order field when the add button is clicked', async () => {
-    setup(
+    const { user } = setup(
       <OrderBy
         availableOptions={mockOptions}
         onAdd={mockOnAdd}
@@ -65,7 +65,8 @@ describe('OrderBy', () => {
     );
 
     const select = screen.getByRole('combobox', { name: 'Order By' });
-    await selectOptionInTest(select, 'Status');
+    await user.click(select);
+    await user.click(await screen.findByText('Status'));
 
     expect(mockOnAdd).toHaveBeenCalledWith('orders.status', DEFAULT_ORDER);
   });
