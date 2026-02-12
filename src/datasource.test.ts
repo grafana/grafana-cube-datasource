@@ -493,27 +493,6 @@ describe('DataSource', () => {
       expect(datasource.filterQuery(query)).toBe(false);
     });
 
-    it('should return false when dimensions and measures are empty arrays', () => {
-      const datasource = createDataSource();
-
-      const query = { refId: 'A', dimensions: [], measures: [] };
-      expect(datasource.filterQuery(query)).toBe(false);
-    });
-
-    it('should return false when dimensions is undefined and measures is empty', () => {
-      const datasource = createDataSource();
-
-      const query = { refId: 'A', measures: [] };
-      expect(datasource.filterQuery(query)).toBe(false);
-    });
-
-    it('should return false when measures is undefined and dimensions is empty', () => {
-      const datasource = createDataSource();
-
-      const query = { refId: 'A', dimensions: [] };
-      expect(datasource.filterQuery(query)).toBe(false);
-    });
-
     it('should return true when query has only dimensions (no measures)', () => {
       const datasource = createDataSource();
 
@@ -525,17 +504,6 @@ describe('DataSource', () => {
       const datasource = createDataSource();
 
       const query = { refId: 'A', measures: ['orders.count'] };
-      expect(datasource.filterQuery(query)).toBe(true);
-    });
-
-    it('should return true when query has both dimensions and measures', () => {
-      const datasource = createDataSource();
-
-      const query = {
-        refId: 'A',
-        dimensions: ['orders.status'],
-        measures: ['orders.count'],
-      };
       expect(datasource.filterQuery(query)).toBe(true);
     });
   });

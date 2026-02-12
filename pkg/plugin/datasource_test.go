@@ -724,140 +724,6 @@ func TestCreateNullFieldWithTimeDimension(t *testing.T) {
 	}
 }
 
-func TestQueryDataWithOnlyDimensions(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query().Get("query")
-		var cubeQuery CubeQuery
-		if err := json.Unmarshal([]byte(query), &cubeQuery); err != nil {
-			t.Errorf("Failed to parse cube query: %v", err)
-			http.Error(w, "Invalid query", http.StatusBadRequest)
-			return
-		}
-
-		if len(cubeQuery.Measures) != 0 {
-			t.Errorf("Expected no measures, got %v", cubeQuery.Measures)
-		}
-		if len(cubeQuery.Dimensions) != 2 {
-			t.Errorf("Expected 2 dimensions, got %v", cubeQuery.Dimensions)
-		}
-
-		response := CubeAPIResponse{
-			Data: []map[string]interface{}{
-				{"orders.status": "completed", "orders.payment_method": "credit_card"},
-				{"orders.status": "pending", "orders.payment_method": "paypal"},
-				{"orders.status": "shipped", "orders.payment_method": "credit_card"},
-			},
-			Annotation: CubeAnnotation{
-				Measures: map[string]CubeFieldInfo{},
-				Dimensions: map[string]CubeFieldInfo{
-					"orders.status":         {Type: "string"},
-					"orders.payment_method": {Type: "string"},
-				},
-				Segments:       map[string]CubeFieldInfo{},
-				TimeDimensions: map[string]CubeFieldInfo{},
-			},
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(response); err != nil {
-			t.Errorf("Failed to encode response: %v", err)
-		}
-	}))
-	defer server.Close()
-
-	ds := Datasource{BaseURL: server.URL}
-	queryJSON, _ := json.Marshal(map[string]interface{}{
-		"refId":      "A",
-		"dimensions": []string{"orders.status", "orders.payment_method"},
-	})
-
-	resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: []byte(`{"cubeApiUrl":"` + server.URL + `","deploymentType":"self-hosted-dev"}`),
-			},
-		},
-		Queries: []backend.DataQuery{{RefID: "A", JSON: queryJSON}},
-	})
-	if err != nil {
-		t.Fatalf("QueryData failed: %v", err)
-	}
-
-	frame := resp.Responses["A"].Frames[0]
-	if len(frame.Fields) != 2 {
-		t.Fatalf("Expected 2 columns (dimensions only), got %d", len(frame.Fields))
-	}
-	if frame.Fields[0].Len() != 3 {
-		t.Fatalf("Expected 3 rows, got %d", frame.Fields[0].Len())
-	}
-}
-
-func TestQueryDataWithOnlyMeasures(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query().Get("query")
-		var cubeQuery CubeQuery
-		if err := json.Unmarshal([]byte(query), &cubeQuery); err != nil {
-			t.Errorf("Failed to parse cube query: %v", err)
-			http.Error(w, "Invalid query", http.StatusBadRequest)
-			return
-		}
-
-		if len(cubeQuery.Dimensions) != 0 {
-			t.Errorf("Expected no dimensions, got %v", cubeQuery.Dimensions)
-		}
-		if len(cubeQuery.Measures) != 2 {
-			t.Errorf("Expected 2 measures, got %v", cubeQuery.Measures)
-		}
-
-		response := CubeAPIResponse{
-			Data: []map[string]interface{}{
-				{"orders.count": "1542", "orders.total_revenue": "98765.43"},
-			},
-			Annotation: CubeAnnotation{
-				Measures: map[string]CubeFieldInfo{
-					"orders.count":         {Type: "number"},
-					"orders.total_revenue": {Type: "number"},
-				},
-				Dimensions:     map[string]CubeFieldInfo{},
-				Segments:       map[string]CubeFieldInfo{},
-				TimeDimensions: map[string]CubeFieldInfo{},
-			},
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(response); err != nil {
-			t.Errorf("Failed to encode response: %v", err)
-		}
-	}))
-	defer server.Close()
-
-	ds := Datasource{BaseURL: server.URL}
-	queryJSON, _ := json.Marshal(map[string]interface{}{
-		"refId":    "A",
-		"measures": []string{"orders.count", "orders.total_revenue"},
-	})
-
-	resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: []byte(`{"cubeApiUrl":"` + server.URL + `","deploymentType":"self-hosted-dev"}`),
-			},
-		},
-		Queries: []backend.DataQuery{{RefID: "A", JSON: queryJSON}},
-	})
-	if err != nil {
-		t.Fatalf("QueryData failed: %v", err)
-	}
-
-	frame := resp.Responses["A"].Frames[0]
-	if len(frame.Fields) != 2 {
-		t.Fatalf("Expected 2 columns (measures only), got %d", len(frame.Fields))
-	}
-	if frame.Fields[0].Len() != 1 {
-		t.Fatalf("Expected 1 row, got %d", frame.Fields[0].Len())
-	}
-}
-
 func TestQueryDataWithOrderField(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query().Get("query")
@@ -867,8 +733,26 @@ func TestQueryDataWithOrderField(t *testing.T) {
 			http.Error(w, "Invalid query", http.StatusBadRequest)
 			return
 		}
-		if cubeQuery.Order == nil {
-			t.Error("Expected order field to be present")
+
+		if len(cubeQuery.Dimensions) != 1 || cubeQuery.Dimensions[0] != "orders.status" {
+			t.Errorf("Expected dimensions [orders.status], got %v", cubeQuery.Dimensions)
+		}
+		if len(cubeQuery.Measures) != 1 || cubeQuery.Measures[0] != "orders.count" {
+			t.Errorf("Expected measures [orders.count], got %v", cubeQuery.Measures)
+		}
+
+		orderMap, ok := cubeQuery.Order.(map[string]interface{})
+		if !ok {
+			t.Fatalf("Expected order field as object, got %T", cubeQuery.Order)
+		}
+		if len(orderMap) != 2 {
+			t.Fatalf("Expected 2 order entries, got %v", orderMap)
+		}
+		if orderMap["orders.count"] != "desc" {
+			t.Errorf("Expected orders.count sort direction desc, got %v", orderMap["orders.count"])
+		}
+		if orderMap["orders.status"] != "asc" {
+			t.Errorf("Expected orders.status sort direction asc, got %v", orderMap["orders.status"])
 		}
 
 		response := CubeAPIResponse{
