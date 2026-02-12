@@ -353,6 +353,7 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 	// Use shared helper to make the request with "Continue wait" polling
 	body, err := d.doCubeLoadRequest(ctx, u.String(), apiReq.Config)
 	if err != nil {
+		backend.Logger.Error("Failed to fetch data from Cube API", "error", err, "url", u.String())
 		return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
 	}
 
