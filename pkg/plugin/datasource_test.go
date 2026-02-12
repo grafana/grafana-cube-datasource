@@ -743,10 +743,14 @@ func TestQueryDataWithOrderField(t *testing.T) {
 
 		orderMap, ok := cubeQuery.Order.(map[string]interface{})
 		if !ok {
-			t.Fatalf("Expected order field as object, got %T", cubeQuery.Order)
+			t.Errorf("Expected order field as object, got %T", cubeQuery.Order)
+			http.Error(w, "Invalid order", http.StatusBadRequest)
+			return
 		}
 		if len(orderMap) != 2 {
-			t.Fatalf("Expected 2 order entries, got %v", orderMap)
+			t.Errorf("Expected 2 order entries, got %v", orderMap)
+			http.Error(w, "Invalid order", http.StatusBadRequest)
+			return
 		}
 		if orderMap["orders.count"] != "desc" {
 			t.Errorf("Expected orders.count sort direction desc, got %v", orderMap["orders.count"])
