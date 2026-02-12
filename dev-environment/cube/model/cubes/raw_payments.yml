@@ -3,6 +3,11 @@ cubes:
     sql_table: raw_payments
     data_source: default
 
+    joins:
+      - name: raw_orders
+        sql: '{CUBE}.order_id = {raw_orders}.id'
+        relationship: many_to_one
+
     dimensions:
       - name: id
         sql: id

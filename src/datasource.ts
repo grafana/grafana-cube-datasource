@@ -1,7 +1,7 @@
 import { DataSourceInstanceSettings, CoreApp, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 
-import { CubeQuery, CubeDataSourceOptions, DEFAULT_QUERY, CubeFilter } from './types';
+import { CubeQuery, CubeDataSourceOptions, DEFAULT_QUERY, CubeFilter, MetadataResponse } from './types';
 import { filterValidCubeFilters } from './utils/filterValidation';
 
 export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceOptions> {
@@ -164,8 +164,20 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
     });
   }
 
-  // Get available dimensions and measures for the query builder
-  getMetadata() {
+  // Get available dimensions, measures, views, and cubes for the query builder
+  getMetadata(): Promise<MetadataResponse> {
     return this.getResource('metadata');
+  }
+
+  // Get available views
+  async getViews() {
+    const metadata = await this.getMetadata();
+    return (metadata as any).views || [];
+  }
+
+  // Get available cubes
+  async getCubes() {
+    const metadata = await this.getMetadata();
+    return (metadata as any).cubes || [];
   }
 }
