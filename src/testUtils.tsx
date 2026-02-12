@@ -1,9 +1,8 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, waitFor } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
-import { select } from 'react-select-event';
 import { CubeDataSourceOptions } from 'types';
 import { DataSource } from 'datasource';
 
@@ -72,8 +71,3 @@ export const createMockDataSource = (mockMetadata: any = null, mockSQLResponse: 
 
   return datasource;
 };
-
-export const selectOptionInTest = async (
-  input: HTMLElement,
-  optionOrOptions: string | RegExp | Array<string | RegExp>
-) => await waitFor(() => select(input, optionOrOptions, { container: document.body }));
