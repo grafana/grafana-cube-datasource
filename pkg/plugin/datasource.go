@@ -781,18 +781,18 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, requestURL string, c
 			backend.Logger.Debug("Cube returned 'Continue wait', polling again",
 				"url", requestURL, "attempt", pollRetries,
 				"stage", progress.Stage, "cubeTimeElapsed", progress.TimeElapsed)
-		select {
-		case <-ctx.Done():
-			var msg string
-			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-				msg = "Cube API request timed out while waiting for results to be computed"
-			} else {
-				msg = "query cancelled while waiting for Cube to compute results"
-			}
-			if progress.Stage != "" || progress.TimeElapsed > 0 {
-				msg = fmt.Sprintf("%s (stage: %s, Cube timeElapsed: %ds)", msg, progress.Stage, int(progress.TimeElapsed))
-			}
-			return nil, fmt.Errorf("%s", msg)
+			select {
+			case <-ctx.Done():
+				var msg string
+				if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+					msg = "Cube API request timed out while waiting for results to be computed"
+				} else {
+					msg = "query cancelled while waiting for Cube to compute results"
+				}
+				if progress.Stage != "" || progress.TimeElapsed > 0 {
+					msg = fmt.Sprintf("%s (stage: %s, Cube timeElapsed: %ds)", msg, progress.Stage, int(progress.TimeElapsed))
+				}
+				return nil, fmt.Errorf("%s", msg)
 			case <-time.After(pollInterval):
 				continue
 			}
