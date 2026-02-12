@@ -46,20 +46,11 @@ type jwtCacheEntry struct {
 	expiration time.Time
 }
 
-// defaultContinueWaitPollInterval is the default time to wait between retries
-// when Cube returns a "Continue wait" response.  Matches the @cubejs-client/core
-// default of 5 seconds.
-const defaultContinueWaitPollInterval = 5 * time.Second
-
 // Datasource is an example datasource which can respond to data queries, reports
 // its health and has streaming skills.
 type Datasource struct {
 	// BaseURL allows overriding the Cube API URL for testing
 	BaseURL string
-
-	// ContinueWaitPollInterval overrides the polling interval for "Continue wait"
-	// responses.  Zero means use the default (5s).  Intended for testing.
-	ContinueWaitPollInterval time.Duration
 
 	// JWT cache keyed by API secret
 	jwtCache      map[string]jwtCacheEntry
@@ -727,16 +718,13 @@ func (e *CubeAPIError) Error() string {
 // doCubeLoadRequest makes a GET request to Cube's /v1/load endpoint, handling the
 // "Continue wait" polling protocol. Cube returns {"error": "Continue wait"} (HTTP 200)
 // when query results aren't cached yet (e.g. the upstream warehouse is still computing).
-// This method polls until actual data arrives or the context is cancelled, matching the
+// This method retries immediately until actual data arrives or the context is cancelled, matching the
 // behavior of the official @cubejs-client/core SDK.
 func (d *Datasource) doCubeLoadRequest(ctx context.Context, requestURL string, config *models.PluginSettings) ([]byte, error) {
-	pollInterval := d.ContinueWaitPollInterval
-	if pollInterval == 0 {
-		pollInterval = defaultContinueWaitPollInterval
-	}
-
 	pollStart := time.Now()
 	pollRetries := 0
+	var lastContinueWaitProgress continueWaitProgress
+	haveContinueWaitProgress := false
 	for {
 		req, err := http.NewRequestWithContext(ctx, "GET", requestURL, nil)
 		if err != nil {
@@ -753,7 +741,18 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, requestURL string, c
 		if err != nil {
 			if errors.Is(err, context.DeadlineExceeded) {
 				elapsed := time.Since(pollStart).Round(time.Millisecond)
-				return nil, fmt.Errorf("request to Cube API timed out after %s (the upstream warehouse may still be computing)", elapsed)
+				msg := fmt.Sprintf("request to Cube API timed out after %s (the upstream warehouse may still be computing)", elapsed)
+				if haveContinueWaitProgress && (lastContinueWaitProgress.Stage != "" || lastContinueWaitProgress.TimeElapsed > 0) {
+					msg = fmt.Sprintf("%s (stage: %s, Cube timeElapsed: %ds)", msg, lastContinueWaitProgress.Stage, int(lastContinueWaitProgress.TimeElapsed))
+				}
+				return nil, fmt.Errorf("%s", msg)
+			}
+			if errors.Is(err, context.Canceled) {
+				msg := "query cancelled while waiting for Cube to compute results"
+				if haveContinueWaitProgress && (lastContinueWaitProgress.Stage != "" || lastContinueWaitProgress.TimeElapsed > 0) {
+					msg = fmt.Sprintf("%s (stage: %s, Cube timeElapsed: %ds)", msg, lastContinueWaitProgress.Stage, int(lastContinueWaitProgress.TimeElapsed))
+				}
+				return nil, fmt.Errorf("%s", msg)
 			}
 			return nil, fmt.Errorf("failed to make API request: %w", err)
 		}
@@ -774,6 +773,8 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, requestURL string, c
 			// Parse progress info from the response for logging and error messages.
 			// Cube returns {"error": "Continue wait", "stage": "...", "timeElapsed": N}
 			progress := parseContinueWaitProgress(body)
+			lastContinueWaitProgress = progress
+			haveContinueWaitProgress = true
 
 			if pollRetries == 0 {
 				backend.Logger.Info("Cube query not yet ready, polling for results", "url", requestURL)
@@ -782,19 +783,19 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, requestURL string, c
 			backend.Logger.Debug("Cube returned 'Continue wait', polling again",
 				"url", requestURL, "attempt", pollRetries,
 				"stage", progress.Stage, "cubeTimeElapsed", progress.TimeElapsed)
-		select {
-		case <-ctx.Done():
-			var msg string
-			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-				msg = "Cube API request timed out while waiting for results to be computed"
-			} else {
-				msg = "query cancelled while waiting for Cube to compute results"
-			}
-			if progress.Stage != "" || progress.TimeElapsed > 0 {
-				msg = fmt.Sprintf("%s (stage: %s, Cube timeElapsed: %ds)", msg, progress.Stage, int(progress.TimeElapsed))
-			}
-			return nil, fmt.Errorf("%s", msg)
-			case <-time.After(pollInterval):
+			select {
+			case <-ctx.Done():
+				var msg string
+				if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+					msg = "Cube API request timed out while waiting for results to be computed"
+				} else {
+					msg = "query cancelled while waiting for Cube to compute results"
+				}
+				if progress.Stage != "" || progress.TimeElapsed > 0 {
+					msg = fmt.Sprintf("%s (stage: %s, Cube timeElapsed: %ds)", msg, progress.Stage, int(progress.TimeElapsed))
+				}
+				return nil, fmt.Errorf("%s", msg)
+			default:
 				continue
 			}
 		}
