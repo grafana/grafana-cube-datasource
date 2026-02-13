@@ -1,10 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.1.4 (2026-02-13)
 
-### Changed
+### Changed in 0.1.4
 
-- Raise minimum supported Grafana version to `12.3.3` to align with current React runtime compatibility expectations.
+- Set supported Grafana range to `>=12.2.5 <12.3 || >=12.3.0` based on patched Grafana plugin backward-compatibility support for jsx-runtime externalization.
+- Drop support for Grafana versions earlier than `12.2.5`.
+- Use `12.3.3` as the default local development target while keeping `12.2.5` as the minimum supported version.
 
 ## 0.1.3 (2026-02-12)
 

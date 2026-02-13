@@ -69,7 +69,7 @@ To filter all panels by the dashboard time picker:
 
 ## Requirements
 
-- Grafana 12.3.3 or later
+- Grafana 12.2.5 or later
 - A running Cube instance (self-hosted*)
 
 *See [Known Limitations](#known-limitations) regarding using Cube Cloud.
