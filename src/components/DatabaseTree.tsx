@@ -63,23 +63,43 @@ export function DatabaseTree({ datasourceUid, onTableSelect, selectedTables }: D
     isExpanded: expandedSchemas.has(node.key),
   }));
 
-  const handleNodeClick = useCallback(
-    (node: TreeNode, isChild: boolean) => {
-      if (isChild) {
-        const newSelected = node.isSelected
-          ? selectedTables.filter((key) => key !== node.key)
-          : [...selectedTables, node.key];
-        onTableSelect(newSelected);
+  const handleTableClick = useCallback(
+    (node: TreeNode) => {
+      const newSelected = node.isSelected
+        ? selectedTables.filter((key) => key !== node.key)
+        : [...selectedTables, node.key];
+      onTableSelect(newSelected);
+    },
+    [selectedTables, onTableSelect]
+  );
+
+  const handleSchemaToggle = useCallback((schemaKey: string) => {
+    setExpandedSchemas((prev) => {
+      const next = new Set(prev);
+      if (next.has(schemaKey)) {
+        next.delete(schemaKey);
       } else {
-        setExpandedSchemas((prev) => {
-          const next = new Set(prev);
-          if (next.has(node.key)) {
-            next.delete(node.key);
-          } else {
-            next.add(node.key);
-          }
-          return next;
-        });
+        next.add(schemaKey);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleSchemaCheckboxClick = useCallback(
+    (node: TreeNode) => {
+      if (!node.children) {
+        return;
+      }
+      const childKeys = node.children.map((c) => c.key);
+
+      if (node.isSelected) {
+        // Deselect all children
+        onTableSelect(selectedTables.filter((key) => !childKeys.includes(key)));
+      } else {
+        // Select all children (merge with existing)
+        const newSelected = new Set(selectedTables);
+        childKeys.forEach((key) => newSelected.add(key));
+        onTableSelect(Array.from(newSelected));
       }
     },
     [selectedTables, onTableSelect]
@@ -95,9 +115,16 @@ export function DatabaseTree({ datasourceUid, onTableSelect, selectedTables }: D
     }
     return (
       <div
+        role="checkbox"
+        aria-checked={node.isSelected ? 'true' : node.isIndeterminate ? 'mixed' : 'false'}
+        aria-label={`Select all tables in ${node.title}`}
         className={`${styles.checkbox} ${node.isSelected ? styles.checkboxChecked : ''} ${
           node.isIndeterminate ? styles.checkboxIndeterminate : ''
         }`}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleSchemaCheckboxClick(node);
+        }}
       >
         {node.isSelected && <Icon name="check" className={styles.checkIcon} />}
         {node.isIndeterminate && <div className={styles.indeterminateLine} />}
@@ -113,7 +140,7 @@ export function DatabaseTree({ datasourceUid, onTableSelect, selectedTables }: D
         <div
           className={`${styles.nodeContent} ${isChild ? styles.childNode : styles.parentNode}`}
           style={{ paddingLeft: `${level * 16 + 8}px` }}
-          onClick={() => handleNodeClick(node, isChild)}
+          onClick={() => (isChild ? handleTableClick(node) : handleSchemaToggle(node.key))}
         >
           {!isChild && hasChildren && (
             <Icon name={node.isExpanded ? 'angle-down' : 'angle-right'} className={styles.expandIcon} />

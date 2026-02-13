@@ -115,4 +115,71 @@ describe('DatabaseTree', () => {
       expect(screen.getByText('Connection refused')).toBeInTheDocument();
     });
   });
+
+  it('selects all tables in a schema when schema checkbox is clicked', async () => {
+    mockApiSuccess();
+    const onTableSelect = jest.fn();
+
+    const { user } = setup(
+      <DatabaseTree datasourceUid="test-uid" onTableSelect={onTableSelect} selectedTables={[]} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('public')).toBeInTheDocument();
+    });
+
+    // Click the schema checkbox (not the expand/collapse icon)
+    await user.click(screen.getByLabelText('Select all tables in public'));
+
+    expect(onTableSelect).toHaveBeenCalledWith(
+      expect.arrayContaining(['public.raw_customers', 'public.raw_orders'])
+    );
+    expect(onTableSelect).toHaveBeenCalledWith(expect.any(Array));
+    const callArgs = onTableSelect.mock.calls[0][0];
+    expect(callArgs).toHaveLength(2);
+  });
+
+  it('deselects all tables in a schema when all are already selected', async () => {
+    mockApiSuccess();
+    const onTableSelect = jest.fn();
+
+    const { user } = setup(
+      <DatabaseTree
+        datasourceUid="test-uid"
+        onTableSelect={onTableSelect}
+        selectedTables={['public.raw_customers', 'public.raw_orders']}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('public')).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByLabelText('Select all tables in public'));
+
+    expect(onTableSelect).toHaveBeenCalledWith([]);
+  });
+
+  it('selects remaining tables when schema is partially selected', async () => {
+    mockApiSuccess();
+    const onTableSelect = jest.fn();
+
+    const { user } = setup(
+      <DatabaseTree
+        datasourceUid="test-uid"
+        onTableSelect={onTableSelect}
+        selectedTables={['public.raw_customers']}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('public')).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByLabelText('Select all tables in public'));
+
+    expect(onTableSelect).toHaveBeenCalledWith(
+      expect.arrayContaining(['public.raw_customers', 'public.raw_orders'])
+    );
+  });
 });
