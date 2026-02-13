@@ -1,9 +1,9 @@
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DataSource } from 'datasource';
 import { fetchSqlDatasources } from './services/datasourceApi';
-import { DbSchemaResponse } from './types';
+import { DbSchemaResponse, GenerateSchemaRequest } from './types';
 
 export interface MetadataOption {
   label: string;
@@ -111,5 +111,12 @@ export const useDbSchemaQuery = (datasourceUid?: string): UseQueryResult<DbSchem
     queryKey: ['dbSchema', datasourceUid],
     queryFn: () => getBackendSrv().get(`/api/datasources/uid/${datasourceUid}/resources/db-schema`),
     enabled: Boolean(datasourceUid),
+  });
+};
+
+export const useGenerateSchemaMutation = (datasourceUid?: string) => {
+  return useMutation({
+    mutationFn: (request: GenerateSchemaRequest) =>
+      getBackendSrv().post(`/api/datasources/uid/${datasourceUid}/resources/generate-schema`, request),
   });
 };
