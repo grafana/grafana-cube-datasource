@@ -20,12 +20,27 @@ interface TreeNode {
   isIndeterminate?: boolean;
 }
 
+/**
+ * Create a unique key for a table that can safely contain dots or special characters.
+ * Uses JSON encoding to avoid issues with identifiers containing dots.
+ */
+export function encodeTableKey(schemaName: string, tableName: string): string {
+  return JSON.stringify([schemaName, tableName]);
+}
+
+/**
+ * Decode a table key back into [schemaName, tableName].
+ */
+export function decodeTableKey(key: string): [string, string] {
+  return JSON.parse(key) as [string, string];
+}
+
 function convertToTreeData(schema: DbSchemaResponse, selectedTables: string[]): TreeNode[] {
   return Object.entries(schema.tablesSchema || {}).map(([schemaName, tables]) => {
     const children = Object.keys(tables).map((tableName) => ({
-      key: `${schemaName}.${tableName}`,
+      key: encodeTableKey(schemaName, tableName),
       title: tableName,
-      isSelected: selectedTables.includes(`${schemaName}.${tableName}`),
+      isSelected: selectedTables.includes(encodeTableKey(schemaName, tableName)),
     }));
 
     const selectedCount = children.filter((c) => c.isSelected).length;

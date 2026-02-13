@@ -9,7 +9,7 @@ jest.mock('@grafana/runtime', () => ({
 import React from 'react';
 import { screen, waitFor } from '@testing-library/react';
 import { setup } from 'testUtils';
-import { DatabaseTree } from './DatabaseTree';
+import { DatabaseTree, encodeTableKey } from './DatabaseTree';
 import { getBackendSrv } from '@grafana/runtime';
 
 const mockGetBackendSrv = getBackendSrv as jest.Mock;
@@ -82,7 +82,7 @@ describe('DatabaseTree', () => {
 
     await user.click(screen.getByText('raw_customers'));
 
-    expect(onTableSelect).toHaveBeenCalledWith(['public.raw_customers']);
+    expect(onTableSelect).toHaveBeenCalledWith([encodeTableKey('public', 'raw_customers')]);
   });
 
   it('deselects a table when clicking an already selected table', async () => {
@@ -93,7 +93,7 @@ describe('DatabaseTree', () => {
       <DatabaseTree
         datasourceUid="test-uid"
         onTableSelect={onTableSelect}
-        selectedTables={['public.raw_customers']}
+        selectedTables={[encodeTableKey('public', 'raw_customers')]}
       />
     );
 
@@ -132,7 +132,7 @@ describe('DatabaseTree', () => {
     await user.click(screen.getByLabelText('Select all tables in public'));
 
     expect(onTableSelect).toHaveBeenCalledWith(
-      expect.arrayContaining(['public.raw_customers', 'public.raw_orders'])
+      expect.arrayContaining([encodeTableKey('public', 'raw_customers'), encodeTableKey('public', 'raw_orders')])
     );
     expect(onTableSelect).toHaveBeenCalledWith(expect.any(Array));
     const callArgs = onTableSelect.mock.calls[0][0];
@@ -147,7 +147,7 @@ describe('DatabaseTree', () => {
       <DatabaseTree
         datasourceUid="test-uid"
         onTableSelect={onTableSelect}
-        selectedTables={['public.raw_customers', 'public.raw_orders']}
+        selectedTables={[encodeTableKey('public', 'raw_customers'), encodeTableKey('public', 'raw_orders')]}
       />
     );
 
@@ -168,7 +168,7 @@ describe('DatabaseTree', () => {
       <DatabaseTree
         datasourceUid="test-uid"
         onTableSelect={onTableSelect}
-        selectedTables={['public.raw_customers']}
+        selectedTables={[encodeTableKey('public', 'raw_customers')]}
       />
     );
 
@@ -179,7 +179,7 @@ describe('DatabaseTree', () => {
     await user.click(screen.getByLabelText('Select all tables in public'));
 
     expect(onTableSelect).toHaveBeenCalledWith(
-      expect.arrayContaining(['public.raw_customers', 'public.raw_orders'])
+      expect.arrayContaining([encodeTableKey('public', 'raw_customers'), encodeTableKey('public', 'raw_orders')])
     );
   });
 

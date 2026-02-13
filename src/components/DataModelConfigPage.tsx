@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, PluginConfigPageProps, PluginMeta } from '@grafana/data';
 import { useStyles2, Button, Alert, CodeEditor, Icon, Badge } from '@grafana/ui';
-import { DatabaseTree } from './DatabaseTree';
+import { DatabaseTree, decodeTableKey } from './DatabaseTree';
 import { FileList } from './FileList';
 import { useDbSchemaQuery, useGenerateSchemaMutation, useModelFilesQuery } from '../queries';
 import { ModelFile } from '../types';
@@ -37,7 +37,7 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
       return;
     }
 
-    const tables = selectedTables.map((key) => key.split('.'));
+    const tables = selectedTables.map((key) => decodeTableKey(key));
 
     try {
       await generateMutation.mutateAsync({
