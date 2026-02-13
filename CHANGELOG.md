@@ -4,7 +4,7 @@
 
 ### Changed in 0.1.4
 
-- Set supported Grafana range to `>=12.2.5 <12.3 || >=12.3.0` based on patched Grafana plugin backward-compatibility support for jsx-runtime externalization.
+- Set minimum supported Grafana version to `12.2.5` based on patched Grafana plugin backward-compatibility support for jsx-runtime externalization.
 - Drop support for Grafana versions earlier than `12.2.5`.
 - Use `12.3.3` as the default local development target while keeping `12.2.5` as the minimum supported version.
 
