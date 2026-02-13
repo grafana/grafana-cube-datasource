@@ -3,16 +3,17 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2, PluginConfigPageProps, PluginMeta } from '@grafana/data';
 import { useStyles2, Button, Alert, CodeEditor, Icon, Badge } from '@grafana/ui';
 import { DatabaseTree, decodeTableKey } from './DatabaseTree';
-import { FileList } from './FileList';
+import { FileList, sortFiles } from './FileList';
 import { useDbSchemaQuery, useGenerateSchemaMutation, useModelFilesQuery } from '../queries';
 import { ModelFile } from '../types';
 
 /**
  * Extract datasource UID from the current URL.
  * URL pattern: /connections/datasources/edit/{uid}/?page=data-model
+ * The regex excludes '?' so query params aren't captured when there's no trailing slash.
  */
 export function extractDatasourceUid(pathname = window.location.pathname): string | null {
-  const match = pathname.match(/\/datasources\/edit\/([^/]+)/);
+  const match = pathname.match(/\/datasources\/edit\/([^/?]+)/);
   return match ? match[1] : null;
 }
 
@@ -46,11 +47,12 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
         tablesSchema: dbSchemaQuery.data.tablesSchema,
       });
 
-      // Switch to files tab and select first file after refetch
+      // Switch to files tab and select the first file in sorted (visible) order
       setActiveTab('files');
       const result = await modelFilesQuery.refetch();
       if (result.data?.files?.length) {
-        setSelectedFile(result.data.files[0]);
+        const sorted = sortFiles(result.data.files);
+        setSelectedFile(sorted[0]);
       }
     } catch {
       // Error is captured by mutation state and displayed in the UI

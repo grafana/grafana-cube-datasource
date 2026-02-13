@@ -51,8 +51,12 @@ describe('extractDatasourceUid', () => {
     expect(extractDatasourceUid('/connections/datasources/edit/cube-datasource/')).toBe('cube-datasource');
   });
 
-  it('extracts UID from path with query params', () => {
+  it('extracts UID from path with trailing slash', () => {
     expect(extractDatasourceUid('/connections/datasources/edit/my-uid/')).toBe('my-uid');
+  });
+
+  it('extracts UID from path without trailing slash and with query params', () => {
+    expect(extractDatasourceUid('/connections/datasources/edit/my-uid?page=data-model')).toBe('my-uid');
   });
 
   it('returns null for unrelated paths', () => {

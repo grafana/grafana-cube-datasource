@@ -12,7 +12,7 @@ interface FileListProps {
   onFileSelect: (file: ModelFile) => void;
 }
 
-function sortFiles(files: ModelFile[]): ModelFile[] {
+export function sortFiles(files: ModelFile[]): ModelFile[] {
   return [...files].sort((a, b) => {
     const aType = a.fileName.split('/')[0];
     const bType = b.fileName.split('/')[0];
@@ -72,14 +72,15 @@ export function FileList({ files, isLoading, error, selectedFile, onFileSelect }
       {sortedFiles.map((file) => {
         const isSelected = selectedFile === file.fileName;
         return (
-          <div
+          <button
             key={file.fileName}
+            type="button"
             className={`${styles.fileItem} ${isSelected ? styles.fileItemSelected : ''}`}
             onClick={() => onFileSelect(file)}
           >
             <Icon name={getFileIcon(file.fileName)} className={styles.fileIcon} />
             <span className={styles.fileName}>{file.fileName}</span>
-          </div>
+          </button>
         );
       })}
     </div>
@@ -93,9 +94,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
   fileItem: css`
     display: flex;
     align-items: center;
+    width: 100%;
     gap: 8px;
     padding: 6px 12px;
     cursor: pointer;
+    border: none;
+    background: none;
+    text-align: left;
+    font: inherit;
+    color: inherit;
     border-radius: ${theme.shape.radius.default};
     margin: 2px 4px;
     &:hover {
