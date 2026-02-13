@@ -17,7 +17,6 @@
   "license": "AGPL-3.0",
   "devDependencies": {
     "@cubejs-client/core": "1.6.9",
-    "@grafana/eslint-config": "9.0.0",
     "@grafana/plugin-e2e": "3.2.1",
     "@grafana/tsconfig": "2.0.1",
     "@playwright/test": "1.58.1",

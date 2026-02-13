@@ -72,7 +72,6 @@ const baseRules = {
 };
 
 export default defineConfig([
-  prettierConfig,
   {
     name: 'eslint-10-compatible-config',
     plugins: {
@@ -105,4 +104,6 @@ export default defineConfig([
       '@typescript-eslint/no-deprecated': 'warn',
     },
   },
+  // prettierConfig must be last to override any formatting-related rules from other configs
+  prettierConfig,
 ]);

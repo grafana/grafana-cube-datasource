@@ -218,11 +218,14 @@ const config = async (env: Env): Promise<Configuration> => {
               },
               typescript: { configFile: path.join(process.cwd(), 'tsconfig.json') },
             }),
-            new ESLintPlugin({
-              extensions: ['.ts', '.tsx'],
-              lintDirtyModulesOnly: Boolean(env.development), // don't lint on start, only lint changed files
-              failOnError: Boolean(env.production),
-            }),
+            // ESLintPlugin is temporarily disabled until eslint-webpack-plugin releases a version
+            // compatible with ESLint 10. The current v5.0.2 only supports ESLint ^8.0.0 || ^9.0.0.
+            // Use `npm run lint` separately to check for linting errors.
+            // new ESLintPlugin({
+            //   extensions: ['.ts', '.tsx'],
+            //   lintDirtyModulesOnly: Boolean(env.development), // don't lint on start, only lint changed files
+            //   failOnError: Boolean(env.production),
+            // }),
           ]
         : []),
     ],
