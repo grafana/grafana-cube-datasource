@@ -22,7 +22,10 @@ export function DataModelConfigPage({ plugin }: PluginConfigPageProps<PluginMeta
   const datasourceUid = useMemo(() => getDatasourceUidFromPath(window.location.pathname), []);
   const queryClient = useQueryClient();
   const generateMutation = useGenerateSchemaMutation(datasourceUid ?? undefined);
-  const { data: modelFiles, isLoading: modelFilesLoading } = useModelFilesQuery(datasourceUid ?? undefined, activeTab === 'files');
+  const { data: modelFiles, isLoading: modelFilesLoading, error: modelFilesError } = useModelFilesQuery(
+    datasourceUid ?? undefined,
+    activeTab === 'files'
+  );
 
   const onGenerate = async () => {
     if (!selectedTables.length) {
@@ -73,6 +76,10 @@ export function DataModelConfigPage({ plugin }: PluginConfigPageProps<PluginMeta
         {activeTab === 'files' ? (
           modelFilesLoading ? (
             <div>Loading files...</div>
+          ) : modelFilesError ? (
+            <Alert title="Failed to load model files" severity="error">
+              {modelFilesError instanceof Error ? modelFilesError.message : 'Unknown error'}
+            </Alert>
           ) : (
             <FileList
               files={modelFiles?.files ?? []}

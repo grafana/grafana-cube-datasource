@@ -113,4 +113,41 @@ describe('DataModelConfigPage', () => {
     expect(screen.getByTestId('yaml-preview')).toHaveTextContent('cubes:');
     expect(screen.getByTestId('yaml-preview')).toHaveTextContent('raw_orders');
   });
+
+  it('shows model files error message when files request fails', async () => {
+    const get = jest.fn().mockImplementation((url: string) => {
+      if (url.includes('/resources/model-files')) {
+        return Promise.reject(new Error('model files unavailable'));
+      }
+
+      if (url.includes('/resources/db-schema')) {
+        return Promise.resolve({
+          tablesSchema: {
+            public: {
+              raw_orders: [],
+            },
+          },
+        });
+      }
+
+      return Promise.resolve({});
+    });
+    const post = jest.fn().mockResolvedValue({ files: [] });
+    mockedGetBackendSrv.mockReturnValue({ get, post });
+
+    const { user } = setup(<DataModelConfigPage {...pluginProps} />);
+
+    await user.click(screen.getByRole('button', { name: 'Files' }));
+
+    expect(await screen.findByText('Failed to load model files')).toBeInTheDocument();
+  });
+
+  it('shows datasource UID error when URL does not contain datasource id', () => {
+    mockedGetBackendSrv.mockReturnValue({ get: jest.fn(), post: jest.fn() });
+    window.history.pushState({}, '', '/connections/datasources/edit/');
+
+    setup(<DataModelConfigPage {...pluginProps} />);
+
+    expect(screen.getByText('Could not determine datasource UID from URL.')).toBeInTheDocument();
+  });
 });
