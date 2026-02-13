@@ -220,7 +220,7 @@ npm run test:ci
 # First, spin up a Grafana instance to test against:
 npm run server
 # Optionally specify Grafana version:
-GRAFANA_VERSION=11.3.0 npm run server
+GRAFANA_VERSION=12.3.3 npm run server
 # Then run the E2E tests:
 npm run e2e
 ```

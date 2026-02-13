@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Raise minimum supported Grafana version to `12.3.3` to align with current React runtime compatibility expectations.
+
 ## 0.1.3 (2026-02-12)
 
 ### Fixed in 0.1.3
