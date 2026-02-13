@@ -334,14 +334,7 @@ describe('DataSource', () => {
 
         mockGetTemplateSrv.mockReturnValue({
           replace: mockReplace,
-          getAdhocFilters: () => [
-            {
-              key: 'orders.status',
-              operator: '=|',
-              value: 'completed',
-              values: ['completed', 'shipped', 'delivered'],
-            },
-          ],
+          getAdhocFilters: () => [],
         });
 
         const datasource = createDataSource();
@@ -352,7 +345,14 @@ describe('DataSource', () => {
           measures: ['orders.count'],
         };
 
-        const result = datasource.applyTemplateVariables(query, {});
+        const result = datasource.applyTemplateVariables(query, {}, [
+          {
+            key: 'orders.status',
+            operator: '=|',
+            value: 'completed',
+            values: ['completed', 'shipped', 'delivered'],
+          },
+        ]);
 
         expect(result.filters).toBeDefined();
         expect(result.filters).toHaveLength(1);
@@ -368,14 +368,7 @@ describe('DataSource', () => {
 
         mockGetTemplateSrv.mockReturnValue({
           replace: mockReplace,
-          getAdhocFilters: () => [
-            {
-              key: 'orders.status',
-              operator: '!=|',
-              value: 'cancelled',
-              values: ['cancelled', 'refunded'],
-            },
-          ],
+          getAdhocFilters: () => [],
         });
 
         const datasource = createDataSource();
@@ -386,7 +379,14 @@ describe('DataSource', () => {
           measures: ['orders.count'],
         };
 
-        const result = datasource.applyTemplateVariables(query, {});
+        const result = datasource.applyTemplateVariables(query, {}, [
+          {
+            key: 'orders.status',
+            operator: '!=|',
+            value: 'cancelled',
+            values: ['cancelled', 'refunded'],
+          },
+        ]);
 
         expect(result.filters).toBeDefined();
         expect(result.filters).toHaveLength(1);
@@ -402,14 +402,7 @@ describe('DataSource', () => {
 
         mockGetTemplateSrv.mockReturnValue({
           replace: mockReplace,
-          getAdhocFilters: () => [
-            {
-              key: 'orders.status',
-              operator: '=',
-              value: 'completed',
-              values: [], // Empty values array
-            },
-          ],
+          getAdhocFilters: () => [],
         });
 
         const datasource = createDataSource();
@@ -420,7 +413,14 @@ describe('DataSource', () => {
           measures: ['orders.count'],
         };
 
-        const result = datasource.applyTemplateVariables(query, {});
+        const result = datasource.applyTemplateVariables(query, {}, [
+          {
+            key: 'orders.status',
+            operator: '=',
+            value: 'completed',
+            values: [], // Empty values array
+          },
+        ]);
 
         expect(result.filters).toBeDefined();
         expect(result.filters![0].values).toEqual(['completed']);
@@ -431,10 +431,7 @@ describe('DataSource', () => {
 
         mockGetTemplateSrv.mockReturnValue({
           replace: mockReplace,
-          getAdhocFilters: () => [
-            { key: 'orders.status', operator: '=', value: 'completed' },
-            { key: 'orders.customer', operator: '!=', value: 'test' },
-          ],
+          getAdhocFilters: () => [],
         });
 
         const datasource = createDataSource();
@@ -445,7 +442,10 @@ describe('DataSource', () => {
           measures: ['orders.count'],
         };
 
-        const result = datasource.applyTemplateVariables(query, {});
+        const result = datasource.applyTemplateVariables(query, {}, [
+          { key: 'orders.status', operator: '=', value: 'completed' },
+          { key: 'orders.customer', operator: '!=', value: 'test' },
+        ]);
 
         expect(result.filters).toHaveLength(2);
         expect(result.filters![0].operator).toBe('equals');

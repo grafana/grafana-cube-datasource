@@ -12,7 +12,11 @@ import { normalizeOrder } from './normalizeOrder';
  * This function uses @cubejs-client/core types to ensure compile-time
  * compatibility with Cube's /load endpoint format.
  */
-export function buildCubeQueryJson(query: CubeQuery, datasource: DataSource): string {
+export function buildCubeQueryJson(
+  query: CubeQuery,
+  datasource: DataSource,
+  adHocFiltersArg?: Array<{ key: string; operator: string; value: string; values?: string[] }>
+): string {
   if (!query.dimensions?.length && !query.measures?.length) {
     return '';
   }
@@ -73,11 +77,8 @@ export function buildCubeQueryJson(query: CubeQuery, datasource: DataSource): st
   // Combine query-level filters with AdHoc filters
   let filters: CubeFilter[] = query.filters?.length ? [...query.filters] : [];
 
-  // Get AdHoc filters and convert to Cube format
-  const templateSrv = getTemplateSrv();
-  const adHocFilters = (templateSrv as any).getAdhocFilters
-    ? (templateSrv as any).getAdhocFilters(datasource.name)
-    : [];
+  // AdHoc filters may be provided by the caller (for example from request context).
+  const adHocFilters = adHocFiltersArg ?? [];
 
   if (adHocFilters && adHocFilters.length > 0) {
     const cubeFilters: CubeFilter[] = adHocFilters.map((filter: any) => ({
