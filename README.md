@@ -219,8 +219,10 @@ npm run test:ci
 # Run E2E tests (using Playwright)
 # First, spin up a Grafana instance to test against:
 npm run server
-# Optionally specify Grafana version:
-GRAFANA_VERSION=11.3.0 npm run server
+# Optionally specify Grafana version (recommended dev target):
+GRAFANA_VERSION=12.3.3 npm run server
+# Validate minimum supported version compatibility:
+GRAFANA_VERSION=12.2.5 npm run server
 # Then run the E2E tests:
 npm run e2e
 ```
