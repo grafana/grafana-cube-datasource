@@ -61,3 +61,28 @@ export interface CubeSecureJsonData {
   apiKey?: string; // For Cube Cloud
   apiSecret?: string; // For self-hosted Cube (JWT generation)
 }
+
+export interface DatabaseColumn {
+  name: string;
+  type: string;
+  attributes: string[];
+}
+
+export interface DbSchemaResponse {
+  tablesSchema: Record<string, Record<string, DatabaseColumn[]>>;
+}
+
+export interface ModelFile {
+  fileName: string;
+  content: string;
+}
+
+export interface ModelFilesResponse {
+  files: ModelFile[];
+}
+
+export interface GenerateSchemaRequest {
+  format: 'yaml' | 'javascript';
+  tables: string[][];
+  tablesSchema: Record<string, Record<string, DatabaseColumn[]>>;
+}

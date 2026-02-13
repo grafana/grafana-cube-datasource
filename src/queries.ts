@@ -3,6 +3,7 @@ import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DataSource } from 'datasource';
 import { fetchSqlDatasources } from './services/datasourceApi';
+import { DbSchemaResponse } from './types';
 
 export interface MetadataOption {
   label: string;
@@ -102,5 +103,13 @@ export const useMemberValuesQuery = ({
       return await datasource.getTagValues({ key: member });
     },
     enabled: !!member,
+  });
+};
+
+export const useDbSchemaQuery = (datasourceUid?: string): UseQueryResult<DbSchemaResponse> => {
+  return useQuery({
+    queryKey: ['dbSchema', datasourceUid],
+    queryFn: () => getBackendSrv().get(`/api/datasources/uid/${datasourceUid}/resources/db-schema`),
+    enabled: Boolean(datasourceUid),
   });
 };
