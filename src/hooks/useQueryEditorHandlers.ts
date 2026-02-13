@@ -10,8 +10,13 @@ export function useQueryEditorHandlers(query: CubeQuery, onChange: (query: CubeQ
     onRunQuery();
   };
 
-  const onDimensionOrMeasureChange = (values: Array<SelectableValue<string>>, type: 'measures' | 'dimensions') => {
+  const onDimensionOrMeasureChange = (values: Array<SelectableValue<string>>, type: 'views' | 'measures' | 'dimensions') => {
     const newValues = values.map((v) => v.value).filter((v): v is string => Boolean(v));
+
+    if (type === 'views') {
+      updateQueryAndRun({ views: newValues });
+      return;
+    }
 
     // Include newValues for the type being updated, and existing values for the other type
     const otherType = type === 'measures' ? 'dimensions' : 'measures';

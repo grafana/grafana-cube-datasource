@@ -21,7 +21,7 @@ export function QueryEditor({
   const cubeQueryJson = useMemo(() => buildCubeQueryJson(query, datasource), [query, datasource]);
 
   const { data, isLoading: metadataIsLoading, isError: metadataIsError } = useMetadataQuery({ datasource });
-  const metadata = data ?? { dimensions: [], measures: [] };
+  const metadata = data ?? { dimensions: [], measures: [], views: [], cubes: [] };
 
   const { data: compiledSql, isLoading: compiledSqlIsLoading } = useCompiledSqlQuery({
     datasource,
@@ -46,6 +46,25 @@ export function QueryEditor({
   const selectedMeasures = (query.measures || [])
     .map((name) => metadata.measures.find((option) => option.value === name))
     .filter((option): option is MetadataOption => option !== undefined);
+  const selectedViews = (query.views || [])
+    .map((name) => metadata.views.find((option) => option.value === name))
+    .filter((option): option is MetadataOption => option !== undefined);
+
+  const filteredDimensions = useMemo(() => {
+    if (!query.views?.length) {
+      return metadata.dimensions;
+    }
+
+    return metadata.dimensions.filter((option) => query.views?.some((view) => option.value.startsWith(`${view}.`)));
+  }, [metadata.dimensions, query.views]);
+
+  const filteredMeasures = useMemo(() => {
+    if (!query.views?.length) {
+      return metadata.measures;
+    }
+
+    return metadata.measures.filter((option) => query.views?.some((view) => option.value.startsWith(`${view}.`)));
+  }, [metadata.measures, query.views]);
   const currentLimit = query.limit ?? '';
 
   // All selected dimensions and measures with their labels (for OrderBy component)
@@ -57,12 +76,26 @@ export function QueryEditor({
   return (
     <>
       {metadataIsError && <Alert title="Error fetching metadata" severity="error" />}
+      <InlineField label="Views" labelWidth={16} tooltip="Select views to scope dimensions and measures" grow>
+        <div className={styles.multiSelectWrapper}>
+          <div className={styles.multiSelectContainer}>
+            <MultiSelect
+              aria-label="Views"
+              options={metadata.views}
+              value={selectedViews}
+              onChange={(v) => onDimensionOrMeasureChange(v, 'views')}
+              placeholder={metadataIsLoading ? 'Loading views...' : 'Select views...'}
+              isLoading={metadataIsLoading}
+            />
+          </div>
+        </div>
+      </InlineField>
       <InlineField label="Dimensions" labelWidth={16} tooltip="Select the dimensions to group your data by" grow>
         <div className={styles.multiSelectWrapper}>
           <div className={styles.multiSelectContainer}>
             <MultiSelect
               aria-label="Dimensions"
-              options={metadata.dimensions}
+              options={filteredDimensions}
               value={selectedDimensions}
               onChange={(v) => onDimensionOrMeasureChange(v, 'dimensions')}
               placeholder={metadataIsLoading ? 'Loading dimensions...' : 'Select dimensions...'}
@@ -77,7 +110,7 @@ export function QueryEditor({
           <div className={styles.multiSelectContainer}>
             <MultiSelect
               aria-label="Measures"
-              options={metadata.measures}
+              options={filteredMeasures}
               value={selectedMeasures}
               onChange={(v) => onDimensionOrMeasureChange(v, 'measures')}
               placeholder={metadataIsLoading ? 'Loading measures...' : 'Select measures...'}
