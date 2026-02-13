@@ -3,7 +3,7 @@ import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DataSource } from 'datasource';
 import { fetchSqlDatasources } from './services/datasourceApi';
-import { DbSchemaResponse, GenerateSchemaRequest } from './types';
+import { DbSchemaResponse, GenerateSchemaRequest, ModelFilesResponse } from './types';
 
 export interface MetadataOption {
   label: string;
@@ -133,7 +133,9 @@ export const useGenerateSchemaMutation = (datasourceUid?: string) => {
       const backendSrv = getBackendSrv();
       const dbSchema = await backendSrv.get(`/api/datasources/uid/${datasourceUid}/resources/db-schema`);
       const tables = selectedTables.map((tableKey) => {
-        const [schema, table] = tableKey.split('.');
+        const dotIndex = tableKey.indexOf('.');
+        const schema = tableKey.slice(0, dotIndex);
+        const table = tableKey.slice(dotIndex + 1);
         return [schema, table];
       });
       const request: GenerateSchemaRequest = {
@@ -147,10 +149,10 @@ export const useGenerateSchemaMutation = (datasourceUid?: string) => {
   });
 };
 
-export const useModelFilesQuery = (datasourceUid?: string, enabled = true): UseQueryResult<GenerateSchemaResponse> => {
+export const useModelFilesQuery = (datasourceUid?: string, enabled = true): UseQueryResult<ModelFilesResponse> => {
   return useQuery({
     queryKey: ['modelFiles', datasourceUid],
-    queryFn: async (): Promise<GenerateSchemaResponse> => {
+    queryFn: async (): Promise<ModelFilesResponse> => {
       if (!datasourceUid) {
         throw new Error('Datasource UID is required');
       }
