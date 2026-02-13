@@ -1,7 +1,7 @@
 import { DataSourceInstanceSettings, CoreApp, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 
-import { CubeQuery, CubeDataSourceOptions, DEFAULT_QUERY, CubeFilter } from './types';
+import { CubeQuery, CubeDataSourceOptions, DEFAULT_QUERY, CubeFilter, Operator } from './types';
 import { filterValidCubeFilters } from './utils/filterValidation';
 
 export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceOptions> {
@@ -16,7 +16,11 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
     return DEFAULT_QUERY;
   }
 
-  applyTemplateVariables(query: CubeQuery, scopedVars: ScopedVars): CubeQuery {
+  applyTemplateVariables(
+    query: CubeQuery,
+    scopedVars: ScopedVars,
+    adHocFiltersArg?: Array<{ key: string; operator: string; value: string; values?: string[] }>
+  ): CubeQuery {
     const templateSrv = getTemplateSrv();
 
     // Dimensions and measures: pass through as-is (no interpolation of dashboard variables)
@@ -33,8 +37,9 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
       values: filter.values.map((v) => templateSrv.replace(v, scopedVars)),
     }));
 
-    // Check for AdHoc filters and inject them
-    const adHocFilters = (templateSrv as any).getAdhocFilters ? (templateSrv as any).getAdhocFilters(this.name) : [];
+    // AdHoc filters are provided by Grafana on the request path via applyTemplateVariables(..., filters).
+    // Avoid templateSrv.getAdhocFilters(), which is deprecated.
+    const adHocFilters = adHocFiltersArg ?? [];
 
     let filters = interpolatedFilters ? [...interpolatedFilters] : [];
 
@@ -106,24 +111,24 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
   }
 
   // Made public so QueryEditor can use this for SQL preview with AdHoc filters
-  mapOperator(grafanaOp: string): string {
+  mapOperator(grafanaOp: string): CubeFilter['operator'] {
     switch (grafanaOp) {
       case '=':
       case '=|': // "One of" - Cube's equals operator supports multiple values
-        return 'equals';
+        return Operator.Equals;
       case '!=':
       case '!=|': // "Not one of" - Cube's notEquals operator supports multiple values
-        return 'notEquals';
+        return Operator.NotEquals;
       // Note: =~ and !~ are Prometheus regex operators, not substring contains.
       // We intentionally don't (yet) map these to `contains` or `notContains` to avoid semantic confusion,
       // and because isValidCubeFilter doesn't support `contains` or `notContains` yet.
       // We don't yet test for the behaviour below because it's not desirable long term - it's a temporary workaround.
       case '=~':
-        return 'equals';
+        return Operator.Equals;
       case '!~':
-        return 'notEquals';
+        return Operator.NotEquals;
       default:
-        return 'equals';
+        return Operator.Equals;
     }
   }
 

@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { InlineField, Input, Alert, MultiSelect, Text, Field, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import { DataSource } from '../datasource';
 import { CubeDataSourceOptions, CubeQuery } from '../types';
 import { SQLPreview } from './SQLPreview';
@@ -18,7 +19,10 @@ export function QueryEditor({
   datasource,
 }: QueryEditorProps<DataSource, CubeQuery, CubeDataSourceOptions>) {
   const styles = useStyles2(getStyles);
-  const cubeQueryJson = useMemo(() => buildCubeQueryJson(query, datasource), [query, datasource]);
+  const adHocFilters = useMemo(() => {
+    return getTemplateSrv().getAdhocFilters(datasource.name) as NonNullable<Parameters<typeof buildCubeQueryJson>[2]>;
+  }, [datasource.name]);
+  const cubeQueryJson = useMemo(() => buildCubeQueryJson(query, datasource, adHocFilters), [query, datasource, adHocFilters]);
 
   const { data, isLoading: metadataIsLoading, isError: metadataIsError } = useMetadataQuery({ datasource });
   const metadata = data ?? { dimensions: [], measures: [] };

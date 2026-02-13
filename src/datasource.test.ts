@@ -161,6 +161,12 @@ describe('DataSource', () => {
   });
 
   describe('applyTemplateVariables', () => {
+    beforeEach(() => {
+      mockGetTemplateSrv.mockReturnValue({
+        replace: (str: string) => str,
+      });
+    });
+
     it('should interpolate template variables in filter values', () => {
       const mockReplace = jest.fn((str: string) => {
         if (str === '$filterValue') {
@@ -171,7 +177,6 @@ describe('DataSource', () => {
 
       mockGetTemplateSrv.mockReturnValue({
         replace: mockReplace,
-        getAdhocFilters: () => [],
       });
 
       const datasource = createDataSource();
@@ -215,7 +220,6 @@ describe('DataSource', () => {
 
         mockGetTemplateSrv.mockReturnValue({
           replace: mockReplace,
-          getAdhocFilters: () => [],
         });
 
         const datasource = createDataSource();
@@ -252,7 +256,6 @@ describe('DataSource', () => {
 
         mockGetTemplateSrv.mockReturnValue({
           replace: mockReplace,
-          getAdhocFilters: () => [],
         });
 
         const datasource = createDataSource();
@@ -277,16 +280,6 @@ describe('DataSource', () => {
       });
 
       it('should not inject time dimension when $cubeTimeDimension variable is not set', () => {
-        const mockReplace = jest.fn((str: string) => {
-          // Return the variable name unchanged when not set
-          return str;
-        });
-
-        mockGetTemplateSrv.mockReturnValue({
-          replace: mockReplace,
-          getAdhocFilters: () => [],
-        });
-
         const datasource = createDataSource();
 
         const query = {
@@ -311,7 +304,6 @@ describe('DataSource', () => {
 
         mockGetTemplateSrv.mockReturnValue({
           replace: mockReplace,
-          getAdhocFilters: () => [],
         });
 
         const datasource = createDataSource();
@@ -330,20 +322,6 @@ describe('DataSource', () => {
 
     describe('AdHoc filter operators', () => {
       it('should map "One of" operator (=|) to Cube equals with multiple values', () => {
-        const mockReplace = jest.fn((str: string) => str);
-
-        mockGetTemplateSrv.mockReturnValue({
-          replace: mockReplace,
-          getAdhocFilters: () => [
-            {
-              key: 'orders.status',
-              operator: '=|',
-              value: 'completed',
-              values: ['completed', 'shipped', 'delivered'],
-            },
-          ],
-        });
-
         const datasource = createDataSource();
 
         const query = {
@@ -352,7 +330,14 @@ describe('DataSource', () => {
           measures: ['orders.count'],
         };
 
-        const result = datasource.applyTemplateVariables(query, {});
+        const result = datasource.applyTemplateVariables(query, {}, [
+          {
+            key: 'orders.status',
+            operator: '=|',
+            value: 'completed',
+            values: ['completed', 'shipped', 'delivered'],
+          },
+        ]);
 
         expect(result.filters).toBeDefined();
         expect(result.filters).toHaveLength(1);
@@ -364,20 +349,6 @@ describe('DataSource', () => {
       });
 
       it('should map "Not one of" operator (!=|) to Cube notEquals with multiple values', () => {
-        const mockReplace = jest.fn((str: string) => str);
-
-        mockGetTemplateSrv.mockReturnValue({
-          replace: mockReplace,
-          getAdhocFilters: () => [
-            {
-              key: 'orders.status',
-              operator: '!=|',
-              value: 'cancelled',
-              values: ['cancelled', 'refunded'],
-            },
-          ],
-        });
-
         const datasource = createDataSource();
 
         const query = {
@@ -386,7 +357,14 @@ describe('DataSource', () => {
           measures: ['orders.count'],
         };
 
-        const result = datasource.applyTemplateVariables(query, {});
+        const result = datasource.applyTemplateVariables(query, {}, [
+          {
+            key: 'orders.status',
+            operator: '!=|',
+            value: 'cancelled',
+            values: ['cancelled', 'refunded'],
+          },
+        ]);
 
         expect(result.filters).toBeDefined();
         expect(result.filters).toHaveLength(1);
@@ -398,20 +376,6 @@ describe('DataSource', () => {
       });
 
       it('should fall back to single value when values array is empty', () => {
-        const mockReplace = jest.fn((str: string) => str);
-
-        mockGetTemplateSrv.mockReturnValue({
-          replace: mockReplace,
-          getAdhocFilters: () => [
-            {
-              key: 'orders.status',
-              operator: '=',
-              value: 'completed',
-              values: [], // Empty values array
-            },
-          ],
-        });
-
         const datasource = createDataSource();
 
         const query = {
@@ -420,23 +384,20 @@ describe('DataSource', () => {
           measures: ['orders.count'],
         };
 
-        const result = datasource.applyTemplateVariables(query, {});
+        const result = datasource.applyTemplateVariables(query, {}, [
+          {
+            key: 'orders.status',
+            operator: '=',
+            value: 'completed',
+            values: [], // Empty values array
+          },
+        ]);
 
         expect(result.filters).toBeDefined();
         expect(result.filters![0].values).toEqual(['completed']);
       });
 
       it('should handle standard single-value operators', () => {
-        const mockReplace = jest.fn((str: string) => str);
-
-        mockGetTemplateSrv.mockReturnValue({
-          replace: mockReplace,
-          getAdhocFilters: () => [
-            { key: 'orders.status', operator: '=', value: 'completed' },
-            { key: 'orders.customer', operator: '!=', value: 'test' },
-          ],
-        });
-
         const datasource = createDataSource();
 
         const query = {
@@ -445,7 +406,10 @@ describe('DataSource', () => {
           measures: ['orders.count'],
         };
 
-        const result = datasource.applyTemplateVariables(query, {});
+        const result = datasource.applyTemplateVariables(query, {}, [
+          { key: 'orders.status', operator: '=', value: 'completed' },
+          { key: 'orders.customer', operator: '!=', value: 'test' },
+        ]);
 
         expect(result.filters).toHaveLength(2);
         expect(result.filters![0].operator).toBe('equals');
@@ -454,14 +418,6 @@ describe('DataSource', () => {
     });
 
     describe('filter validation', () => {
-      beforeEach(() => {
-        // Reset template srv mock to avoid AdHoc filters from previous tests
-        mockGetTemplateSrv.mockReturnValue({
-          replace: (str: string) => str,
-          getAdhocFilters: () => [],
-        });
-      });
-
       it('should strip out filters with empty values', () => {
         const datasource = createDataSource();
 
