@@ -514,7 +514,7 @@ describe('QueryEditor', () => {
   });
 
   describe('SQL Preview with AdHoc Filters and Dashboard Variables', () => {
-    it('should not read AdHoc filters from templateSrv for SQL preview', async () => {
+    it('should include dashboard AdHoc filters in SQL preview query', async () => {
       // Setup mock to return AdHoc filters
       mockGetTemplateSrv.mockReturnValue({
         replace: jest.fn((value: string) => value),
@@ -545,7 +545,17 @@ describe('QueryEditor', () => {
         ?.query;
       const parsedQuery = JSON.parse(callArg);
 
-      expect(parsedQuery.filters).toBeUndefined();
+      expect(parsedQuery.filters).toHaveLength(2);
+      expect(parsedQuery.filters).toContainEqual({
+        member: 'orders.status',
+        operator: 'equals',
+        values: ['completed'],
+      });
+      expect(parsedQuery.filters).toContainEqual({
+        member: 'orders.customer',
+        operator: 'notEquals',
+        values: ['test-user'],
+      });
     });
 
     it('should include $cubeTimeDimension in SQL compilation when variable is set', async () => {
@@ -663,16 +673,21 @@ describe('QueryEditor', () => {
         expect(datasource.getResource).toHaveBeenCalled();
       });
 
-      // Parse the query to verify both filters are included
+      // Parse the query to verify query-level and dashboard AdHoc filters are included
       const callArg = (datasource.getResource as jest.Mock).mock.calls.find((call: unknown[]) => call[0] === 'sql')?.[1]
         ?.query;
       const parsedQuery = JSON.parse(callArg);
 
-      expect(parsedQuery.filters).toHaveLength(1);
+      expect(parsedQuery.filters).toHaveLength(2);
       expect(parsedQuery.filters).toContainEqual({
         member: 'orders.status',
         operator: 'equals',
         values: ['active'],
+      });
+      expect(parsedQuery.filters).toContainEqual({
+        member: 'orders.region',
+        operator: 'equals',
+        values: ['US'],
       });
     });
   });
