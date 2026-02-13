@@ -86,5 +86,9 @@
   "packageManager": "npm@11.9.0",
   "volta": {
     "node": "24.13.0"
+  },
+  "overrides": {
+    "lodash": "4.17.23",
+    "qs": "6.14.2"
   }
 }
