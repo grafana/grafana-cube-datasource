@@ -50,7 +50,7 @@ export function DatabaseTree({ datasourceUid, selectedTables, onTableSelect }: D
       title: schemaName,
       isExpanded: true,
       children: Object.keys(tables).map((tableName) => ({
-        key: `${schemaName}.${tableName}`,
+        key: `${schemaName}\0${tableName}`,
         title: tableName,
       })),
     }));

@@ -37,7 +37,7 @@ export function DataModelConfigPage({ plugin }: PluginConfigPageProps<PluginMeta
     }
 
     const tables = selectedTables
-      .map((table) => table.split('.', 2))
+      .map((table) => table.split('\0', 2))
       .filter((parts) => parts.length === 2) as string[][];
 
     try {
@@ -53,6 +53,9 @@ export function DataModelConfigPage({ plugin }: PluginConfigPageProps<PluginMeta
       if (firstFile) {
         setSelectedFile(firstFile.fileName);
         setSelectedFileContent(firstFile.content);
+      } else {
+        setSelectedFile(undefined);
+        setSelectedFileContent(null);
       }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Failed to generate schema');

@@ -21,7 +21,7 @@ jest.mock('queries', () => ({
 jest.mock('./DatabaseTree', () => ({
   DatabaseTree: ({ onTableSelect }: { onTableSelect: (tables: string[]) => void }) => (
     <div>
-      <button type="button" onClick={() => onTableSelect(['public.raw_orders'])}>
+      <button type="button" onClick={() => onTableSelect(['public\0raw_orders'])}>
         Select raw_orders
       </button>
     </div>

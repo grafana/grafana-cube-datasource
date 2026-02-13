@@ -62,7 +62,7 @@ describe('DatabaseTree', () => {
 
     await user.click(screen.getByText('raw_orders'));
 
-    expect(onTableSelect).toHaveBeenCalledWith(['public.raw_orders']);
+    expect(onTableSelect).toHaveBeenCalledWith(['public\0raw_orders']);
   });
 
   it('shows error state', () => {
