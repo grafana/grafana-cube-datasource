@@ -16,8 +16,13 @@ export function extractDatasourceUid(pathname: string = window.location.pathname
 
 type ActiveTab = 'tables' | 'files';
 
-export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
-  const datasourceUid = extractDatasourceUid();
+interface DataModelConfigPageInternalProps {
+  /** Override for testing -- if not provided, extracted from window.location */
+  datasourceUid?: string;
+}
+
+export function DataModelConfigPage({ datasourceUid: uidOverride, ...rest }: PluginConfigPageProps<PluginMeta> & DataModelConfigPageInternalProps) {
+  const datasourceUid = uidOverride ?? extractDatasourceUid();
   const styles = useStyles2(getStyles);
 
   const [selectedTables, setSelectedTables] = useState<string[]>([]);
