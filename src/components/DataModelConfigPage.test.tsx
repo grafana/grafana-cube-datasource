@@ -159,8 +159,10 @@ describe('DataModelConfigPage', () => {
     await user.click(screen.getByText('raw_customers'));
     await user.click(screen.getByRole('button', { name: /Generate Data Model/i }));
 
+    // After generation, file list and file header both show the filename
     await waitFor(() => {
-      expect(screen.getByText('cubes/raw_customers.yml')).toBeInTheDocument();
+      const matches = screen.getAllByText('cubes/raw_customers.yml');
+      expect(matches.length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -189,5 +191,76 @@ describe('DataModelConfigPage', () => {
     setup(<DataModelConfigPage {...mockPluginProps} />);
 
     expect(screen.getByText('Unable to determine datasource')).toBeInTheDocument();
+  });
+
+  it('shows selected table count in Generate button text', async () => {
+    mockApi();
+    const { user } = setup(<DataModelConfigPage {...mockPluginProps} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('raw_customers')).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByText('raw_customers'));
+    expect(screen.getByRole('button', { name: /Generate Data Model \(1\)/i })).toBeInTheDocument();
+
+    await user.click(screen.getByText('raw_orders'));
+    expect(screen.getByRole('button', { name: /Generate Data Model \(2\)/i })).toBeInTheDocument();
+  });
+
+  it('shows file header with filename when a file is selected', async () => {
+    mockApi({ modelFiles: mockModelFiles });
+    const { user } = setup(<DataModelConfigPage {...mockPluginProps} />);
+
+    await user.click(screen.getByText('Files'));
+
+    await waitFor(() => {
+      expect(screen.getByText('cubes/raw_customers.yml')).toBeInTheDocument();
+    });
+
+    // Click a file in the sidebar
+    await user.click(screen.getByText('cubes/raw_customers.yml'));
+
+    // The filename should also appear in the file header bar
+    const fileHeaders = screen.getAllByText('cubes/raw_customers.yml');
+    expect(fileHeaders.length).toBeGreaterThanOrEqual(2); // sidebar + header
+  });
+
+  it('shows empty state with descriptive text when no file is selected', async () => {
+    mockApi();
+    setup(<DataModelConfigPage {...mockPluginProps} />);
+
+    expect(screen.getByText('Generate Data Models')).toBeInTheDocument();
+    expect(screen.getByText(/Select tables from the sidebar/)).toBeInTheDocument();
+  });
+
+  it('shows generation error message when API fails', async () => {
+    const mockGet = jest.fn().mockImplementation((url: string) => {
+      if (url.includes('/resources/db-schema')) {
+        return Promise.resolve(mockDbSchema);
+      }
+      if (url.includes('/resources/model-files')) {
+        return Promise.resolve({ files: [] });
+      }
+      return Promise.reject(new Error('Unexpected'));
+    });
+
+    // Use mockImplementation to avoid immediate rejection at mock creation
+    const mockPost = jest.fn().mockImplementation(() => Promise.reject(new Error('Server error')));
+    mockGetBackendSrv.mockReturnValue({ get: mockGet, post: mockPost });
+
+    const { user } = setup(<DataModelConfigPage {...mockPluginProps} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('raw_customers')).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByText('raw_customers'));
+    await user.click(screen.getByRole('button', { name: /Generate Data Model/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Generation failed')).toBeInTheDocument();
+      expect(screen.getByText('Server error')).toBeInTheDocument();
+    });
   });
 });

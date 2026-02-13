@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, PluginConfigPageProps, PluginMeta } from '@grafana/data';
-import { useStyles2, Button, Alert, CodeEditor } from '@grafana/ui';
+import { useStyles2, Button, Alert, CodeEditor, Icon, Badge } from '@grafana/ui';
 import { DatabaseTree } from './DatabaseTree';
 import { FileList } from './FileList';
 import { useDbSchemaQuery, useGenerateSchemaMutation, useModelFilesQuery } from '../queries';
@@ -39,23 +39,29 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
 
     const tables = selectedTables.map((key) => key.split('.'));
 
-    await generateMutation.mutateAsync({
-      format: 'yaml',
-      tables,
-      tablesSchema: dbSchemaQuery.data.tablesSchema,
-    });
+    try {
+      await generateMutation.mutateAsync({
+        format: 'yaml',
+        tables,
+        tablesSchema: dbSchemaQuery.data.tablesSchema,
+      });
 
-    // Switch to files tab and select first file after refetch
-    setActiveTab('files');
-    const result = await modelFilesQuery.refetch();
-    if (result.data?.files?.length) {
-      setSelectedFile(result.data.files[0]);
+      // Switch to files tab and select first file after refetch
+      setActiveTab('files');
+      const result = await modelFilesQuery.refetch();
+      if (result.data?.files?.length) {
+        setSelectedFile(result.data.files[0]);
+      }
+    } catch {
+      // Error is captured by mutation state and displayed in the UI
     }
   };
 
   const handleFileSelect = (file: ModelFile) => {
     setSelectedFile(file);
   };
+
+  const fileCount = modelFilesQuery.data?.files?.length || 0;
 
   return (
     <div className={styles.container}>
@@ -69,6 +75,9 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
             type="button"
           >
             Tables
+            {selectedTables.length > 0 && (
+              <Badge text={String(selectedTables.length)} color="blue" className={styles.badge} />
+            )}
           </button>
           <button
             className={`${styles.tab} ${activeTab === 'files' ? styles.tabActive : ''}`}
@@ -76,6 +85,7 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
             type="button"
           >
             Files
+            {fileCount > 0 && <Badge text={String(fileCount)} color="green" className={styles.badge} />}
           </button>
         </div>
 
@@ -88,14 +98,15 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
               onClick={handleGenerate}
               icon={generateMutation.isPending ? 'spinner' : 'cog'}
               disabled={selectedTables.length === 0 || generateMutation.isPending}
+              fullWidth
             >
-              {generateMutation.isPending ? 'Generating...' : 'Generate Data Model'}
+              {generateMutation.isPending ? 'Generating...' : `Generate Data Model (${selectedTables.length})`}
             </Button>
           </div>
         )}
 
         {generateMutation.isError && (
-          <div className={styles.generateContainer}>
+          <div className={styles.errorContainer}>
             <Alert severity="error" title="Generation failed">
               {generateMutation.error instanceof Error
                 ? generateMutation.error.message
@@ -128,21 +139,33 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
       {/* Main content - YAML preview */}
       <div className={styles.mainContent}>
         {selectedFile ? (
-          <div className={styles.codeEditorWrapper}>
-            <CodeEditor
-              value={selectedFile.content}
-              language="yaml"
-              showMiniMap={false}
-              showLineNumbers={true}
-              readOnly={true}
-              height="498px"
-            />
-          </div>
+          <>
+            <div className={styles.fileHeader}>
+              <Icon name="file-alt" className={styles.fileHeaderIcon} />
+              <span className={styles.fileHeaderName}>{selectedFile.fileName}</span>
+            </div>
+            <div className={styles.codeEditorWrapper}>
+              <CodeEditor
+                value={selectedFile.content}
+                language="yaml"
+                showMiniMap={false}
+                showLineNumbers={true}
+                readOnly={true}
+                height="464px"
+              />
+            </div>
+          </>
         ) : (
           <div className={styles.emptyState}>
-            {activeTab === 'tables'
-              ? 'Select tables and click "Generate Data Model" to create Cube data models.'
-              : 'Select a file to view its contents.'}
+            <Icon name="cube" size="xxxl" className={styles.emptyStateIcon} />
+            <h4 className={styles.emptyStateTitle}>
+              {activeTab === 'tables' ? 'Generate Data Models' : 'Preview Files'}
+            </h4>
+            <p className={styles.emptyStateText}>
+              {activeTab === 'tables'
+                ? 'Select tables from the sidebar and click "Generate Data Model" to create Cube data model files.'
+                : 'Select a file from the sidebar to preview its YAML contents.'}
+            </p>
           </div>
         )}
       </div>
@@ -180,6 +203,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: ${theme.colors.text.secondary};
     cursor: pointer;
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     &:hover {
       color: ${theme.colors.text.primary};
     }
@@ -196,9 +223,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
       background: ${theme.colors.primary.main};
     }
   `,
+  badge: css`
+    font-size: 10px;
+    padding: 0 4px;
+    height: 16px;
+    line-height: 16px;
+  `,
   generateContainer: css`
-    padding: ${theme.spacing(1)} ${theme.spacing(2)};
+    padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
     border-bottom: 1px solid ${theme.colors.border.weak};
+    flex-shrink: 0;
+  `,
+  errorContainer: css`
+    padding: ${theme.spacing(1)};
     flex-shrink: 0;
   `,
   tabContent: css`
@@ -212,17 +249,47 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: ${theme.colors.background.primary};
     min-width: 0;
   `,
+  fileHeader: css`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: ${theme.spacing(1)} ${theme.spacing(2)};
+    border-bottom: 1px solid ${theme.colors.border.weak};
+    background: ${theme.colors.background.secondary};
+    flex-shrink: 0;
+  `,
+  fileHeaderIcon: css`
+    color: ${theme.colors.text.secondary};
+  `,
+  fileHeaderName: css`
+    font-size: ${theme.typography.bodySmall.fontSize};
+    font-family: ${theme.typography.fontFamilyMonospace};
+    color: ${theme.colors.text.primary};
+  `,
   codeEditorWrapper: css`
     flex: 1;
     overflow: hidden;
   `,
   emptyState: css`
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     height: 100%;
     color: ${theme.colors.text.secondary};
     padding: ${theme.spacing(4)};
     text-align: center;
+  `,
+  emptyStateIcon: css`
+    color: ${theme.colors.text.disabled};
+    margin-bottom: ${theme.spacing(2)};
+  `,
+  emptyStateTitle: css`
+    color: ${theme.colors.text.primary};
+    margin: 0 0 ${theme.spacing(1)} 0;
+  `,
+  emptyStateText: css`
+    max-width: 400px;
+    line-height: 1.5;
   `,
 });
