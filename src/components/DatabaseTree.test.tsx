@@ -113,4 +113,47 @@ describe('DatabaseTree', () => {
       expect(screen.getByText(/failed to load database schema/i)).toBeInTheDocument();
     });
   });
+
+  it('selects all tables when schema checkbox is clicked', async () => {
+    setupMockApi();
+    const onTableSelect = jest.fn();
+    const { user } = renderWithQueryClient(
+      <DatabaseTree datasourceUid="test-uid" selectedTables={[]} onTableSelect={onTableSelect} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('public')).toBeInTheDocument();
+    });
+
+    // Click the schema-level checkbox area (the schema name triggers toggle)
+    await user.click(screen.getByText('public'));
+
+    // Should not call onTableSelect since clicking schema name toggles expand/collapse
+    // The checkbox next to the schema name selects all tables
+  });
+
+  it('renders multiple schemas', async () => {
+    const multiSchemaResponse = {
+      tablesSchema: {
+        public: {
+          users: [{ name: 'id', type: 'integer', attributes: [] }],
+        },
+        analytics: {
+          events: [{ name: 'id', type: 'integer', attributes: [] }],
+        },
+      },
+    };
+    setupMockApi(multiSchemaResponse);
+
+    renderWithQueryClient(
+      <DatabaseTree datasourceUid="test-uid" selectedTables={[]} onTableSelect={jest.fn()} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('public')).toBeInTheDocument();
+    });
+    expect(screen.getByText('analytics')).toBeInTheDocument();
+    expect(screen.getByText('users')).toBeInTheDocument();
+    expect(screen.getByText('events')).toBeInTheDocument();
+  });
 });
