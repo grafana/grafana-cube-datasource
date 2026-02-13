@@ -2,11 +2,12 @@ import React from 'react';
 import { screen } from '@testing-library/react';
 import { setup } from 'testUtils';
 import { DataModelConfigPage } from './DataModelConfigPage';
-import { useDbSchemaQuery, useGenerateSchemaMutation } from 'queries';
+import { useDbSchemaQuery, useGenerateSchemaMutation, useModelFilesQuery } from 'queries';
 
 jest.mock('queries', () => ({
   useDbSchemaQuery: jest.fn(),
   useGenerateSchemaMutation: jest.fn(),
+  useModelFilesQuery: jest.fn(),
 }));
 
 jest.mock('./DatabaseTree', () => ({
@@ -21,6 +22,7 @@ jest.mock('./DatabaseTree', () => ({
 
 const mockedUseDbSchemaQuery = useDbSchemaQuery as jest.MockedFunction<typeof useDbSchemaQuery>;
 const mockedUseGenerateSchemaMutation = useGenerateSchemaMutation as jest.MockedFunction<typeof useGenerateSchemaMutation>;
+const mockedUseModelFilesQuery = useModelFilesQuery as jest.MockedFunction<typeof useModelFilesQuery>;
 
 describe('DataModelConfigPage', () => {
   beforeEach(() => {
@@ -41,6 +43,14 @@ describe('DataModelConfigPage', () => {
       isPending: false,
       isError: false,
       error: null,
+    } as any);
+    mockedUseModelFilesQuery.mockReturnValue({
+      data: { files: [] },
+      refetch: jest.fn().mockResolvedValue({
+        data: {
+          files: [{ fileName: 'cubes/raw_orders.yml', content: 'orders schema' }],
+        },
+      }),
     } as any);
   });
 
@@ -81,5 +91,15 @@ describe('DataModelConfigPage', () => {
         },
       },
     });
+  });
+
+  it('switches to files tab and shows first generated file content', async () => {
+    const { user } = setup(<DataModelConfigPage plugin={{ meta: { id: 'grafana-cube-datasource' } } as any} query={{}} />);
+
+    await user.click(screen.getByRole('button', { name: 'Select raw_orders' }));
+    await user.click(screen.getByRole('button', { name: 'Generate Data Model' }));
+
+    expect(screen.getByRole('button', { name: 'Files' })).toBeInTheDocument();
+    expect(screen.getByText('orders schema')).toBeInTheDocument();
   });
 });

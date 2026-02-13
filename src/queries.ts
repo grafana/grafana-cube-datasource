@@ -3,7 +3,7 @@ import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DataSource } from 'datasource';
 import { fetchSqlDatasources } from './services/datasourceApi';
-import { DbSchemaResponse, GenerateSchemaRequest } from './types';
+import { DbSchemaResponse, GenerateSchemaRequest, ModelFilesResponse } from './types';
 
 export interface MetadataOption {
   label: string;
@@ -118,5 +118,13 @@ export const useGenerateSchemaMutation = (datasourceUid?: string) => {
   return useMutation({
     mutationFn: (request: GenerateSchemaRequest) =>
       getBackendSrv().post(`/api/datasources/uid/${datasourceUid}/resources/generate-schema`, request),
+  });
+};
+
+export const useModelFilesQuery = (datasourceUid?: string): UseQueryResult<ModelFilesResponse> => {
+  return useQuery({
+    queryKey: ['modelFiles', datasourceUid],
+    queryFn: () => getBackendSrv().get(`/api/datasources/uid/${datasourceUid}/resources/model-files`),
+    enabled: Boolean(datasourceUid),
   });
 };
