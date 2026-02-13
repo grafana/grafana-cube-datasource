@@ -11,8 +11,8 @@ import { ModelFile } from '../types';
  * Extract datasource UID from the current URL.
  * URL pattern: /connections/datasources/edit/{uid}/?page=data-model
  */
-function extractDatasourceUid(): string | null {
-  const match = window.location.pathname.match(/\/datasources\/edit\/([^/]+)/);
+export function extractDatasourceUid(pathname = window.location.pathname): string | null {
+  const match = pathname.match(/\/datasources\/edit\/([^/]+)/);
   return match ? match[1] : null;
 }
 
@@ -128,14 +128,16 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
       {/* Main content - YAML preview */}
       <div className={styles.mainContent}>
         {selectedFile ? (
-          <CodeEditor
-            value={selectedFile.content}
-            language="yaml"
-            showMiniMap={false}
-            showLineNumbers={true}
-            readOnly={true}
-            height="100%"
-          />
+          <div className={styles.codeEditorWrapper}>
+            <CodeEditor
+              value={selectedFile.content}
+              language="yaml"
+              showMiniMap={false}
+              showLineNumbers={true}
+              readOnly={true}
+              height="498px"
+            />
+          </div>
         ) : (
           <div className={styles.emptyState}>
             {activeTab === 'tables'
@@ -208,6 +210,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: column;
     background: ${theme.colors.background.primary};
+    min-width: 0;
+  `,
+  codeEditorWrapper: css`
+    flex: 1;
+    overflow: hidden;
   `,
   emptyState: css`
     display: flex;
