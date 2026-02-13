@@ -19,10 +19,11 @@ export function QueryEditor({
   datasource,
 }: QueryEditorProps<DataSource, CubeQuery, CubeDataSourceOptions>) {
   const styles = useStyles2(getStyles);
-  const adHocFilters = useMemo(() => {
-    return getTemplateSrv().getAdhocFilters(datasource.name) as NonNullable<Parameters<typeof buildCubeQueryJson>[2]>;
-  }, [datasource.name]);
-  const cubeQueryJson = useMemo(() => buildCubeQueryJson(query, datasource, adHocFilters), [query, datasource, adHocFilters]);
+  const cubeQueryJson = useMemo(() => {
+    const templateSrv = getTemplateSrv();
+    const adHocFilters = (templateSrv.getAdhocFilters?.(datasource.name) ?? []) as NonNullable<Parameters<typeof buildCubeQueryJson>[2]>;
+    return buildCubeQueryJson(query, datasource, adHocFilters);
+  }, [query, datasource]);
 
   const { data, isLoading: metadataIsLoading, isError: metadataIsError } = useMetadataQuery({ datasource });
   const metadata = data ?? { dimensions: [], measures: [] };
