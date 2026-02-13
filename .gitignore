@@ -43,6 +43,10 @@ ci/
 /playwright/.cache/
 /playwright/.auth/
 
+# Docker Compose overrides (local development)
+docker-compose.override.yaml
+docker-compose.override.yml
+
 # Editor
 .idea
 *.code-workspace
