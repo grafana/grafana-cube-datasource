@@ -124,6 +124,7 @@ export function DatabaseTree({ datasourceUid, onTableSelect, selectedTables }: D
     return (
       <div
         role="checkbox"
+        tabIndex={0}
         aria-checked={node.isSelected ? 'true' : node.isIndeterminate ? 'mixed' : 'false'}
         aria-label={`Select all tables in ${node.title}`}
         className={`${styles.checkbox} ${node.isSelected ? styles.checkboxChecked : ''} ${
@@ -132,6 +133,13 @@ export function DatabaseTree({ datasourceUid, onTableSelect, selectedTables }: D
         onClick={(e) => {
           e.stopPropagation();
           handleSchemaCheckboxClick(node);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            e.stopPropagation();
+            handleSchemaCheckboxClick(node);
+          }
         }}
       >
         {node.isSelected && <Icon name="check" className={styles.checkIcon} />}
@@ -143,12 +151,29 @@ export function DatabaseTree({ datasourceUid, onTableSelect, selectedTables }: D
   const renderNode = (node: TreeNode, isChild = false, level = 0) => {
     const hasChildren = node.children && node.children.length > 0;
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (isChild) {
+          handleTableClick(node);
+        } else {
+          handleSchemaToggle(node.key);
+        }
+      }
+    };
+
     return (
       <div key={node.key} className={styles.treeNode}>
         <div
+          role={isChild ? 'checkbox' : 'button'}
+          tabIndex={0}
+          aria-checked={isChild ? node.isSelected : undefined}
+          aria-expanded={!isChild && hasChildren ? node.isExpanded : undefined}
+          aria-label={isChild ? `Select table ${node.title}` : `${node.isExpanded ? 'Collapse' : 'Expand'} schema ${node.title}`}
           className={`${styles.nodeContent} ${isChild ? styles.childNode : styles.parentNode}`}
           style={{ paddingLeft: `${level * 16 + 8}px` }}
           onClick={() => (isChild ? handleTableClick(node) : handleSchemaToggle(node.key))}
+          onKeyDown={handleKeyDown}
         >
           {!isChild && hasChildren && (
             <Icon name={node.isExpanded ? 'angle-down' : 'angle-right'} className={styles.expandIcon} />

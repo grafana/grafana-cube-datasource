@@ -53,6 +53,9 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
       if (result.data?.files?.length) {
         const sorted = sortFiles(result.data.files);
         setSelectedFile(sorted[0]);
+      } else {
+        // Clear stale selection when generation produces no files
+        setSelectedFile(null);
       }
     } catch {
       // Error is captured by mutation state and displayed in the UI
