@@ -33,16 +33,29 @@ export function DataModelConfigPage({ datasourceUid: uidOverride }: PluginConfig
   const modelFilesQuery = useModelFilesQuery(datasourceUid || '');
   const generateMutation = useGenerateSchemaMutation(datasourceUid || '');
 
+  const sortedFiles = React.useMemo(() => {
+    const files = modelFilesQuery.data?.files || [];
+    return [...files].sort((a, b) => {
+      const typeOrder: Record<string, number> = { cubes: 0, views: 1 };
+      const aOrder = typeOrder[a.fileName.split('/')[0]] ?? 2;
+      const bOrder = typeOrder[b.fileName.split('/')[0]] ?? 2;
+      return aOrder !== bOrder ? aOrder - bOrder : a.fileName.localeCompare(b.fileName);
+    });
+  }, [modelFilesQuery.data]);
+
   // Auto-select the first file when model files load (e.g. after generation)
   React.useEffect(() => {
-    const files = modelFilesQuery.data?.files;
-    if (files && files.length > 0 && !selectedFile) {
+    // Don't auto-select while data is being fetched (could be stale during refetch)
+    if (modelFilesQuery.isFetching) {
+      return;
+    }
+    if (sortedFiles.length > 0 && !selectedFile) {
       // Only auto-select when on the files tab
       if (activeTab === 'files') {
-        setSelectedFile(files[0]);
+        setSelectedFile(sortedFiles[0]);
       }
     }
-  }, [modelFilesQuery.data, selectedFile, activeTab]);
+  }, [sortedFiles, selectedFile, activeTab, modelFilesQuery.isFetching]);
 
   if (!datasourceUid) {
     return <Alert severity="error" title="Unable to determine datasource" />;
@@ -69,16 +82,6 @@ export function DataModelConfigPage({ datasourceUid: uidOverride }: PluginConfig
   const handleFileSelect = (file: ModelFile) => {
     setSelectedFile(file);
   };
-
-  const sortedFiles = React.useMemo(() => {
-    const files = modelFilesQuery.data?.files || [];
-    return [...files].sort((a, b) => {
-      const typeOrder: Record<string, number> = { cubes: 0, views: 1 };
-      const aOrder = typeOrder[a.fileName.split('/')[0]] ?? 2;
-      const bOrder = typeOrder[b.fileName.split('/')[0]] ?? 2;
-      return aOrder !== bOrder ? aOrder - bOrder : a.fileName.localeCompare(b.fileName);
-    });
-  }, [modelFilesQuery.data]);
 
   return (
     <div className={styles.wrapper}>
