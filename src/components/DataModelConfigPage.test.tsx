@@ -4,6 +4,14 @@ import { setup } from 'testUtils';
 import { DataModelConfigPage } from './DataModelConfigPage';
 import { useDbSchemaQuery, useGenerateSchemaMutation, useModelFilesQuery } from 'queries';
 
+jest.mock('@grafana/ui', () => {
+  const actual = jest.requireActual('@grafana/ui');
+  return {
+    ...actual,
+    CodeEditor: ({ value }: { value: string }) => <div data-testid="mock-code-editor">{value}</div>,
+  };
+});
+
 jest.mock('queries', () => ({
   useDbSchemaQuery: jest.fn(),
   useGenerateSchemaMutation: jest.fn(),
@@ -100,6 +108,6 @@ describe('DataModelConfigPage', () => {
     await user.click(screen.getByRole('button', { name: 'Generate Data Model' }));
 
     expect(screen.getByRole('button', { name: 'Files' })).toBeInTheDocument();
-    expect(screen.getByText('orders schema')).toBeInTheDocument();
+    expect(screen.getByTestId('yaml-preview')).toHaveAttribute('data-content', 'orders schema');
   });
 });

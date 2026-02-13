@@ -1,6 +1,7 @@
 import React from 'react';
-import { PluginConfigPageProps, PluginMeta } from '@grafana/data';
-import { Alert, Button } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { GrafanaTheme2, PluginConfigPageProps, PluginMeta } from '@grafana/data';
+import { Alert, Button, CodeEditor, useStyles2 } from '@grafana/ui';
 import { useDbSchemaQuery, useGenerateSchemaMutation, useModelFilesQuery } from 'queries';
 import { DatabaseTree } from './DatabaseTree';
 import { FileList } from './FileList';
@@ -11,6 +12,7 @@ function getDatasourceUidFromLocation(pathname: string): string | null {
 }
 
 export function DataModelConfigPage({ plugin }: PluginConfigPageProps<PluginMeta>) {
+  const styles = useStyles2(getStyles);
   const datasourceUid = getDatasourceUidFromLocation(window.location.pathname);
   const [selectedTables, setSelectedTables] = React.useState<string[]>([]);
   const [activeTab, setActiveTab] = React.useState<'tables' | 'files'>('tables');
@@ -58,43 +60,84 @@ export function DataModelConfigPage({ plugin }: PluginConfigPageProps<PluginMeta
   };
 
   return (
-    <div>
-      <h3>Data Model</h3>
-      <p>This page will let you generate Cube data models from your database schema.</p>
-      <p>Plugin ID: {plugin.meta.id}</p>
-      {errorMessage ? (
-        <Alert severity="error" title="Generate failed">
-          {errorMessage}
-        </Alert>
-      ) : null}
-      <div>
-        <Button variant={activeTab === 'tables' ? 'primary' : 'secondary'} onClick={() => setActiveTab('tables')}>
-          Tables
+    <div className={styles.page}>
+      <div className={styles.sidebar}>
+        <h3>Data Model</h3>
+        <p>This page will let you generate Cube data models from your database schema.</p>
+        <p>Plugin ID: {plugin.meta.id}</p>
+        {errorMessage ? (
+          <Alert severity="error" title="Generate failed">
+            {errorMessage}
+          </Alert>
+        ) : null}
+        <div className={styles.tabs}>
+          <Button variant={activeTab === 'tables' ? 'primary' : 'secondary'} onClick={() => setActiveTab('tables')}>
+            Tables
+          </Button>
+          <Button variant={activeTab === 'files' ? 'primary' : 'secondary'} onClick={() => setActiveTab('files')}>
+            Files
+          </Button>
+        </div>
+        <Button
+          variant="primary"
+          onClick={handleGenerateSchema}
+          disabled={selectedTables.length === 0 || generateSchemaMutation.isPending}
+        >
+          {generateSchemaMutation.isPending ? 'Generating...' : 'Generate Data Model'}
         </Button>
-        <Button variant={activeTab === 'files' ? 'primary' : 'secondary'} onClick={() => setActiveTab('files')}>
-          Files
-        </Button>
+
+        <div className={styles.sidebarContent}>
+          {activeTab === 'tables' ? (
+            <DatabaseTree datasourceUid={datasourceUid} selectedTables={selectedTables} onTableSelect={setSelectedTables} />
+          ) : (
+            <FileList
+              files={modelFilesQuery.data?.files ?? []}
+              selectedFile={selectedFile}
+              onFileSelect={(fileName, content) => {
+                setSelectedFile(fileName);
+                setSelectedFileContent(content);
+              }}
+            />
+          )}
+        </div>
       </div>
-      <Button
-        variant="primary"
-        onClick={handleGenerateSchema}
-        disabled={selectedTables.length === 0 || generateSchemaMutation.isPending}
-      >
-        {generateSchemaMutation.isPending ? 'Generating...' : 'Generate Data Model'}
-      </Button>
-      {activeTab === 'tables' ? (
-        <DatabaseTree datasourceUid={datasourceUid} selectedTables={selectedTables} onTableSelect={setSelectedTables} />
-      ) : (
-        <FileList
-          files={modelFilesQuery.data?.files ?? []}
-          selectedFile={selectedFile}
-          onFileSelect={(fileName, content) => {
-            setSelectedFile(fileName);
-            setSelectedFileContent(content);
-          }}
+
+      <div className={styles.previewPanel} data-testid="yaml-preview" data-content={selectedFileContent ?? ''}>
+        <CodeEditor
+          value={selectedFileContent ?? ''}
+          language="yaml"
+          showMiniMap={false}
+          showLineNumbers={true}
+          readOnly={true}
         />
-      )}
-      {selectedFileContent ? <pre>{selectedFileContent}</pre> : null}
+      </div>
     </div>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  page: css`
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: ${theme.spacing(2)};
+    min-height: 520px;
+  `,
+  sidebar: css`
+    display: flex;
+    flex-direction: column;
+    gap: ${theme.spacing(1)};
+  `,
+  tabs: css`
+    display: flex;
+    gap: ${theme.spacing(1)};
+  `,
+  sidebarContent: css`
+    min-height: 240px;
+  `,
+  previewPanel: css`
+    border: 1px solid ${theme.colors.border.weak};
+    border-radius: ${theme.shape.radius.default};
+    overflow: hidden;
+    min-height: 520px;
+  `,
+});
