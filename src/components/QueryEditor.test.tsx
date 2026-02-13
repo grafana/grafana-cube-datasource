@@ -514,7 +514,7 @@ describe('QueryEditor', () => {
   });
 
   describe('SQL Preview with AdHoc Filters and Dashboard Variables', () => {
-    it('should include dashboard AdHoc filters in SQL preview query', async () => {
+    it('should include AdHoc filters in SQL compilation request', async () => {
       // Setup mock to return AdHoc filters
       mockGetTemplateSrv.mockReturnValue({
         replace: jest.fn((value: string) => value),
@@ -537,7 +537,9 @@ describe('QueryEditor', () => {
       setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
       await waitFor(() => {
-        expect(datasource.getResource).toHaveBeenCalledWith('sql', expect.any(Object));
+        expect(datasource.getResource).toHaveBeenCalledWith('sql', {
+          query: expect.stringContaining('"filters"'),
+        });
       });
 
       // Parse the query to verify the filters
@@ -545,17 +547,10 @@ describe('QueryEditor', () => {
         ?.query;
       const parsedQuery = JSON.parse(callArg);
 
-      expect(parsedQuery.filters).toHaveLength(2);
-      expect(parsedQuery.filters).toContainEqual({
-        member: 'orders.status',
-        operator: 'equals',
-        values: ['completed'],
-      });
-      expect(parsedQuery.filters).toContainEqual({
-        member: 'orders.customer',
-        operator: 'notEquals',
-        values: ['test-user'],
-      });
+      expect(parsedQuery.filters).toEqual([
+        { member: 'orders.status', operator: 'equals', values: ['completed'] },
+        { member: 'orders.customer', operator: 'notEquals', values: ['test-user'] },
+      ]);
     });
 
     it('should include $cubeTimeDimension in SQL compilation when variable is set', async () => {
@@ -650,7 +645,7 @@ describe('QueryEditor', () => {
       expect(parsedQuery.timeDimensions[0].granularity).toBe('day');
     });
 
-    it('should keep query filters in SQL compilation request', async () => {
+    it('should combine query filters with AdHoc filters', async () => {
       // Setup mock to return AdHoc filters
       mockGetTemplateSrv.mockReturnValue({
         replace: jest.fn((value: string) => value),
@@ -673,7 +668,7 @@ describe('QueryEditor', () => {
         expect(datasource.getResource).toHaveBeenCalled();
       });
 
-      // Parse the query to verify query-level and dashboard AdHoc filters are included
+      // Parse the query to verify both filters are included
       const callArg = (datasource.getResource as jest.Mock).mock.calls.find((call: unknown[]) => call[0] === 'sql')?.[1]
         ?.query;
       const parsedQuery = JSON.parse(callArg);
