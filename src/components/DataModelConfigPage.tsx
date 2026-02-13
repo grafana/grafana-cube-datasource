@@ -7,10 +7,10 @@ import { FileList } from './FileList';
 import { useDbSchemaQuery, useGenerateSchemaMutation, useModelFilesQuery } from '../queries';
 import { ModelFile } from '../types';
 
-/** Extract datasource UID from the current URL path.
+/** Extract datasource UID from a URL path.
  *  Handles both /datasources/edit/{uid}/ and /datasources/edit/{uid}?page=... */
-export function extractDatasourceUid(): string | null {
-  const match = window.location.pathname.match(/\/datasources\/edit\/([^/?]+)/);
+export function extractDatasourceUid(pathname: string = window.location.pathname): string | null {
+  const match = pathname.match(/\/datasources\/edit\/([^/?]+)/);
   return match ? match[1] : null;
 }
 
