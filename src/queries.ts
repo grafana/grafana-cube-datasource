@@ -146,3 +146,17 @@ export const useGenerateSchemaMutation = (datasourceUid?: string) => {
     },
   });
 };
+
+export const useModelFilesQuery = (datasourceUid?: string, enabled = true): UseQueryResult<GenerateSchemaResponse> => {
+  return useQuery({
+    queryKey: ['modelFiles', datasourceUid],
+    queryFn: async (): Promise<GenerateSchemaResponse> => {
+      if (!datasourceUid) {
+        throw new Error('Datasource UID is required');
+      }
+
+      return await getBackendSrv().get(`/api/datasources/uid/${datasourceUid}/resources/model-files`);
+    },
+    enabled: Boolean(datasourceUid) && enabled,
+  });
+};
