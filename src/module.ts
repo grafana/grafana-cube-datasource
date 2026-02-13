@@ -13,5 +13,5 @@ export const plugin = new DataSourcePlugin<DataSource, CubeQuery, CubeDataSource
     title: 'Data Model',
     id: 'data-model',
     icon: 'cube',
-    body: DataModelConfigPage,
+    body: withQueryClient(DataModelConfigPage),
   });
