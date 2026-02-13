@@ -61,3 +61,36 @@ export interface CubeSecureJsonData {
   apiKey?: string; // For Cube Cloud
   apiSecret?: string; // For self-hosted Cube (JWT generation)
 }
+
+/**
+ * Data Model types -- used by the Data Model config page to interact with
+ * Cube's playground endpoints (db-schema, generate-schema, model-files).
+ */
+
+export interface DatabaseColumn {
+  name: string;
+  type: string;
+  attributes: string[];
+}
+
+/** Response from GET /resources/db-schema (proxied from Cube's /playground/db-schema) */
+export interface DbSchemaResponse {
+  tablesSchema: Record<string, Record<string, DatabaseColumn[]>>;
+}
+
+export interface ModelFile {
+  fileName: string;
+  content: string;
+}
+
+/** Response from GET /resources/model-files (proxied from Cube's /playground/files) */
+export interface ModelFilesResponse {
+  files: ModelFile[];
+}
+
+/** Request body for POST /resources/generate-schema */
+export interface GenerateSchemaRequest {
+  format: 'yaml';
+  tables: string[][];
+  tablesSchema: DbSchemaResponse['tablesSchema'];
+}

@@ -1,8 +1,9 @@
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import { useQuery, useMutation, UseQueryResult, useQueryClient } from '@tanstack/react-query';
 import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DataSource } from 'datasource';
 import { fetchSqlDatasources } from './services/datasourceApi';
+import { DbSchemaResponse, ModelFilesResponse, GenerateSchemaRequest } from './types';
 
 export interface MetadataOption {
   label: string;
@@ -79,6 +80,36 @@ export const useCompiledSqlQuery = ({
     queryKey: ['compiledSql', datasource.uid, cubeQueryJson],
     queryFn: () => datasource.getResource('sql', { query: cubeQueryJson }),
     enabled: Boolean(cubeQueryJson),
+  });
+};
+
+// --- Data Model hooks (used by the Data Model config page) ---
+
+export const useDbSchemaQuery = (datasourceUid: string) => {
+  return useQuery<DbSchemaResponse>({
+    queryKey: ['dbSchema', datasourceUid],
+    queryFn: () => getBackendSrv().get(`/api/datasources/uid/${datasourceUid}/resources/db-schema`),
+    enabled: !!datasourceUid,
+  });
+};
+
+export const useModelFilesQuery = (datasourceUid: string) => {
+  return useQuery<ModelFilesResponse>({
+    queryKey: ['modelFiles', datasourceUid],
+    queryFn: () => getBackendSrv().get(`/api/datasources/uid/${datasourceUid}/resources/model-files`),
+    enabled: !!datasourceUid,
+  });
+};
+
+export const useGenerateSchemaMutation = (datasourceUid: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: GenerateSchemaRequest) =>
+      getBackendSrv().post(`/api/datasources/uid/${datasourceUid}/resources/generate-schema`, body),
+    onSuccess: () => {
+      // Invalidate model files so they reload after generation
+      queryClient.invalidateQueries({ queryKey: ['modelFiles', datasourceUid] });
+    },
   });
 };
 
