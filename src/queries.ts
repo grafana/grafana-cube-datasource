@@ -1,9 +1,9 @@
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import { useMutation, useQuery, UseQueryResult } from '@tanstack/react-query';
 import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DataSource } from 'datasource';
 import { fetchSqlDatasources } from './services/datasourceApi';
-import { DbSchemaResponse } from './types';
+import { DbSchemaResponse, GenerateSchemaRequest } from './types';
 
 export interface MetadataOption {
   label: string;
@@ -113,5 +113,36 @@ export const useDbSchemaQuery = (datasourceUid?: string): UseQueryResult<DbSchem
       return await getBackendSrv().get(`/api/datasources/uid/${datasourceUid}/resources/db-schema`);
     },
     enabled: Boolean(datasourceUid),
+  });
+};
+
+interface GenerateSchemaResponse {
+  files: Array<{
+    fileName: string;
+    content: string;
+  }>;
+}
+
+export const useGenerateSchemaMutation = (datasourceUid?: string) => {
+  return useMutation({
+    mutationFn: async (selectedTables: string[]): Promise<GenerateSchemaResponse> => {
+      if (!datasourceUid) {
+        throw new Error('Datasource UID is required');
+      }
+
+      const backendSrv = getBackendSrv();
+      const dbSchema = await backendSrv.get(`/api/datasources/uid/${datasourceUid}/resources/db-schema`);
+      const tables = selectedTables.map((tableKey) => {
+        const [schema, table] = tableKey.split('.');
+        return [schema, table];
+      });
+      const request: GenerateSchemaRequest = {
+        format: 'yaml',
+        tables,
+        tablesSchema: dbSchema.tablesSchema,
+      };
+
+      return await backendSrv.post(`/api/datasources/uid/${datasourceUid}/resources/generate-schema`, request);
+    },
   });
 };
