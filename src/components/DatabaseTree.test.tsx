@@ -182,4 +182,64 @@ describe('DatabaseTree', () => {
       expect.arrayContaining(['public.raw_customers', 'public.raw_orders'])
     );
   });
+
+  it('renders multiple schemas correctly', async () => {
+    const multiSchemaData = {
+      tablesSchema: {
+        public: {
+          users: [{ name: 'id', type: 'integer', attributes: [] }],
+        },
+        analytics: {
+          events: [{ name: 'id', type: 'integer', attributes: [] }],
+        },
+      },
+    } as any;
+    mockApiSuccess(multiSchemaData);
+
+    setup(<DatabaseTree datasourceUid="test-uid" onTableSelect={jest.fn()} selectedTables={[]} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('public')).toBeInTheDocument();
+    });
+    expect(screen.getByText('analytics')).toBeInTheDocument();
+    expect(screen.getByText('users')).toBeInTheDocument();
+    expect(screen.getByText('events')).toBeInTheDocument();
+  });
+
+  it('handles empty tablesSchema gracefully', async () => {
+    mockApiSuccess({ tablesSchema: {} } as any);
+
+    setup(<DatabaseTree datasourceUid="test-uid" onTableSelect={jest.fn()} selectedTables={[]} />);
+
+    // Should render the container but with no tree nodes
+    await waitFor(() => {
+      expect(screen.queryByText('Loading database schema...')).not.toBeInTheDocument();
+    });
+  });
+
+  it('collapses and expands schemas on row click', async () => {
+    mockApiSuccess();
+    const { user } = setup(
+      <DatabaseTree datasourceUid="test-uid" onTableSelect={jest.fn()} selectedTables={[]} />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('public')).toBeInTheDocument();
+    });
+
+    // Tables should be visible initially (auto-expanded)
+    expect(screen.getByText('raw_customers')).toBeInTheDocument();
+
+    // Click the schema row (not checkbox) to collapse
+    await user.click(screen.getByText('public'));
+
+    // Tables should be hidden
+    expect(screen.queryByText('raw_customers')).not.toBeInTheDocument();
+
+    // Click again to expand
+    await user.click(screen.getByText('public'));
+
+    // Tables visible again
+    expect(screen.getByText('raw_customers')).toBeInTheDocument();
+  });
 });

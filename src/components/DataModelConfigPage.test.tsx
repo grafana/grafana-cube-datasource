@@ -234,6 +234,48 @@ describe('DataModelConfigPage', () => {
     expect(screen.getByText(/Select tables from the sidebar/)).toBeInTheDocument();
   });
 
+  it('retains table selections when switching between tabs', async () => {
+    mockApi({ modelFiles: mockModelFiles });
+    const { user } = setup(<DataModelConfigPage {...mockPluginProps} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('raw_customers')).toBeInTheDocument();
+    });
+
+    // Select a table
+    await user.click(screen.getByText('raw_customers'));
+    expect(screen.getByRole('button', { name: /Generate Data Model \(1\)/i })).toBeInTheDocument();
+
+    // Switch to Files tab
+    await user.click(screen.getByText(/^Files/));
+
+    // Switch back to Tables tab
+    await user.click(screen.getByText(/^Tables/));
+
+    // Selection should be retained
+    expect(screen.getByRole('button', { name: /Generate Data Model \(1\)/i })).toBeInTheDocument();
+  });
+
+  it('updates code editor when switching between files', async () => {
+    mockApi({ modelFiles: mockModelFiles });
+    const { user } = setup(<DataModelConfigPage {...mockPluginProps} />);
+
+    // Switch to files tab
+    await user.click(screen.getByText(/^Files/));
+
+    await waitFor(() => {
+      expect(screen.getByText('cubes/raw_customers.yml')).toBeInTheDocument();
+    });
+
+    // Select first file
+    await user.click(screen.getByText('cubes/raw_customers.yml'));
+    expect(screen.getByTestId('code-editor')).toHaveTextContent('raw_customers');
+
+    // Select second file
+    await user.click(screen.getByText('cubes/raw_orders.yml'));
+    expect(screen.getByTestId('code-editor')).toHaveTextContent('raw_orders');
+  });
+
   it('shows generation error message when API fails', async () => {
     const mockGet = jest.fn().mockImplementation((url: string) => {
       if (url.includes('/resources/db-schema')) {
