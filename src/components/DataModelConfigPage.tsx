@@ -81,7 +81,7 @@ export function DataModelConfigPage({ plugin }: PluginConfigPageProps<PluginMeta
         <Button
           variant="primary"
           onClick={handleGenerateSchema}
-          disabled={selectedTables.length === 0 || generateSchemaMutation.isPending}
+          disabled={selectedTables.length === 0 || generateSchemaMutation.isPending || !dbSchema?.tablesSchema}
         >
           {generateSchemaMutation.isPending ? 'Generating...' : 'Generate Data Model'}
         </Button>
@@ -90,26 +90,33 @@ export function DataModelConfigPage({ plugin }: PluginConfigPageProps<PluginMeta
           {activeTab === 'tables' ? (
             <DatabaseTree datasourceUid={datasourceUid} selectedTables={selectedTables} onTableSelect={setSelectedTables} />
           ) : (
-            <FileList
-              files={modelFilesQuery.data?.files ?? []}
-              selectedFile={selectedFile}
-              onFileSelect={(fileName, content) => {
-                setSelectedFile(fileName);
-                setSelectedFileContent(content);
-              }}
-            />
+            <>
+              {modelFilesQuery.isLoading ? <div className={styles.mutedText}>Loading files...</div> : null}
+              <FileList
+                files={modelFilesQuery.data?.files ?? []}
+                selectedFile={selectedFile}
+                onFileSelect={(fileName, content) => {
+                  setSelectedFile(fileName);
+                  setSelectedFileContent(content);
+                }}
+              />
+            </>
           )}
         </div>
       </div>
 
       <div className={styles.previewPanel} data-testid="yaml-preview" data-content={selectedFileContent ?? ''}>
-        <CodeEditor
-          value={selectedFileContent ?? ''}
-          language="yaml"
-          showMiniMap={false}
-          showLineNumbers={true}
-          readOnly={true}
-        />
+        {selectedFileContent ? (
+          <CodeEditor
+            value={selectedFileContent}
+            language="yaml"
+            showMiniMap={false}
+            showLineNumbers={true}
+            readOnly={true}
+          />
+        ) : (
+          <div className={styles.emptyPreview}>Select a file to preview generated YAML.</div>
+        )}
       </div>
     </div>
   );
@@ -139,5 +146,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border-radius: ${theme.shape.radius.default};
     overflow: hidden;
     min-height: 520px;
+  `,
+  emptyPreview: css`
+    color: ${theme.colors.text.secondary};
+    padding: ${theme.spacing(2)};
+  `,
+  mutedText: css`
+    color: ${theme.colors.text.secondary};
+    margin-bottom: ${theme.spacing(1)};
   `,
 });

@@ -66,6 +66,7 @@ describe('DataModelConfigPage', () => {
     setup(<DataModelConfigPage plugin={{ meta: { id: 'grafana-cube-datasource' } } as any} query={{}} />);
 
     expect(screen.getByRole('button', { name: 'Generate Data Model' })).toBeDisabled();
+    expect(screen.getByText('Select a file to preview generated YAML.')).toBeInTheDocument();
   });
 
   it('enables generate button once a table is selected', async () => {
@@ -109,5 +110,27 @@ describe('DataModelConfigPage', () => {
 
     expect(screen.getByRole('button', { name: 'Files' })).toBeInTheDocument();
     expect(screen.getByTestId('yaml-preview')).toHaveAttribute('data-content', 'orders schema');
+  });
+
+  it('shows error alert when generation fails', async () => {
+    mockedUseGenerateSchemaMutation.mockReturnValue({
+      mutateAsync: jest.fn().mockRejectedValue(new Error('generation exploded')),
+      isPending: false,
+      isError: false,
+      error: null,
+    } as any);
+
+    const { user } = setup(<DataModelConfigPage plugin={{ meta: { id: 'grafana-cube-datasource' } } as any} query={{}} />);
+    await user.click(screen.getByRole('button', { name: 'Select raw_orders' }));
+    await user.click(screen.getByRole('button', { name: 'Generate Data Model' }));
+
+    expect(screen.getByText('generation exploded')).toBeInTheDocument();
+  });
+
+  it('shows route error when datasource uid is missing', () => {
+    window.history.pushState({}, '', '/connections/datasources/new');
+    setup(<DataModelConfigPage plugin={{ meta: { id: 'grafana-cube-datasource' } } as any} query={{}} />);
+
+    expect(screen.getByText('This page requires a datasource edit route.')).toBeInTheDocument();
   });
 });
