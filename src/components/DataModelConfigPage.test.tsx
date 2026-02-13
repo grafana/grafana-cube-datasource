@@ -169,6 +169,11 @@ describe('DataModelConfigPage', () => {
     await waitFor(() => {
       expect(screen.getByText('cubes/raw_customers.yml')).toBeInTheDocument();
     });
+
+    // Should auto-select the first file and show YAML preview
+    await waitFor(() => {
+      expect(screen.getByTestId('code-editor')).toHaveTextContent('raw_customers');
+    });
   });
 
   it('shows YAML preview when a file is selected', async () => {

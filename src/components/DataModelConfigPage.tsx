@@ -21,7 +21,7 @@ interface DataModelConfigPageInternalProps {
   datasourceUid?: string;
 }
 
-export function DataModelConfigPage({ datasourceUid: uidOverride, ...rest }: PluginConfigPageProps<PluginMeta> & DataModelConfigPageInternalProps) {
+export function DataModelConfigPage({ datasourceUid: uidOverride }: PluginConfigPageProps<PluginMeta> & DataModelConfigPageInternalProps) {
   const datasourceUid = uidOverride ?? extractDatasourceUid();
   const styles = useStyles2(getStyles);
 
@@ -32,6 +32,17 @@ export function DataModelConfigPage({ datasourceUid: uidOverride, ...rest }: Plu
   const dbSchemaQuery = useDbSchemaQuery(datasourceUid || '');
   const modelFilesQuery = useModelFilesQuery(datasourceUid || '');
   const generateMutation = useGenerateSchemaMutation(datasourceUid || '');
+
+  // Auto-select the first file when model files load (e.g. after generation)
+  React.useEffect(() => {
+    const files = modelFilesQuery.data?.files;
+    if (files && files.length > 0 && !selectedFile) {
+      // Only auto-select when on the files tab
+      if (activeTab === 'files') {
+        setSelectedFile(files[0]);
+      }
+    }
+  }, [modelFilesQuery.data, selectedFile, activeTab]);
 
   if (!datasourceUid) {
     return <Alert severity="error" title="Unable to determine datasource" />;
@@ -50,7 +61,8 @@ export function DataModelConfigPage({ datasourceUid: uidOverride, ...rest }: Plu
       tablesSchema: dbSchemaQuery.data.tablesSchema,
     });
 
-    // Switch to files tab and refetch
+    // Switch to files tab -- the auto-select effect will pick the first file
+    setSelectedFile(null);
     setActiveTab('files');
   };
 
