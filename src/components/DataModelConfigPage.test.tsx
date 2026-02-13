@@ -4,6 +4,14 @@ import { setup } from 'testUtils';
 import { DataModelConfigPage } from './DataModelConfigPage';
 import { getBackendSrv } from '@grafana/runtime';
 
+jest.mock('@grafana/ui', () => {
+  const actual = jest.requireActual('@grafana/ui');
+  return {
+    ...actual,
+    CodeEditor: ({ value }: { value: string }) => <div data-testid="yaml-preview">{value}</div>,
+  };
+});
+
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
   return {
@@ -72,5 +80,37 @@ describe('DataModelConfigPage', () => {
         },
       },
     });
+  });
+
+  it('shows YAML preview content when selecting a generated file', async () => {
+    const get = jest.fn().mockImplementation((url: string) => {
+      if (url.includes('/resources/model-files')) {
+        return Promise.resolve({
+          files: [{ fileName: 'cubes/raw_orders.yml', content: 'cubes:\n  - name: raw_orders' }],
+        });
+      }
+
+      if (url.includes('/resources/db-schema')) {
+        return Promise.resolve({
+          tablesSchema: {
+            public: {
+              raw_orders: [],
+            },
+          },
+        });
+      }
+
+      return Promise.resolve({});
+    });
+    const post = jest.fn().mockResolvedValue({ files: [] });
+    mockedGetBackendSrv.mockReturnValue({ get, post });
+
+    const { user } = setup(<DataModelConfigPage {...pluginProps} />);
+
+    await user.click(screen.getByRole('button', { name: 'Files' }));
+    await user.click(screen.getByRole('button', { name: 'Open cubes/raw_orders.yml' }));
+
+    expect(screen.getByTestId('yaml-preview')).toHaveTextContent('cubes:');
+    expect(screen.getByTestId('yaml-preview')).toHaveTextContent('raw_orders');
   });
 });
