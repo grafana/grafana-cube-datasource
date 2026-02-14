@@ -116,6 +116,28 @@ describe('QueryEditor', () => {
     });
   });
 
+  it('should render read-only JSON viewer for queries with unsupported features', () => {
+    const datasource = createMockDataSource();
+    const query = createMockQuery({
+      dimensions: ['orders.status'],
+      measures: ['orders.count'],
+      timeDimensions: [{ dimension: 'orders.created_at', granularity: 'day' }],
+    });
+
+    setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+    expect(screen.getByText('JSON mode is active')).toBeInTheDocument();
+    expect(screen.getByText('Time dimensions are not supported in the visual query builder.')).toBeInTheDocument();
+
+    const queryJson = screen.getByLabelText('Query JSON') as HTMLTextAreaElement;
+    expect(queryJson).toHaveAttribute('readonly');
+    expect(queryJson.value).toContain('"timeDimensions"');
+
+    expect(screen.queryByLabelText('Dimensions')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Try Visual Editor' })).not.toBeInTheDocument();
+    expect(datasource.getMetadata).not.toHaveBeenCalled();
+  });
+
   it('should parse existing query and select appropriate options', async () => {
     const mockMetadata = {
       dimensions: [

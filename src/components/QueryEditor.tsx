@@ -4,19 +4,33 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
 import { CubeDataSourceOptions, CubeQuery } from '../types';
+import { JsonQueryViewer } from './JsonQueryViewer';
 import { SQLPreview } from './SQLPreview';
 import { useMetadataQuery, useCompiledSqlQuery, MetadataOption } from 'queries';
 import { OrderBy } from './OrderBy/OrderBy';
 import { FilterField } from './FilterField/FilterField';
 import { useQueryEditorHandlers } from '../hooks/useQueryEditorHandlers';
 import { buildCubeQueryJson } from '../utils/buildCubeQuery';
+import { detectUnsupportedFeatures } from '../utils/detectUnsupportedFeatures';
 
-export function QueryEditor({
+type Props = QueryEditorProps<DataSource, CubeQuery, CubeDataSourceOptions>;
+
+export function QueryEditor(props: Props) {
+  const unsupportedFeatures = detectUnsupportedFeatures(props.query);
+
+  if (unsupportedFeatures.length > 0) {
+    return <JsonQueryViewer query={props.query} reasons={unsupportedFeatures} datasource={props.datasource} />;
+  }
+
+  return <VisualQueryEditor {...props} />;
+}
+
+function VisualQueryEditor({
   query,
   onChange,
   onRunQuery,
   datasource,
-}: QueryEditorProps<DataSource, CubeQuery, CubeDataSourceOptions>) {
+}: Props) {
   const styles = useStyles2(getStyles);
   const cubeQueryJson = useMemo(() => buildCubeQueryJson(query, datasource), [query, datasource]);
 
