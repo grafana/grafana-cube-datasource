@@ -10,6 +10,8 @@ import { OrderBy } from './OrderBy/OrderBy';
 import { FilterField } from './FilterField/FilterField';
 import { useQueryEditorHandlers } from '../hooks/useQueryEditorHandlers';
 import { buildCubeQueryJson } from '../utils/buildCubeQuery';
+import { detectUnsupportedFeatures } from '../utils/detectUnsupportedFeatures';
+import { JsonQueryViewer } from './JsonQueryViewer';
 
 export function QueryEditor({
   query,
@@ -18,6 +20,7 @@ export function QueryEditor({
   datasource,
 }: QueryEditorProps<DataSource, CubeQuery, CubeDataSourceOptions>) {
   const styles = useStyles2(getStyles);
+  const unsupportedFeatures = useMemo(() => detectUnsupportedFeatures(query), [query]);
   const cubeQueryJson = useMemo(() => buildCubeQueryJson(query, datasource), [query, datasource]);
 
   const { data, isLoading: metadataIsLoading, isError: metadataIsError } = useMetadataQuery({ datasource });
@@ -53,6 +56,10 @@ export function QueryEditor({
     const selectedFields = [...(query.dimensions || []), ...(query.measures || [])];
     return selectedFields.map((field) => ({ label: field.split('.').pop() || field, value: field }));
   }, [query.dimensions, query.measures]);
+
+  if (unsupportedFeatures.length > 0) {
+    return <JsonQueryViewer query={query} reasons={unsupportedFeatures} />;
+  }
 
   return (
     <>

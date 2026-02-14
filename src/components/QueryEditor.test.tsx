@@ -687,6 +687,79 @@ describe('QueryEditor', () => {
     });
   });
 
+  describe('unsupported features detection', () => {
+    it('should show JSON viewer when query has time dimensions', async () => {
+      const datasource = createMockDataSource();
+      const query = createMockQuery({
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+        timeDimensions: [{ dimension: 'orders.created_at', granularity: 'day' }],
+      });
+
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      // Should show the JSON viewer
+      expect(screen.getByTestId('json-query-viewer')).toBeInTheDocument();
+      expect(screen.getByText(/features not supported by the visual editor/i)).toBeInTheDocument();
+      expect(screen.getByText(/time dimensions/i)).toBeInTheDocument();
+
+      // Should NOT show the visual editor fields
+      expect(screen.queryByText('Select dimensions...')).not.toBeInTheDocument();
+      expect(screen.queryByText('Select measures...')).not.toBeInTheDocument();
+    });
+
+    it('should show JSON viewer with query content when unsupported features detected', async () => {
+      const datasource = createMockDataSource();
+      const query = createMockQuery({
+        dimensions: ['orders.status'],
+        timeDimensions: [{ dimension: 'orders.created_at', dateRange: ['2025-01-01', '2025-12-31'] }],
+      });
+
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      const jsonContent = screen.getByTestId('json-query-content');
+      const parsed = JSON.parse(jsonContent.textContent || '');
+      expect(parsed.dimensions).toEqual(['orders.status']);
+      expect(parsed.timeDimensions).toEqual([
+        { dimension: 'orders.created_at', dateRange: ['2025-01-01', '2025-12-31'] },
+      ]);
+    });
+
+    it('should show visual editor when query has no unsupported features', async () => {
+      const datasource = createMockDataSource();
+      const query = createMockQuery({
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+      });
+
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      await waitFor(() => {
+        expect(screen.getByText('orders.status')).toBeInTheDocument();
+        expect(screen.getByText('orders.count')).toBeInTheDocument();
+      });
+
+      // Should NOT show the JSON viewer
+      expect(screen.queryByTestId('json-query-viewer')).not.toBeInTheDocument();
+    });
+
+    it('should show visual editor when timeDimensions is empty array', async () => {
+      const datasource = createMockDataSource();
+      const query = createMockQuery({
+        dimensions: ['orders.status'],
+        timeDimensions: [],
+      });
+
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      await waitFor(() => {
+        expect(screen.getByText('orders.status')).toBeInTheDocument();
+      });
+
+      expect(screen.queryByTestId('json-query-viewer')).not.toBeInTheDocument();
+    });
+  });
+
   describe('filter state management integration', () => {
     /**
      * Integration test to verify that adding a filter with multiple values
