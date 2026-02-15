@@ -21,14 +21,19 @@ export function QueryEditor({
 }: QueryEditorProps<DataSource, CubeQuery, CubeDataSourceOptions>) {
   const styles = useStyles2(getStyles);
   const unsupportedFeatures = useMemo(() => detectUnsupportedFeatures(query), [query]);
+  const isSupported = unsupportedFeatures.length === 0;
   const cubeQueryJson = useMemo(() => buildCubeQueryJson(query, datasource), [query, datasource]);
 
-  const { data, isLoading: metadataIsLoading, isError: metadataIsError } = useMetadataQuery({ datasource });
+  const { data, isLoading: metadataIsLoading, isError: metadataIsError } = useMetadataQuery({
+    datasource,
+    enabled: isSupported,
+  });
   const metadata = data ?? { dimensions: [], measures: [] };
 
   const { data: compiledSql, isLoading: compiledSqlIsLoading } = useCompiledSqlQuery({
     datasource,
     cubeQueryJson,
+    enabled: isSupported,
   });
 
   const {

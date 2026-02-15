@@ -604,7 +604,9 @@ describe('QueryEditor', () => {
     });
 
     // Issue #147: Layered time dimension config (Panel Override → Dashboard Default → Datasource Default)
-    it('should use panel-specific timeDimensions over dashboard-wide $cubeTimeDimension', async () => {
+    // Note: Queries with timeDimensions are considered unsupported by the visual editor
+    // and should render JsonQueryViewer without making API calls
+    it('should render JsonQueryViewer without API calls when query has panel-specific timeDimensions', async () => {
       // Dashboard has $cubeTimeDimension set to orders.created_at
       mockGetTemplateSrv.mockReturnValue({
         replace: jest.fn((value: string) => {
@@ -616,33 +618,25 @@ describe('QueryEditor', () => {
         getAdhocFilters: jest.fn(() => []),
       });
 
-      const mockSQLResponse = {
-        sql: 'SELECT status FROM orders WHERE updated_at BETWEEN ...',
-      };
+      const datasource = createMockDataSource(null, { sql: '' });
 
-      const datasource = createMockDataSource(null, mockSQLResponse);
-
-      // Panel has its own time dimension configured - this should take precedence
+      // Panel has its own time dimension configured - this triggers unsupported mode
       const query = createMockQuery({
         dimensions: ['orders.status'],
         measures: ['orders.count'],
         timeDimensions: [{ dimension: 'orders.updated_at', granularity: 'day' }],
       });
 
-      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+      const { container } = setup(
+        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+      );
 
-      await waitFor(() => {
-        expect(datasource.getResource).toHaveBeenCalled();
-      });
+      // Should render JsonQueryViewer for unsupported features
+      expect(container.querySelector('[data-testid="json-query-viewer"]')).toBeInTheDocument();
 
-      // Verify the panel's time dimension is used, not the dashboard variable
-      const callArg = (datasource.getResource as jest.Mock).mock.calls.find((call: unknown[]) => call[0] === 'sql')?.[1]
-        ?.query;
-      const parsedQuery = JSON.parse(callArg);
-
-      expect(parsedQuery.timeDimensions).toHaveLength(1);
-      expect(parsedQuery.timeDimensions[0].dimension).toBe('orders.updated_at');
-      expect(parsedQuery.timeDimensions[0].granularity).toBe('day');
+      // Should NOT make API calls when in unsupported mode
+      expect(datasource.getMetadata).not.toHaveBeenCalled();
+      expect(datasource.getResource).not.toHaveBeenCalled();
     });
 
     it('should combine query filters with AdHoc filters', async () => {

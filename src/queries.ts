@@ -16,10 +16,17 @@ export interface MetadataResponse {
   measures: MetadataOption[];
 }
 
-export const useMetadataQuery = ({ datasource }: { datasource: DataSource }): UseQueryResult<MetadataResponse> => {
+export const useMetadataQuery = ({
+  datasource,
+  enabled = true,
+}: {
+  datasource: DataSource;
+  enabled?: boolean;
+}): UseQueryResult<MetadataResponse> => {
   return useQuery({
     queryKey: ['metadata', datasource.uid],
     queryFn: () => datasource.getMetadata(),
+    enabled,
   });
 };
 
@@ -72,14 +79,16 @@ interface CompiledSqlResponse {
 export const useCompiledSqlQuery = ({
   datasource,
   cubeQueryJson,
+  enabled = true,
 }: {
   datasource: DataSource;
   cubeQueryJson: string;
+  enabled?: boolean;
 }): UseQueryResult<CompiledSqlResponse> => {
   return useQuery({
     queryKey: ['compiledSql', datasource.uid, cubeQueryJson],
     queryFn: () => datasource.getResource('sql', { query: cubeQueryJson }),
-    enabled: Boolean(cubeQueryJson),
+    enabled: enabled && Boolean(cubeQueryJson),
   });
 };
 
