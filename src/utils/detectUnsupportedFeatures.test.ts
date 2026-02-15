@@ -91,4 +91,79 @@ describe('detectUnsupportedFeatures', () => {
     const issues = detectUnsupportedFeatures(query);
     expect(issues).toHaveLength(2);
   });
+
+  it('detects AND filter groups', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [
+        {
+          and: [
+            { member: 'orders.status', operator: Operator.Equals, values: ['active'] },
+            { member: 'orders.region', operator: Operator.Equals, values: ['US'] },
+          ],
+        },
+      ],
+    };
+    const issues = detectUnsupportedFeatures(query);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatch(/AND\/OR filter groups/i);
+  });
+
+  it('detects OR filter groups', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [
+        {
+          or: [
+            { member: 'orders.status', operator: Operator.Equals, values: ['active'] },
+            { member: 'orders.region', operator: Operator.Equals, values: ['EU'] },
+          ],
+        },
+      ],
+    };
+    const issues = detectUnsupportedFeatures(query);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatch(/AND\/OR filter groups/i);
+  });
+
+  it('detects advanced operators inside nested groups', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [
+        {
+          or: [
+            { member: 'orders.amount', operator: Operator.Gt, values: ['100'] },
+            { member: 'orders.status', operator: Operator.Equals, values: ['active'] },
+          ],
+        },
+      ],
+    };
+    const issues = detectUnsupportedFeatures(query);
+    // Should report both the logical group AND the advanced operator
+    expect(issues).toHaveLength(2);
+    expect(issues[0]).toMatch(/AND\/OR filter groups/i);
+    expect(issues[1]).toMatch(/gt/);
+  });
+
+  it('handles deeply nested AND/OR groups', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [
+        {
+          and: [
+            {
+              or: [
+                { member: 'orders.status', operator: Operator.Equals, values: ['active'] },
+                { member: 'orders.status', operator: Operator.Equals, values: ['pending'] },
+              ],
+            },
+            { member: 'orders.region', operator: Operator.Equals, values: ['US'] },
+          ],
+        },
+      ],
+    };
+    const issues = detectUnsupportedFeatures(query);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatch(/AND\/OR filter groups/i);
+  });
 });

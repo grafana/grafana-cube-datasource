@@ -1,7 +1,7 @@
-import type { BinaryFilter, UnaryFilter, Query as CubeJsQuery, TimeDimension } from '@cubejs-client/core';
+import type { BinaryFilter, UnaryFilter, Filter as CubeJsFilter, Query as CubeJsQuery, TimeDimension } from '@cubejs-client/core';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataSource } from '../datasource';
-import { CubeFilter, CubeQuery, UNARY_OPERATORS } from '../types';
+import { CubeFilter, CubeFilterItem, CubeQuery, UNARY_OPERATORS, isCubeFilter, isCubeAndFilter, isCubeOrFilter } from '../types';
 import { filterValidCubeFilters } from './filterValidation';
 import { normalizeOrder } from './normalizeOrder';
 
@@ -71,9 +71,9 @@ export function buildCubeQueryJson(query: CubeQuery, datasource: DataSource): st
   }
 
   // Combine query-level filters with AdHoc filters
-  let filters: CubeFilter[] = query.filters?.length ? [...query.filters] : [];
+  let filters: CubeFilterItem[] = query.filters?.length ? [...query.filters] : [];
 
-  // Get AdHoc filters and convert to Cube format
+  // Get AdHoc filters and convert to Cube format (always flat filters)
   const templateSrv = getTemplateSrv();
   const adHocFilters = (templateSrv as any).getAdhocFilters
     ? (templateSrv as any).getAdhocFilters(datasource.name)
@@ -93,24 +93,7 @@ export function buildCubeQueryJson(query: CubeQuery, datasource: DataSource): st
   const validFilters = filterValidCubeFilters(filters);
 
   if (validFilters.length > 0) {
-    // Map to Cube's official filter types at the boundary.
-    // Our Operator enum values exactly match Cube's operator strings,
-    // so we can cast directly. We split into binary/unary based on operator type.
-    const cubeFilters: Array<BinaryFilter | UnaryFilter> = validFilters.map((filter) => {
-      if (UNARY_OPERATORS.has(filter.operator)) {
-        return {
-          member: filter.member,
-          operator: filter.operator as unknown as UnaryFilter['operator'],
-        };
-      }
-      return {
-        member: filter.member,
-        operator: filter.operator as unknown as BinaryFilter['operator'],
-        values: filter.values ?? [],
-      };
-    });
-
-    cubeQuery.filters = cubeFilters;
+    cubeQuery.filters = validFilters.map(toCubeJsFilter);
   }
 
   const normalizedOrder = normalizeOrder(query.order);
@@ -119,4 +102,35 @@ export function buildCubeQueryJson(query: CubeQuery, datasource: DataSource): st
   }
 
   return JSON.stringify(cubeQuery);
+}
+
+/**
+ * Recursively converts our internal filter types to Cube's official Filter types.
+ * Handles flat filters (binary/unary) and logical groups (and/or).
+ */
+function toCubeJsFilter(item: CubeFilterItem): CubeJsFilter {
+  if (isCubeFilter(item)) {
+    if (UNARY_OPERATORS.has(item.operator)) {
+      return {
+        member: item.member,
+        operator: item.operator as unknown as UnaryFilter['operator'],
+      };
+    }
+    return {
+      member: item.member,
+      operator: item.operator as unknown as BinaryFilter['operator'],
+      values: item.values ?? [],
+    };
+  }
+
+  if (isCubeAndFilter(item)) {
+    return { and: item.and.map(toCubeJsFilter) };
+  }
+
+  if (isCubeOrFilter(item)) {
+    return { or: item.or.map(toCubeJsFilter) };
+  }
+
+  // Should never reach here with valid types, but satisfy the compiler
+  return item as CubeJsFilter;
 }

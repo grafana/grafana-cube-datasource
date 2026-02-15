@@ -62,12 +62,55 @@ export interface CubeFilter {
   values?: string[];
 }
 
+/**
+ * Logical AND filter group. All child filters must match.
+ * Can be nested with CubeOrFilter for complex conditions.
+ */
+export interface CubeAndFilter {
+  and: CubeFilterItem[];
+}
+
+/**
+ * Logical OR filter group. Any child filter must match.
+ * Can be nested with CubeAndFilter for complex conditions.
+ */
+export interface CubeOrFilter {
+  or: CubeFilterItem[];
+}
+
+/**
+ * A filter item can be a flat filter, an AND group, or an OR group.
+ * Matches Cube's official Filter type from @cubejs-client/core.
+ */
+export type CubeFilterItem = CubeFilter | CubeAndFilter | CubeOrFilter;
+
+/** Type guard: is this a flat CubeFilter (has member + operator)? */
+export function isCubeFilter(item: CubeFilterItem): item is CubeFilter {
+  return 'member' in item && 'operator' in item;
+}
+
+/** Type guard: is this a logical AND filter group? */
+export function isCubeAndFilter(item: CubeFilterItem): item is CubeAndFilter {
+  return 'and' in item;
+}
+
+/** Type guard: is this a logical OR filter group? */
+export function isCubeOrFilter(item: CubeFilterItem): item is CubeOrFilter {
+  return 'or' in item;
+}
+
 export interface CubeQuery extends DataQuery {
   dimensions?: string[];
   measures?: string[];
   timeDimensions?: TimeDimension[];
   limit?: number;
-  filters?: CubeFilter[];
+  /**
+   * Filters can be flat CubeFilter objects or logical AND/OR groups.
+   * The visual builder only supports flat CubeFilter with equals/notEquals.
+   * Logical groups can be configured via panel JSON and will cause the
+   * query editor to show the read-only JSON viewer.
+   */
+  filters?: CubeFilterItem[];
   /**
    * Order can be array format (new) or object format (legacy saved queries).
    * Uses Cube's official order types for API compatibility.

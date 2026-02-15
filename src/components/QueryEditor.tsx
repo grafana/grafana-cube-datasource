@@ -3,7 +3,7 @@ import { InlineField, Input, Alert, MultiSelect, Text, Field, useStyles2 } from 
 import { css } from '@emotion/css';
 import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
-import { CubeDataSourceOptions, CubeQuery } from '../types';
+import { CubeDataSourceOptions, CubeQuery, CubeFilter, isCubeFilter } from '../types';
 import { SQLPreview } from './SQLPreview';
 import { useMetadataQuery, useCompiledSqlQuery, MetadataOption } from 'queries';
 import { OrderBy } from './OrderBy/OrderBy';
@@ -153,7 +153,7 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
 
       <Field label="Filters" description="Filter results by field values">
         <FilterField
-          filters={query.filters}
+          filters={query.filters?.filter((f): f is CubeFilter => isCubeFilter(f))}
           dimensions={metadata.dimensions}
           onChange={onFiltersChange}
           datasource={datasource}

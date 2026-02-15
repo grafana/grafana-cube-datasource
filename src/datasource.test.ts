@@ -1,6 +1,6 @@
 import { DataSource } from './datasource';
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { CubeDataSourceOptions, Operator } from './types';
+import { CubeDataSourceOptions, CubeFilter, Operator } from './types';
 import { getTemplateSrv } from '@grafana/runtime';
 
 // Mock @grafana/runtime
@@ -192,7 +192,7 @@ describe('DataSource', () => {
       const result = datasource.applyTemplateVariables(query, {});
 
       expect(result.filters).toBeDefined();
-      expect(result.filters![0].values).toContain('completed');
+      expect((result.filters![0] as CubeFilter).values).toContain('completed');
     });
 
     describe('dashboard-level time dimension', () => {
@@ -423,7 +423,7 @@ describe('DataSource', () => {
         const result = datasource.applyTemplateVariables(query, {});
 
         expect(result.filters).toBeDefined();
-        expect(result.filters![0].values).toEqual(['completed']);
+        expect((result.filters![0] as CubeFilter).values).toEqual(['completed']);
       });
 
       it('should handle standard single-value operators', () => {
@@ -448,8 +448,8 @@ describe('DataSource', () => {
         const result = datasource.applyTemplateVariables(query, {});
 
         expect(result.filters).toHaveLength(2);
-        expect(result.filters![0].operator).toBe('equals');
-        expect(result.filters![1].operator).toBe('notEquals');
+        expect((result.filters![0] as CubeFilter).operator).toBe('equals');
+        expect((result.filters![1] as CubeFilter).operator).toBe('notEquals');
       });
     });
 
@@ -479,8 +479,8 @@ describe('DataSource', () => {
 
         // Only valid filters should remain
         expect(result.filters).toHaveLength(2);
-        expect(result.filters![0].member).toBe('orders.status');
-        expect(result.filters![1].member).toBe('orders.customer');
+        expect((result.filters![0] as CubeFilter).member).toBe('orders.status');
+        expect((result.filters![1] as CubeFilter).member).toBe('orders.customer');
       });
     });
   });

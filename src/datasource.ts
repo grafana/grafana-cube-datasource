@@ -1,7 +1,7 @@
 import { DataSourceInstanceSettings, CoreApp, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 
-import { CubeQuery, CubeDataSourceOptions, DEFAULT_QUERY, CubeFilter, Operator } from './types';
+import { CubeQuery, CubeDataSourceOptions, DEFAULT_QUERY, CubeFilter, CubeFilterItem, Operator, isCubeFilter, isCubeAndFilter, isCubeOrFilter } from './types';
 import { filterValidCubeFilters } from './utils/filterValidation';
 
 export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceOptions> {
@@ -28,16 +28,26 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
 
     // Apply template variable substitution to filter VALUES only (not member)
     // Filter values with variables like $user_id work correctly and render in the visual builder
-    // Unary operators (set, notSet) have no values, so we skip interpolation for those
-    const interpolatedFilters = query.filters?.map((filter) => ({
-      ...filter,
-      values: filter.values?.map((v) => templateSrv.replace(v, scopedVars)),
-    }));
+    // Handles both flat filters and logical AND/OR groups recursively
+    const interpolateFilterItem = (item: CubeFilterItem): CubeFilterItem => {
+      if (isCubeFilter(item)) {
+        return { ...item, values: item.values?.map((v) => templateSrv.replace(v, scopedVars)) };
+      }
+      if (isCubeAndFilter(item)) {
+        return { and: item.and.map(interpolateFilterItem) };
+      }
+      if (isCubeOrFilter(item)) {
+        return { or: item.or.map(interpolateFilterItem) };
+      }
+      return item;
+    };
+
+    const interpolatedFilters = query.filters?.map(interpolateFilterItem);
 
     // Check for AdHoc filters and inject them
     const adHocFilters = (templateSrv as any).getAdhocFilters ? (templateSrv as any).getAdhocFilters(this.name) : [];
 
-    let filters: CubeFilter[] = interpolatedFilters ? [...interpolatedFilters] : [];
+    let filters: CubeFilterItem[] = interpolatedFilters ? [...interpolatedFilters] : [];
 
     if (adHocFilters && adHocFilters.length > 0) {
       // Convert AdHoc filters to Cube format
