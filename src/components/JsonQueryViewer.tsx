@@ -1,7 +1,9 @@
 import React from 'react';
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, useStyles2 } from '@grafana/ui';
+import Prism from 'prismjs';
+import 'prismjs/components/prism-json';
 import { CubeQuery } from '../types';
 
 interface JsonQueryViewerProps {
@@ -22,6 +24,7 @@ export function JsonQueryViewer({ query, reasons }: JsonQueryViewerProps) {
   // Build a clean query object for display, omitting Grafana-internal fields
   const displayQuery = buildDisplayQuery(query);
   const json = JSON.stringify(displayQuery, null, 2);
+  const highlighted = Prism.highlight(json, Prism.languages.json, 'json');
 
   return (
     <div data-testid="json-query-viewer">
@@ -38,9 +41,11 @@ export function JsonQueryViewer({ query, reasons }: JsonQueryViewerProps) {
           To edit this query, use the dashboard JSON editor or panel JSON editor.
         </p>
       </Alert>
-      <pre className={styles.jsonDisplay} data-testid="json-query-content">
-        {json}
-      </pre>
+      <pre
+        className={cx(styles.jsonDisplay, 'prism-syntax-highlight')}
+        data-testid="json-query-content"
+        dangerouslySetInnerHTML={{ __html: highlighted }}
+      />
     </div>
   );
 }
