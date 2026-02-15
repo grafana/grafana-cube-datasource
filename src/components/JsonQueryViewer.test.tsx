@@ -88,4 +88,19 @@ describe('JsonQueryViewer', () => {
     render(<JsonQueryViewer query={baseQuery} reasons={['Time dimensions']} />);
     expect(screen.getByText(/dashboard JSON editor/i)).toBeInTheDocument();
   });
+
+  it('includes limit when set to zero', () => {
+    const query: CubeQuery = {
+      refId: 'A',
+      dimensions: ['orders.status'],
+      limit: 0,
+    };
+
+    render(<JsonQueryViewer query={query} reasons={['Time dimensions']} />);
+
+    const jsonContent = screen.getByTestId('json-query-content');
+    const parsed = JSON.parse(jsonContent.textContent || '');
+
+    expect(parsed.limit).toBe(0);
+  });
 });
