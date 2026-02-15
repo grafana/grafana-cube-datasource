@@ -499,7 +499,7 @@
         "type": "grafana-cube-datasource",
         "uid": "cube-datasource"
       },
-      "description": "This panel uses timeDimensions with an explicit dateRange, which the visual editor cannot represent. Open the query editor to see the read-only JSON viewer with syntax-highlighted query JSON.",
+      "description": "This panel uses timeDimensions with an explicit dateRange and a 'gt' measure filter, which the visual editor cannot represent. Open the query editor to see the read-only JSON viewer with syntax-highlighted query JSON.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -602,10 +602,19 @@
               ]
             }
           ],
+          "filters": [
+            {
+              "member": "orders.raw_payments_total_amount",
+              "operator": "gt",
+              "values": [
+                "10"
+              ]
+            }
+          ],
           "refId": "A"
         }
       ],
-      "title": "Advanced: Date-Filtered Orders (JSON viewer demo)",
+      "title": "Advanced: High-Value Date-Filtered Orders (JSON viewer demo)",
       "type": "timeseries"
     }
   ],
