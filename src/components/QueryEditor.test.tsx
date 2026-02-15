@@ -706,6 +706,9 @@ describe('QueryEditor', () => {
       // Should NOT show the visual editor fields
       expect(screen.queryByText('Select dimensions...')).not.toBeInTheDocument();
       expect(screen.queryByText('Select measures...')).not.toBeInTheDocument();
+
+      // Should NOT fetch metadata (visual builder not rendered)
+      expect(datasource.getMetadata).not.toHaveBeenCalled();
     });
 
     it('should show JSON viewer with query content when unsupported features detected', async () => {
@@ -723,6 +726,29 @@ describe('QueryEditor', () => {
       expect(parsed.timeDimensions).toEqual([
         { dimension: 'orders.created_at', dateRange: ['2025-01-01', '2025-12-31'] },
       ]);
+    });
+
+    it('should show SQL preview below JSON viewer in unsupported mode', async () => {
+      const mockSQLResponse = {
+        sql: 'SELECT status FROM orders WHERE created_at BETWEEN ...',
+      };
+
+      const datasource = createMockDataSource(null, mockSQLResponse);
+      const query = createMockQuery({
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+        timeDimensions: [{ dimension: 'orders.created_at', granularity: 'day' }],
+      });
+
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      // Should show both JSON viewer and SQL preview
+      expect(screen.getByTestId('json-query-viewer')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId('sql-preview')).toHaveTextContent(
+          'SELECT status FROM orders WHERE created_at BETWEEN ...'
+        );
+      });
     });
 
     it('should show visual editor when query has no unsupported features', async () => {
