@@ -41,11 +41,20 @@ The visual query builder supports:
 
 ### Filtering
 
-Per-panel filters support:
+The visual query builder supports:
 
-- **Filter members**: Dimensions only (measure filtering not yet supported)
+- **Filter members**: Dimensions only
 - **Operators**: `equals` and `notEquals`, each accepting multiple values
 - **Multiple filters**: Combine with AND (intersection)
+
+#### Advanced Filtering (via Panel JSON)
+
+The full [Cube filter syntax](https://cube.dev/docs/product/apis-integrations/rest-api/query-format#filters-format) is supported when editing queries via the panel JSON editor, including:
+
+- **All Cube filter operators**: `contains`, `gt`, `gte`, `lt`, `lte`, `set`, `notSet`, `inDateRange`, and more
+- **Measure filters**: Filter on any measure, not just dimensions
+
+Queries using these features display in the read-only JSON viewer (see below).
 
 ### JSON Query Viewer
 
@@ -106,8 +115,8 @@ This plugin is experimental. Current limitations include:
 |------------|---------|
 | **Cube Cloud authentication** | Authentication does not yet work with Cube Cloud. Self-hosted Cube (dev and production mode) works correctly. |
 | **Technical field names** | Dimension and measure names currently use full technical identifiers (e.g., `orders.customer_name`) rather than human-readable labels. This is due to a dependency on how Grafana implements AdHoc filters. |
-| **Filter operators** | Currently only `equals` and `notEquals` are supported |
-| **Filter members** | Only dimensions can be used as filter members (no measure filtering) |
+| **Visual builder filter operators** | The visual builder only supports `equals` and `notEquals`. All Cube operators are available via panel JSON. |
+| **Visual builder filter members** | The visual builder only supports dimension filters. Measure filters are available via panel JSON. |
 | **Cross-panel filtering** | Depends on Grafana AdHoc filters. Currently works with Table and Bar Chart panels only |
 
 ## Experimental Status
