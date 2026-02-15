@@ -53,8 +53,9 @@ The full [Cube filter syntax](https://cube.dev/docs/product/apis-integrations/re
 
 - **All Cube filter operators**: `contains`, `gt`, `gte`, `lt`, `lte`, `set`, `notSet`, `inDateRange`, and more
 - **Measure filters**: Filter on any measure, not just dimensions
+- **AND/OR filter groups**: Combine filters with logical AND/OR for complex conditions (e.g. "status = completed OR payment_method = credit_card")
 
-Queries using these features display in the read-only JSON viewer (see below).
+Queries using these features display in the read-only JSON viewer (see below). The visual builder includes a hint with a link to the [Cube filter docs](https://cube.dev/docs/product/apis-integrations/rest-api/query-format#filters-format) for reference.
 
 ### JSON Query Viewer
 
