@@ -70,7 +70,6 @@ function UnsupportedQueryEditor({
  */
 function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
   const styles = useStyles2(getStyles);
-  const unsupportedFeatures = useMemo(() => detectUnsupportedFeatures(query), [query]);
   const cubeQueryJson = useMemo(() => buildCubeQueryJson(query, datasource), [query, datasource]);
 
   const { data, isLoading: metadataIsLoading, isError: metadataIsError } = useMetadataQuery({ datasource });
@@ -106,10 +105,6 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
     const selectedFields = [...(query.dimensions || []), ...(query.measures || [])];
     return selectedFields.map((field) => ({ label: field.split('.').pop() || field, value: field }));
   }, [query.dimensions, query.measures]);
-
-  if (unsupportedFeatures.length > 0) {
-    return <JsonQueryViewer query={query} reasons={unsupportedFeatures} />;
-  }
 
   return (
     <>
