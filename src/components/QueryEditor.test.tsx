@@ -688,7 +688,7 @@ describe('QueryEditor', () => {
   });
 
   describe('unsupported features detection', () => {
-    it('should show JSON viewer when query has time dimensions', async () => {
+    it('should show visual editor AND unsupported fields viewer when query has time dimensions', async () => {
       const datasource = createMockDataSource();
       const query = createMockQuery({
         dimensions: ['orders.status'],
@@ -698,37 +698,47 @@ describe('QueryEditor', () => {
 
       setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
-      // Should show the JSON viewer
-      expect(screen.getByTestId('json-query-viewer')).toBeInTheDocument();
-      expect(screen.getByText(/features not supported by the visual editor/i)).toBeInTheDocument();
+      // Should show the unsupported fields viewer
+      expect(screen.getByTestId('unsupported-fields-viewer')).toBeInTheDocument();
+      expect(screen.getByText('Additional query configuration')).toBeInTheDocument();
       expect(screen.getByText(/time dimensions/i)).toBeInTheDocument();
 
-      // Should NOT show the visual editor fields
-      expect(screen.queryByText('Select dimensions...')).not.toBeInTheDocument();
-      expect(screen.queryByText('Select measures...')).not.toBeInTheDocument();
+      // Should ALSO show the visual editor (hybrid layout)
+      await waitFor(() => {
+        expect(screen.getByText('orders.status')).toBeInTheDocument();
+        expect(screen.getByText('orders.count')).toBeInTheDocument();
+      });
 
-      // Should NOT fetch metadata (visual builder not rendered)
-      expect(datasource.getMetadata).not.toHaveBeenCalled();
+      // Metadata should be fetched since visual builder is rendered
+      expect(datasource.getMetadata).toHaveBeenCalled();
     });
 
-    it('should show JSON viewer with query content when unsupported features detected', async () => {
+    it('should show only unsupported keys in the JSON callout, not the full query', async () => {
       const datasource = createMockDataSource();
       const query = createMockQuery({
         dimensions: ['orders.status'],
+        measures: ['orders.count'],
         timeDimensions: [{ dimension: 'orders.created_at', dateRange: ['2025-01-01', '2025-12-31'] }],
       });
 
       setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
-      const jsonContent = screen.getByTestId('json-query-content');
+      // JSON is collapsed by default — expand it
+      fireEvent.click(screen.getByTestId('unsupported-fields-toggle'));
+
+      const jsonContent = screen.getByTestId('unsupported-fields-content');
       const parsed = JSON.parse(jsonContent.textContent || '');
-      expect(parsed.dimensions).toEqual(['orders.status']);
+
+      // Only the unsupported key should appear in JSON
       expect(parsed.timeDimensions).toEqual([
         { dimension: 'orders.created_at', dateRange: ['2025-01-01', '2025-12-31'] },
       ]);
+      // Supported fields should NOT appear in the JSON callout
+      expect(parsed).not.toHaveProperty('dimensions');
+      expect(parsed).not.toHaveProperty('measures');
     });
 
-    it('should show SQL preview below JSON viewer in unsupported mode', async () => {
+    it('should show SQL preview alongside unsupported fields viewer', async () => {
       const mockSQLResponse = {
         sql: 'SELECT status FROM orders WHERE created_at BETWEEN ...',
       };
@@ -742,8 +752,8 @@ describe('QueryEditor', () => {
 
       setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
-      // Should show both JSON viewer and SQL preview
-      expect(screen.getByTestId('json-query-viewer')).toBeInTheDocument();
+      // Should show visual editor, unsupported fields viewer, and SQL preview
+      expect(screen.getByTestId('unsupported-fields-viewer')).toBeInTheDocument();
       await waitFor(() => {
         expect(screen.getByTestId('sql-preview')).toHaveTextContent(
           'SELECT status FROM orders WHERE created_at BETWEEN ...'
@@ -751,7 +761,7 @@ describe('QueryEditor', () => {
       });
     });
 
-    it('should show visual editor when query has no unsupported features', async () => {
+    it('should show visual editor without unsupported fields viewer when query has no unsupported features', async () => {
       const datasource = createMockDataSource();
       const query = createMockQuery({
         dimensions: ['orders.status'],
@@ -765,11 +775,11 @@ describe('QueryEditor', () => {
         expect(screen.getByText('orders.count')).toBeInTheDocument();
       });
 
-      // Should NOT show the JSON viewer
-      expect(screen.queryByTestId('json-query-viewer')).not.toBeInTheDocument();
+      // Should NOT show the unsupported fields viewer
+      expect(screen.queryByTestId('unsupported-fields-viewer')).not.toBeInTheDocument();
     });
 
-    it('should show visual editor when timeDimensions is empty array', async () => {
+    it('should show visual editor without unsupported fields viewer when timeDimensions is empty array', async () => {
       const datasource = createMockDataSource();
       const query = createMockQuery({
         dimensions: ['orders.status'],
@@ -782,7 +792,7 @@ describe('QueryEditor', () => {
         expect(screen.getByText('orders.status')).toBeInTheDocument();
       });
 
-      expect(screen.queryByTestId('json-query-viewer')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('unsupported-fields-viewer')).not.toBeInTheDocument();
     });
   });
 
