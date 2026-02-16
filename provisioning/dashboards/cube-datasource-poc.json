@@ -614,13 +614,13 @@
           "refId": "A"
         }
       ],
-      "title": "Advanced: Date-Filtered Orders, No Discounts (JSON viewer demo)",
+      "title": "Advanced (JSON viewer demo): Date-Filtered Orders, No Discounts",
       "type": "timeseries"
     },
     {
       "id": 8,
       "type": "barchart",
-      "title": "Advanced: OR Filter — Credit Card or Active Customer",
+      "title": "Advanced (JSON viewer demo): OR Filter — Credit Card or Active Customer",
       "description": "This panel uses an OR filter group across different field keys (payment_method OR is_active), which the visual editor cannot represent. OR is needed when combining conditions across different fields — equals with an array only works for multiple values on a single field.",
       "gridPos": {
         "x": 0,
@@ -893,7 +893,7 @@
           "refId": "A"
         }
       ],
-      "title": "Variable Filter Demo: Orders for $customerName",
+      "title": "Advanced (JSON viewer demo): Orders for $customerName",
       "type": "table"
     }
   ],
