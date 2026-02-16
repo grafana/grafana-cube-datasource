@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
-import { InlineField, Input, Alert, MultiSelect, Text, Field, useStyles2 } from '@grafana/ui';
+import { InlineField, Input, Alert, MultiSelect, Text, Field, TextLink, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
-import { CubeDataSourceOptions, CubeQuery } from '../types';
+import { CubeDataSourceOptions, CubeQuery, CubeFilter, isCubeFilter } from '../types';
 import { SQLPreview } from './SQLPreview';
 import { useMetadataQuery, useCompiledSqlQuery, MetadataOption } from 'queries';
 import { OrderBy } from './OrderBy/OrderBy';
@@ -153,12 +153,21 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
 
       <Field label="Filters" description="Filter results by field values">
         <FilterField
-          filters={query.filters}
+          filters={query.filters?.filter((f): f is CubeFilter => isCubeFilter(f))}
           dimensions={metadata.dimensions}
           onChange={onFiltersChange}
           datasource={datasource}
         />
       </Field>
+      <div className={styles.filterHint}>
+        <Text color="secondary" italic>
+          Need advanced filters? Comparison operators, measure filters, and AND/OR groups
+          are supported via the panel JSON editor.{' '}
+          <TextLink href="https://cube.dev/docs/product/apis-integrations/rest-api/query-format#filters-format" external>
+            Cube filter docs
+          </TextLink>
+        </Text>
+      </div>
 
       <Field label="Order By" description="Order results by selected fields">
         <OrderBy
@@ -185,7 +194,7 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
   );
 }
 
-const getStyles = (_theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     multiSelectWrapper: css({
       width: '100%',
@@ -194,6 +203,11 @@ const getStyles = (_theme: GrafanaTheme2) => {
     multiSelectContainer: css({
       width: '100%',
       minWidth: '240px',
+    }),
+    filterHint: css({
+      marginTop: theme.spacing(-0.5),
+      marginBottom: theme.spacing(1),
+      paddingLeft: theme.spacing(2),
     }),
   };
 };

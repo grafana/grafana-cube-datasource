@@ -616,6 +616,179 @@
       ],
       "title": "Advanced: Date-Filtered Orders, No Discounts (JSON viewer demo)",
       "type": "timeseries"
+    },
+    {
+      "id": 8,
+      "type": "barchart",
+      "title": "Advanced: OR Filter — Credit Card or Active Customer",
+      "description": "This panel uses an OR filter group across different field keys (payment_method OR is_active), which the visual editor cannot represent. OR is needed when combining conditions across different fields — equals with an array only works for multiple values on a single field.",
+      "gridPos": {
+        "x": 0,
+        "y": 33,
+        "h": 10,
+        "w": 24
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 80,
+            "gradientMode": "opacity",
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "axisCenteredZero": false,
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "pluginVersion": "12.3.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-cube-datasource",
+            "uid": "cube-datasource"
+          },
+          "dimensions": [
+            "orders.raw_customers_first_name"
+          ],
+          "filters": [
+            {
+              "or": [
+                {
+                  "member": "orders.raw_payments_payment_method",
+                  "operator": "equals",
+                  "values": [
+                    "credit_card"
+                  ]
+                },
+                {
+                  "member": "orders.raw_customers_is_active",
+                  "operator": "equals",
+                  "values": [
+                    "true"
+                  ]
+                }
+              ]
+            }
+          ],
+          "measures": [
+            "orders.raw_payments_total_amount"
+          ],
+          "refId": "Credit Card or Active Customer",
+          "hide": true
+        },
+        {
+          "datasource": {
+            "uid": "cube-datasource",
+            "type": "grafana-cube-datasource"
+          },
+          "refId": "Credit Card",
+          "hide": true,
+          "dimensions": [
+            "orders.raw_customers_first_name"
+          ],
+          "measures": [
+            "orders.raw_payments_total_amount"
+          ],
+          "filters": [
+            {
+              "member": "orders.raw_payments_payment_method",
+              "operator": "equals",
+              "values": [
+                "credit_card"
+              ]
+            }
+          ]
+        },
+        {
+          "datasource": {
+            "uid": "cube-datasource",
+            "type": "grafana-cube-datasource"
+          },
+          "refId": "Active Customer",
+          "hide": true,
+          "dimensions": [
+            "orders.raw_customers_first_name"
+          ],
+          "measures": [
+            "orders.raw_payments_total_amount"
+          ],
+          "filters": [
+            {
+              "member": "orders.raw_customers_is_active",
+              "operator": "equals",
+              "values": [
+                "true"
+              ]
+            }
+          ]
+        },
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "__expr__",
+            "uid": "__expr__",
+            "name": "Expression"
+          },
+          "type": "sql",
+          "hide": false,
+          "expression": "SELECT\n  ccac.`orders.raw_customers_first_name` AS first_name,\n  ccac.`orders.raw_payments_total_amount` AS total_amount_across_credit_card_OR_active_customer,\n  cc.`orders.raw_payments_total_amount` AS total_amount_across_credit_card,\n  ac.`orders.raw_payments_total_amount` AS total_amount_active_customer\nFROM\n  `Credit Card or Active Customer` AS ccac\nLEFT JOIN\n  `Credit Card` AS cc \n  ON ccac.`orders.raw_customers_first_name` = cc.`orders.raw_customers_first_name`\nLEFT JOIN\n  `Active Customer` AS ac \n  ON ccac.`orders.raw_customers_first_name` = ac.`orders.raw_customers_first_name`"
+        }
+      ],
+      "datasource": {
+        "type": "grafana-cube-datasource",
+        "uid": "cube-datasource"
+      },
+      "options": {
+        "orientation": "auto",
+        "xTickLabelRotation": 90,
+        "xTickLabelSpacing": 0,
+        "showValue": "never",
+        "stacking": "none",
+        "groupWidth": 0.7,
+        "barWidth": 0.83,
+        "barRadius": 0.05,
+        "fullHighlight": false,
+        "tooltip": {
+          "mode": "single",
+          "sort": "none",
+          "hideZeros": false
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "right",
+          "calcs": []
+        },
+        "colorByField": "orders.raw_customers_first_name"
+      }
     }
   ],
   "preload": false,

@@ -1,4 +1,4 @@
-import { CubeQuery, VISUAL_BUILDER_OPERATORS } from '../types';
+import { CubeFilterItem, CubeQuery, VISUAL_BUILDER_OPERATORS, isCubeFilter, isCubeAndFilter, isCubeOrFilter } from '../types';
 
 /**
  * Detects query features that the visual builder cannot represent.
@@ -17,17 +17,48 @@ export function detectUnsupportedFeatures(query: CubeQuery): string[] {
     issues.push('Time dimensions are not yet supported in the visual editor');
   }
 
-  // Check for filter operators beyond equals/notEquals
   if (query.filters?.length) {
-    const advancedOperators = query.filters
-      .filter((f) => !VISUAL_BUILDER_OPERATORS.has(f.operator))
-      .map((f) => f.operator);
+    // Check for AND/OR logical filter groups
+    const hasLogicalGroups = query.filters.some(
+      (f) => isCubeAndFilter(f) || isCubeOrFilter(f)
+    );
+    if (hasLogicalGroups) {
+      issues.push('AND/OR filter groups are not yet supported in the visual editor');
+    }
 
+    // Check for filter operators beyond equals/notEquals (in flat filters only;
+    // nested filters inside groups are covered by the logical groups check above)
+    const advancedOperators = collectAdvancedOperators(query.filters);
     if (advancedOperators.length > 0) {
-      const unique = [...new Set(advancedOperators)];
-      issues.push(`Filter operators not yet supported in the visual editor: ${unique.join(', ')}`);
+      issues.push(`Filter operators not yet supported in the visual editor: ${advancedOperators.join(', ')}`);
     }
   }
 
   return issues;
+}
+
+/**
+ * Recursively collects advanced (non-visual-builder) operators from filters,
+ * returning a de-duplicated list of operator names.
+ */
+function collectAdvancedOperators(filters: CubeFilterItem[]): string[] {
+  const operators = new Set<string>();
+
+  for (const item of filters) {
+    if (isCubeFilter(item)) {
+      if (!VISUAL_BUILDER_OPERATORS.has(item.operator)) {
+        operators.add(item.operator);
+      }
+    } else if (isCubeAndFilter(item)) {
+      for (const op of collectAdvancedOperators(item.and)) {
+        operators.add(op);
+      }
+    } else if (isCubeOrFilter(item)) {
+      for (const op of collectAdvancedOperators(item.or)) {
+        operators.add(op);
+      }
+    }
+  }
+
+  return [...operators];
 }

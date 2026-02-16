@@ -1,5 +1,5 @@
-import { isValidCubeFilter, filterValidCubeFilters } from './filterValidation';
-import { CubeFilter, Operator } from '../types';
+import { isValidCubeFilter, filterValidCubeFilters, validateFilterItem } from './filterValidation';
+import { CubeFilter, CubeFilterItem, Operator } from '../types';
 
 describe('filterValidation', () => {
   describe('isValidCubeFilter', () => {
@@ -127,8 +127,8 @@ describe('filterValidation', () => {
       const result = filterValidCubeFilters(filters);
 
       expect(result).toHaveLength(2);
-      expect(result[0].member).toBe('orders.status');
-      expect(result[1].member).toBe('orders.customer');
+      expect((result[0] as CubeFilter).member).toBe('orders.status');
+      expect((result[1] as CubeFilter).member).toBe('orders.customer');
     });
 
     it('returns empty array when all filters are invalid', () => {
@@ -163,8 +163,113 @@ describe('filterValidation', () => {
       const result = filterValidCubeFilters(filters);
 
       expect(result).toHaveLength(2);
-      expect(result[0].operator).toBe('gt');
-      expect(result[1].operator).toBe('set');
+      expect((result[0] as CubeFilter).operator).toBe('gt');
+      expect((result[1] as CubeFilter).operator).toBe('set');
+    });
+
+    it('passes through valid AND filter groups', () => {
+      const filters: CubeFilterItem[] = [
+        {
+          and: [
+            { member: 'orders.status', operator: Operator.Equals, values: ['active'] },
+            { member: 'orders.region', operator: Operator.Equals, values: ['US'] },
+          ],
+        },
+      ];
+
+      const result = filterValidCubeFilters(filters);
+      expect(result).toHaveLength(1);
+      expect(result[0]).toHaveProperty('and');
+    });
+
+    it('passes through valid OR filter groups', () => {
+      const filters: CubeFilterItem[] = [
+        {
+          or: [
+            { member: 'orders.status', operator: Operator.Equals, values: ['active'] },
+            { member: 'orders.status', operator: Operator.Equals, values: ['pending'] },
+          ],
+        },
+      ];
+
+      const result = filterValidCubeFilters(filters);
+      expect(result).toHaveLength(1);
+      expect(result[0]).toHaveProperty('or');
+    });
+
+    it('removes invalid children from AND groups', () => {
+      const filters: CubeFilterItem[] = [
+        {
+          and: [
+            { member: 'orders.status', operator: Operator.Equals, values: ['active'] },
+            { member: '', operator: Operator.Equals, values: ['invalid'] }, // invalid: no member
+          ],
+        },
+      ];
+
+      const result = filterValidCubeFilters(filters);
+      expect(result).toHaveLength(1);
+      const andGroup = result[0] as { and: CubeFilterItem[] };
+      expect(andGroup.and).toHaveLength(1);
+    });
+
+    it('removes AND group entirely if all children are invalid', () => {
+      const filters: CubeFilterItem[] = [
+        {
+          and: [
+            { member: '', operator: Operator.Equals, values: ['invalid'] },
+            { member: 'orders.status', operator: Operator.Equals, values: [] },
+          ],
+        },
+      ];
+
+      const result = filterValidCubeFilters(filters);
+      expect(result).toHaveLength(0);
+    });
+
+    it('handles mixed flat filters and logical groups', () => {
+      const filters: CubeFilterItem[] = [
+        { member: 'orders.status', operator: Operator.Equals, values: ['active'] },
+        {
+          or: [
+            { member: 'orders.region', operator: Operator.Equals, values: ['US'] },
+            { member: 'orders.region', operator: Operator.Equals, values: ['EU'] },
+          ],
+        },
+        { member: '', operator: Operator.Equals, values: ['invalid'] }, // invalid
+      ];
+
+      const result = filterValidCubeFilters(filters);
+      expect(result).toHaveLength(2);
+    });
+  });
+
+  describe('validateFilterItem', () => {
+    it('returns valid flat filter as-is', () => {
+      const filter: CubeFilter = { member: 'orders.status', operator: Operator.Equals, values: ['active'] };
+      expect(validateFilterItem(filter)).toEqual(filter);
+    });
+
+    it('returns null for invalid flat filter', () => {
+      const filter: CubeFilter = { member: '', operator: Operator.Equals, values: ['active'] };
+      expect(validateFilterItem(filter)).toBeNull();
+    });
+
+    it('validates nested AND within OR', () => {
+      const filter: CubeFilterItem = {
+        or: [
+          {
+            and: [
+              { member: 'orders.status', operator: Operator.Equals, values: ['active'] },
+              { member: 'orders.amount', operator: Operator.Gt, values: ['100'] },
+            ],
+          },
+          { member: 'orders.region', operator: Operator.Equals, values: ['EU'] },
+        ],
+      };
+      const result = validateFilterItem(filter);
+      expect(result).not.toBeNull();
+      expect(result).toHaveProperty('or');
     });
   });
 });
