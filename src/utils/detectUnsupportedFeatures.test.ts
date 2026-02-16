@@ -91,4 +91,35 @@ describe('detectUnsupportedFeatures', () => {
     const issues = detectUnsupportedFeatures(query);
     expect(issues).toHaveLength(2);
   });
+
+  it('detects filters on measures', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      dimensions: ['orders.status'],
+      measures: ['orders.count'],
+      filters: [{ member: 'orders.count', operator: Operator.Equals, values: ['10'] }],
+    };
+    const issues = detectUnsupportedFeatures(query);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatch(/filters on measures/i);
+  });
+
+  it('returns no issues for dimension filters when measures are selected', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      dimensions: ['orders.status'],
+      measures: ['orders.count'],
+      filters: [{ member: 'orders.status', operator: Operator.Equals, values: ['active'] }],
+    };
+    expect(detectUnsupportedFeatures(query)).toEqual([]);
+  });
+
+  it('returns no issues for filters when no measures are selected', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      dimensions: ['orders.status'],
+      filters: [{ member: 'orders.status', operator: Operator.Equals, values: ['active'] }],
+    };
+    expect(detectUnsupportedFeatures(query)).toEqual([]);
+  });
 });

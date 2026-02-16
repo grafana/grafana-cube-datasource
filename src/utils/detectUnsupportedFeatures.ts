@@ -29,5 +29,14 @@ export function detectUnsupportedFeatures(query: CubeQuery): string[] {
     }
   }
 
+  // Check for filters on measures (visual builder only supports dimension filters)
+  if (query.filters?.length && query.measures?.length) {
+    const measureSet = new Set(query.measures);
+    const measureFilters = query.filters.filter((f) => measureSet.has(f.member));
+    if (measureFilters.length > 0) {
+      issues.push('Filters on measures are not yet supported in the visual editor');
+    }
+  }
+
   return issues;
 }

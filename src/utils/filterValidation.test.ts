@@ -105,6 +105,16 @@ describe('filterValidation', () => {
       expect(isValidCubeFilter(filter)).toBe(false);
     });
 
+    it('returns false for unknown operator', () => {
+      // Cast to bypass TypeScript - simulates user-editable panel JSON with typo
+      const filter = {
+        member: 'orders.status',
+        operator: 'equls' as any, // typo
+        values: ['completed'],
+      };
+      expect(isValidCubeFilter(filter)).toBe(false);
+    });
+
     it('validates measure filters the same as dimension filters', () => {
       const filter: CubeFilter = {
         member: 'orders.count',

@@ -55,6 +55,9 @@ export const UNARY_OPERATORS: ReadonlySet<Operator> = new Set([
   Operator.NotSet,
 ]);
 
+/** All valid Cube filter operators (for runtime validation of user-editable JSON). */
+export const ALL_OPERATORS: ReadonlySet<string> = new Set(Object.values(Operator));
+
 export interface CubeFilter {
   member: string;
   operator: Operator;
