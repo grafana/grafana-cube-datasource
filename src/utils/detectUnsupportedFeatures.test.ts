@@ -166,4 +166,40 @@ describe('detectUnsupportedFeatures', () => {
     expect(issues).toHaveLength(1);
     expect(issues[0]).toMatch(/AND\/OR filter groups/i);
   });
+
+  it('detects template variables in filter values', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      dimensions: ['orders.status'],
+      filters: [
+        { member: 'orders.raw_customers_first_name', operator: Operator.Equals, values: ['$customerName'] },
+      ],
+    };
+    const issues = detectUnsupportedFeatures(query);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatch(/dashboard variables/i);
+  });
+
+  it('detects template variables in filter values with ${} syntax', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [
+        { member: 'orders.status', operator: Operator.Equals, values: ['${statusVar}'] },
+      ],
+    };
+    const issues = detectUnsupportedFeatures(query);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatch(/dashboard variables/i);
+  });
+
+  it('does not flag filter values without template variables', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      dimensions: ['orders.status'],
+      filters: [
+        { member: 'orders.status', operator: Operator.Equals, values: ['completed'] },
+      ],
+    };
+    expect(detectUnsupportedFeatures(query)).toEqual([]);
+  });
 });

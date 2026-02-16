@@ -32,6 +32,11 @@ export function detectUnsupportedFeatures(query: CubeQuery): string[] {
     if (advancedOperators.length > 0) {
       issues.push(`Filter operators not yet supported in the visual editor: ${advancedOperators.join(', ')}`);
     }
+
+    // Check for template variables in filter values
+    if (hasTemplateVariableInFilterValues(query.filters)) {
+      issues.push('Filter values containing dashboard variables are not yet supported in the visual editor');
+    }
   }
 
   return issues;
@@ -61,4 +66,27 @@ function collectAdvancedOperators(filters: CubeFilterItem[]): string[] {
   }
 
   return [...operators];
+}
+
+/**
+ * Recursively checks whether any filter value contains a Grafana
+ * template variable (e.g. $var or ${var}).
+ */
+function hasTemplateVariableInFilterValues(filters: CubeFilterItem[]): boolean {
+  for (const item of filters) {
+    if (isCubeFilter(item)) {
+      if (item.values?.some((v) => v.includes('$'))) {
+        return true;
+      }
+    } else if (isCubeAndFilter(item)) {
+      if (hasTemplateVariableInFilterValues(item.and)) {
+        return true;
+      }
+    } else if (isCubeOrFilter(item)) {
+      if (hasTemplateVariableInFilterValues(item.or)) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
