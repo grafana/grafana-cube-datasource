@@ -75,7 +75,7 @@ function collectAdvancedOperators(filters: CubeFilterItem[]): string[] {
 function hasTemplateVariableInFilterValues(filters: CubeFilterItem[]): boolean {
   for (const item of filters) {
     if (isCubeFilter(item)) {
-      if (item.values?.some((v) => v.includes('$'))) {
+      if (item.values?.some((v) => /\$[a-zA-Z_{]/.test(v))) {
         return true;
       }
     } else if (isCubeAndFilter(item)) {

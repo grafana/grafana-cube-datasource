@@ -202,4 +202,26 @@ describe('detectUnsupportedFeatures', () => {
     };
     expect(detectUnsupportedFeatures(query)).toEqual([]);
   });
+
+  it('does not flag dollar signs in non-variable contexts (e.g. currency)', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [
+        { member: 'orders.amount', operator: Operator.Equals, values: ['$100'] },
+      ],
+    };
+    const issues = detectUnsupportedFeatures(query);
+    expect(issues).toHaveLength(0);
+  });
+
+  it('does not flag trailing dollar sign', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [
+        { member: 'orders.label', operator: Operator.Equals, values: ['test$'] },
+      ],
+    };
+    const issues = detectUnsupportedFeatures(query);
+    expect(issues).toHaveLength(0);
+  });
 });
