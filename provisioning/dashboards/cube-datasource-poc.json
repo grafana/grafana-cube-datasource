@@ -17,7 +17,7 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": 3,
   "links": [],
   "panels": [
@@ -499,7 +499,7 @@
         "type": "grafana-cube-datasource",
         "uid": "cube-datasource"
       },
-      "description": "This panel uses timeDimensions with an explicit dateRange, which the visual editor cannot represent. Open the query editor to see the read-only JSON viewer with syntax-highlighted query JSON.",
+      "description": "This panel uses timeDimensions with an explicit dateRange and an 'lt' filter, which the visual editor cannot represent. Open the query editor to see the read-only JSON viewer with syntax-highlighted query JSON.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -602,10 +602,19 @@
               ]
             }
           ],
+          "filters": [
+            {
+              "member": "orders.raw_payments_count_with_discount",
+              "operator": "lt",
+              "values": [
+                "1"
+              ]
+            }
+          ],
           "refId": "A"
         }
       ],
-      "title": "Advanced: Date-Filtered Orders (JSON viewer demo)",
+      "title": "Advanced: Date-Filtered Orders, No Discounts (JSON viewer demo)",
       "type": "timeseries"
     }
   ],

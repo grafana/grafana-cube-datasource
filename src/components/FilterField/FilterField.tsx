@@ -17,7 +17,7 @@ export function FilterField({ dimensions, filters = [], onChange, datasource }: 
     filters.map((filter) => ({
       member: filter.member,
       operator: filter.operator,
-      values: filter.values || [],
+      values: filter.values ?? [],
     }))
   );
 

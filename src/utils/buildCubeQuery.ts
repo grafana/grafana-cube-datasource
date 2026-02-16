@@ -1,7 +1,7 @@
-import type { BinaryFilter, Query as CubeJsQuery, TimeDimension } from '@cubejs-client/core';
+import type { BinaryFilter, UnaryFilter, Query as CubeJsQuery, TimeDimension } from '@cubejs-client/core';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataSource } from '../datasource';
-import { CubeFilter, CubeQuery, Operator } from '../types';
+import { CubeFilter, CubeQuery, UNARY_OPERATORS } from '../types';
 import { filterValidCubeFilters } from './filterValidation';
 import { normalizeOrder } from './normalizeOrder';
 
@@ -92,27 +92,23 @@ export function buildCubeQueryJson(query: CubeQuery, datasource: DataSource): st
 
   const validFilters = filterValidCubeFilters(filters);
 
-  const toCubeBinaryOperator = (operator: Operator): BinaryFilter['operator'] => {
-    switch (operator) {
-      case Operator.Equals:
-        return 'equals';
-      case Operator.NotEquals:
-        return 'notEquals';
-      default: {
-        // Ensure we don't silently change semantics if new operators are added.
-        const _exhaustive: never = operator;
-        throw new Error(`Unsupported Cube filter operator: ${String(_exhaustive)}`);
-      }
-    }
-  };
-
   if (validFilters.length > 0) {
-    // Map to Cube's official filter type at the boundary to avoid drift.
-    const cubeFilters: BinaryFilter[] = validFilters.map((filter) => ({
-      member: filter.member,
-      operator: toCubeBinaryOperator(filter.operator),
-      values: filter.values,
-    }));
+    // Map to Cube's official filter types at the boundary.
+    // Our Operator enum values exactly match Cube's operator strings,
+    // so we can cast directly. We split into binary/unary based on operator type.
+    const cubeFilters: Array<BinaryFilter | UnaryFilter> = validFilters.map((filter) => {
+      if (UNARY_OPERATORS.has(filter.operator)) {
+        return {
+          member: filter.member,
+          operator: filter.operator as unknown as UnaryFilter['operator'],
+        };
+      }
+      return {
+        member: filter.member,
+        operator: filter.operator as unknown as BinaryFilter['operator'],
+        values: filter.values ?? [],
+      };
+    });
 
     cubeQuery.filters = cubeFilters;
   }
