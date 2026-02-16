@@ -66,7 +66,7 @@ export function buildCubeQueryJson(query: CubeQuery, datasource: DataSource): st
     cubeQuery.timeDimensions = timeDimensions;
   }
 
-  if (query.limit) {
+  if (query.limit != null) {
     cubeQuery.limit = query.limit;
   }
 

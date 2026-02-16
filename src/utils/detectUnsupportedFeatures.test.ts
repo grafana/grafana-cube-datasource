@@ -1,5 +1,5 @@
 import { CubeQuery, Operator } from '../types';
-import { detectUnsupportedFeatures } from './detectUnsupportedFeatures';
+import { detectUnsupportedFeatures, getUnsupportedQueryKeys } from './detectUnsupportedFeatures';
 
 const baseQuery: CubeQuery = { refId: 'A' };
 
@@ -165,5 +165,123 @@ describe('detectUnsupportedFeatures', () => {
     const issues = detectUnsupportedFeatures(query);
     expect(issues).toHaveLength(1);
     expect(issues[0]).toMatch(/AND\/OR filter groups/i);
+  });
+
+  it('detects template variables in filter values with $var syntax', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [{ member: 'orders.status', operator: Operator.Equals, values: ['$statusVar'] }],
+    };
+    const issues = detectUnsupportedFeatures(query);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatch(/dashboard variables/i);
+  });
+
+  it('detects template variables in filter values with ${var} syntax', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [{ member: 'orders.status', operator: Operator.Equals, values: ['${statusVar}'] }],
+    };
+    const issues = detectUnsupportedFeatures(query);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatch(/dashboard variables/i);
+  });
+
+  it('detects template variables in filter values with [[var]] syntax', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [{ member: 'orders.status', operator: Operator.Equals, values: ['[[statusVar]]'] }],
+    };
+    const issues = detectUnsupportedFeatures(query);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatch(/dashboard variables/i);
+  });
+
+  it('does not flag dollar signs in non-variable contexts', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [
+        { member: 'orders.amount', operator: Operator.Equals, values: ['$100'] },
+        { member: 'orders.label', operator: Operator.Equals, values: ['test$'] },
+      ],
+    };
+    expect(detectUnsupportedFeatures(query)).toEqual([]);
+  });
+});
+
+describe('getUnsupportedQueryKeys', () => {
+  it('returns empty set for a simple query', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      dimensions: ['orders.status'],
+      measures: ['orders.count'],
+    };
+    expect(getUnsupportedQueryKeys(query).size).toBe(0);
+  });
+
+  it('returns "timeDimensions" when time dimensions are present', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      timeDimensions: [{ dimension: 'orders.created_at', granularity: 'day' }],
+    };
+    const keys = getUnsupportedQueryKeys(query);
+    expect(keys.has('timeDimensions')).toBe(true);
+    expect(keys.size).toBe(1);
+  });
+
+  it('returns "filters" when AND/OR groups are present', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [
+        {
+          or: [
+            { member: 'orders.status', operator: Operator.Equals, values: ['active'] },
+            { member: 'orders.region', operator: Operator.Equals, values: ['US'] },
+          ],
+        },
+      ],
+    };
+    const keys = getUnsupportedQueryKeys(query);
+    expect(keys.has('filters')).toBe(true);
+    expect(keys.size).toBe(1);
+  });
+
+  it('returns "filters" when advanced operators are present', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [{ member: 'orders.amount', operator: Operator.Gt, values: ['100'] }],
+    };
+    const keys = getUnsupportedQueryKeys(query);
+    expect(keys.has('filters')).toBe(true);
+  });
+
+  it('returns both keys when time dimensions and filter issues coexist', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      timeDimensions: [{ dimension: 'orders.created_at' }],
+      filters: [{ member: 'orders.amount', operator: Operator.Lt, values: ['50'] }],
+    };
+    const keys = getUnsupportedQueryKeys(query);
+    expect(keys.has('timeDimensions')).toBe(true);
+    expect(keys.has('filters')).toBe(true);
+    expect(keys.size).toBe(2);
+  });
+
+  it('does not include "filters" for simple equals/notEquals filters', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [{ member: 'orders.status', operator: Operator.Equals, values: ['active'] }],
+    };
+    expect(getUnsupportedQueryKeys(query).size).toBe(0);
+  });
+
+  it('includes "filters" when filter values contain template variables', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [{ member: 'orders.status', operator: Operator.Equals, values: ['[[statusVar]]'] }],
+    };
+    const keys = getUnsupportedQueryKeys(query);
+    expect(keys.has('filters')).toBe(true);
+    expect(keys.size).toBe(1);
   });
 });

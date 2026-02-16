@@ -1,5 +1,7 @@
 import { CubeFilterItem, CubeQuery, VISUAL_BUILDER_OPERATORS, isCubeFilter, isCubeAndFilter, isCubeOrFilter } from '../types';
 
+const TEMPLATE_VARIABLE_PATTERN = /(?:\$(?:[a-zA-Z_]\w*|\{[a-zA-Z_]\w*\})|\[\[[^\]]+\]\])/;
+
 /**
  * Detects query features that the visual builder cannot represent.
  *
@@ -32,9 +34,40 @@ export function detectUnsupportedFeatures(query: CubeQuery): string[] {
     if (advancedOperators.length > 0) {
       issues.push(`Filter operators not yet supported in the visual editor: ${advancedOperators.join(', ')}`);
     }
+
+    if (hasTemplateVariableInFilterValues(query.filters)) {
+      issues.push('Filter values containing dashboard variables are not yet supported in the visual editor');
+    }
   }
 
   return issues;
+}
+
+/**
+ * Returns the set of top-level CubeQuery keys that contain unsupported features.
+ *
+ * Used by the UnsupportedFieldsViewer to extract and display only the
+ * query fields that the visual builder cannot represent.
+ */
+export function getUnsupportedQueryKeys(query: CubeQuery): Set<string> {
+  const keys = new Set<string>();
+
+  if (query.timeDimensions && query.timeDimensions.length > 0) {
+    keys.add('timeDimensions');
+  }
+
+  if (query.filters?.length) {
+    const hasLogicalGroups = query.filters.some(
+      (f) => isCubeAndFilter(f) || isCubeOrFilter(f)
+    );
+    const advancedOperators = collectAdvancedOperators(query.filters);
+
+    if (hasLogicalGroups || advancedOperators.length > 0 || hasTemplateVariableInFilterValues(query.filters)) {
+      keys.add('filters');
+    }
+  }
+
+  return keys;
 }
 
 /**
@@ -61,4 +94,27 @@ function collectAdvancedOperators(filters: CubeFilterItem[]): string[] {
   }
 
   return [...operators];
+}
+
+/**
+ * Recursively checks whether any filter value contains a Grafana
+ * template variable (e.g. $var, ${var}, or [[var]]).
+ */
+function hasTemplateVariableInFilterValues(filters: CubeFilterItem[]): boolean {
+  for (const item of filters) {
+    if (isCubeFilter(item)) {
+      if (item.values?.some((v) => TEMPLATE_VARIABLE_PATTERN.test(v))) {
+        return true;
+      }
+    } else if (isCubeAndFilter(item)) {
+      if (hasTemplateVariableInFilterValues(item.and)) {
+        return true;
+      }
+    } else if (isCubeOrFilter(item)) {
+      if (hasTemplateVariableInFilterValues(item.or)) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
