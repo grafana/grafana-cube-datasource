@@ -69,13 +69,19 @@ function collectAdvancedOperators(filters: CubeFilterItem[]): string[] {
 }
 
 /**
+ * Matches Grafana template variable syntax: $var or ${var}
+ * Variable names must start with a letter or underscore.
+ */
+const GRAFANA_TEMPLATE_VAR_PATTERN = /\$[a-zA-Z_{]/;
+
+/**
  * Recursively checks whether any filter value contains a Grafana
  * template variable (e.g. $var or ${var}).
  */
 function hasTemplateVariableInFilterValues(filters: CubeFilterItem[]): boolean {
   for (const item of filters) {
     if (isCubeFilter(item)) {
-      if (item.values?.some((v) => v.includes('$'))) {
+      if (item.values?.some((v) => GRAFANA_TEMPLATE_VAR_PATTERN.test(v))) {
         return true;
       }
     } else if (isCubeAndFilter(item)) {

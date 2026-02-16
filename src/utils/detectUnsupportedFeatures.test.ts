@@ -202,4 +202,16 @@ describe('detectUnsupportedFeatures', () => {
     };
     expect(detectUnsupportedFeatures(query)).toEqual([]);
   });
+
+  it('does not flag filter values with $ that are not template variables', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      dimensions: ['orders.status'],
+      filters: [
+        // Currency like $100, trailing $ like "test$", or $ followed by digits
+        { member: 'orders.price', operator: Operator.Equals, values: ['$100', 'test$', 'foo$123'] },
+      ],
+    };
+    expect(detectUnsupportedFeatures(query)).toEqual([]);
+  });
 });
