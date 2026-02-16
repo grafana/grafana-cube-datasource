@@ -73,7 +73,7 @@ function buildDisplayQuery(query: CubeQuery): Record<string, unknown> {
   if (query.order) {
     display.order = query.order;
   }
-  if (query.limit) {
+  if (query.limit != null) {
     display.limit = query.limit;
   }
 
