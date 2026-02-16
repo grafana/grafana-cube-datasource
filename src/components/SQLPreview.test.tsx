@@ -13,7 +13,7 @@ jest.mock('queries', () => ({
 }));
 
 import React from 'react';
-import { screen } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import { setup } from 'testUtils';
 import { SQLPreview } from './SQLPreview';
 import { useDatasourceQuery } from 'queries';
@@ -21,6 +21,10 @@ import { useDatasourceQuery } from 'queries';
 const mockUseDatasourceQuery = useDatasourceQuery as jest.Mock;
 
 const DEFAULT_DS_ID = 'pg-1';
+
+function expandSqlPreview() {
+  fireEvent.click(screen.getByTestId('sql-preview-toggle'));
+}
 
 describe('SQLPreview', () => {
   beforeEach(() => {
@@ -41,12 +45,23 @@ describe('SQLPreview', () => {
     const sql = 'SELECT * FROM orders WHERE status = "completed"';
 
     setup(<SQLPreview sql={sql} />);
+    expandSqlPreview();
 
     expect(screen.getByLabelText('Generated SQL query')).toHaveTextContent(sql);
   });
 
+  it('should be collapsed by default', () => {
+    setup(<SQLPreview sql="SELECT * FROM orders" />);
+
+    // Content should not be visible
+    expect(screen.queryByLabelText('Generated SQL query')).not.toBeInTheDocument();
+    // Toggle should be visible
+    expect(screen.getByTestId('sql-preview-toggle')).toBeInTheDocument();
+  });
+
   it('should render Edit SQL in Explore button', () => {
     setup(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid={DEFAULT_DS_ID} />);
+    expandSqlPreview();
 
     const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
     expect(button).toBeInTheDocument();
@@ -61,6 +76,7 @@ describe('SQLPreview', () => {
       });
 
       setup(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid={DEFAULT_DS_ID} />);
+      expandSqlPreview();
 
       const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
       const href = button.getAttribute('href');
@@ -89,6 +105,7 @@ describe('SQLPreview', () => {
       });
 
       setup(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid={DEFAULT_DS_ID} />);
+      expandSqlPreview();
 
       const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
       const href = button.getAttribute('href');
@@ -121,6 +138,7 @@ describe('SQLPreview', () => {
       });
 
       setup(<SQLPreview sql="SELECT COUNT(*) FROM users" exploreSqlDatasourceUid="mysql-1" />);
+      expandSqlPreview();
 
       const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
       const href = button.getAttribute('href');
@@ -161,6 +179,7 @@ describe('SQLPreview', () => {
         });
 
         const { unmount } = setup(<SQLPreview sql="SELECT 1" exploreSqlDatasourceUid={uid} />);
+        expandSqlPreview();
 
         const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
         const href = button.getAttribute('href');
@@ -196,6 +215,7 @@ describe('SQLPreview', () => {
       });
 
       setup(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid="pg-prod" />);
+      expandSqlPreview();
 
       // Button text stays the same, but button is disabled with spinner icon
       const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
@@ -211,6 +231,7 @@ describe('SQLPreview', () => {
       });
 
       setup(<SQLPreview sql="SELECT * FROM orders" exploreSqlDatasourceUid="pg-prod" />);
+      expandSqlPreview();
 
       const button = screen.getByRole('link', { name: /Edit SQL in Explore/i });
       expect(button).toBeInTheDocument();
