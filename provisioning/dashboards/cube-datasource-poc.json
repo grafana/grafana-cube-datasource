@@ -616,6 +616,121 @@
       ],
       "title": "Advanced: Date-Filtered Orders, No Discounts (JSON viewer demo)",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-cube-datasource",
+        "uid": "cube-datasource"
+      },
+      "description": "This panel uses an OR filter group across different field keys (payment_method OR is_active), which the visual editor cannot represent. OR is needed when combining conditions across different fields — equals with an array only works for multiple values on a single field.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 0,
+        "y": 33
+      },
+      "id": 8,
+      "options": {
+        "barRadius": 0.05,
+        "barWidth": 0.83,
+        "colorByField": "orders.raw_customers_first_name",
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": false
+        },
+        "orientation": "auto",
+        "showValue": "never",
+        "stacking": "none",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 90,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "12.3.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-cube-datasource",
+            "uid": "cube-datasource"
+          },
+          "dimensions": [
+            "orders.raw_customers_first_name"
+          ],
+          "measures": [
+            "orders.raw_payments_total_amount"
+          ],
+          "filters": [
+            {
+              "or": [
+                {
+                  "member": "orders.raw_payments_payment_method",
+                  "operator": "equals",
+                  "values": [
+                    "credit_card"
+                  ]
+                },
+                {
+                  "member": "orders.raw_customers_is_active",
+                  "operator": "equals",
+                  "values": [
+                    "true"
+                  ]
+                }
+              ]
+            }
+          ],
+          "refId": "A"
+        }
+      ],
+      "title": "Advanced: OR Filter — Credit Card or Active Customer",
+      "type": "barchart"
     }
   ],
   "preload": false,
