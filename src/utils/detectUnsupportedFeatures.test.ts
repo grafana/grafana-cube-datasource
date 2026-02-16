@@ -1,5 +1,5 @@
 import { CubeQuery, Operator } from '../types';
-import { detectUnsupportedFeatures, getUnsupportedQueryKeys } from './detectUnsupportedFeatures';
+import { detectUnsupportedFeatures, getUnsupportedQueryKeys, extractUnsupportedFilters, extractVisualBuilderFilters } from './detectUnsupportedFeatures';
 
 const baseQuery: CubeQuery = { refId: 'A' };
 
@@ -197,6 +197,29 @@ describe('detectUnsupportedFeatures', () => {
     expect(issues[0]).toMatch(/dashboard variables/i);
   });
 
+  it('detects template variables in filter values with ${var:format} syntax', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [{ member: 'orders.status', operator: Operator.Equals, values: ['${status:csv}'] }],
+    };
+    const issues = detectUnsupportedFeatures(query);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatch(/dashboard variables/i);
+  });
+
+  it('detects template variables with various format specifiers', () => {
+    const formats = ['csv', 'json', 'pipe', 'raw', 'regex', 'glob', 'queryparam'];
+    for (const format of formats) {
+      const query: CubeQuery = {
+        ...baseQuery,
+        filters: [{ member: 'orders.status', operator: Operator.Equals, values: [`\${myVar:${format}}`] }],
+      };
+      const issues = detectUnsupportedFeatures(query);
+      expect(issues).toHaveLength(1);
+      expect(issues[0]).toMatch(/dashboard variables/i);
+    }
+  });
+
   it('does not flag dollar signs in non-variable contexts', () => {
     const query: CubeQuery = {
       ...baseQuery,
@@ -283,5 +306,162 @@ describe('getUnsupportedQueryKeys', () => {
     const keys = getUnsupportedQueryKeys(query);
     expect(keys.has('filters')).toBe(true);
     expect(keys.size).toBe(1);
+  });
+
+  it('includes "filters" when filter values contain ${var:format} template variables', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [{ member: 'orders.status', operator: Operator.Equals, values: ['${status:csv}'] }],
+    };
+    const keys = getUnsupportedQueryKeys(query);
+    expect(keys.has('filters')).toBe(true);
+    expect(keys.size).toBe(1);
+  });
+});
+
+describe('extractUnsupportedFilters', () => {
+  it('returns empty array for undefined filters', () => {
+    expect(extractUnsupportedFilters(undefined)).toEqual([]);
+  });
+
+  it('returns empty array for empty filters', () => {
+    expect(extractUnsupportedFilters([])).toEqual([]);
+  });
+
+  it('returns empty array when all filters are visual-builder-compatible', () => {
+    const filters = [
+      { member: 'orders.status', operator: Operator.Equals, values: ['active'] },
+      { member: 'orders.region', operator: Operator.NotEquals, values: ['EU'] },
+    ];
+    expect(extractUnsupportedFilters(filters)).toEqual([]);
+  });
+
+  it('extracts AND filter groups', () => {
+    const andGroup = {
+      and: [
+        { member: 'orders.status', operator: Operator.Equals, values: ['active'] },
+        { member: 'orders.region', operator: Operator.Equals, values: ['US'] },
+      ],
+    };
+    const filters = [
+      { member: 'orders.customer', operator: Operator.Equals, values: ['test'] },
+      andGroup,
+    ];
+    expect(extractUnsupportedFilters(filters)).toEqual([andGroup]);
+  });
+
+  it('extracts OR filter groups', () => {
+    const orGroup = {
+      or: [
+        { member: 'orders.status', operator: Operator.Equals, values: ['active'] },
+        { member: 'orders.status', operator: Operator.Equals, values: ['pending'] },
+      ],
+    };
+    const filters = [orGroup];
+    expect(extractUnsupportedFilters(filters)).toEqual([orGroup]);
+  });
+
+  it('extracts filters with advanced operators', () => {
+    const advancedFilter = { member: 'orders.amount', operator: Operator.Gt, values: ['100'] };
+    const filters = [
+      { member: 'orders.status', operator: Operator.Equals, values: ['active'] },
+      advancedFilter,
+    ];
+    expect(extractUnsupportedFilters(filters)).toEqual([advancedFilter]);
+  });
+
+  it('extracts filters with template variables', () => {
+    const templateFilter = { member: 'orders.status', operator: Operator.Equals, values: ['$statusVar'] };
+    const filters = [
+      { member: 'orders.region', operator: Operator.Equals, values: ['US'] },
+      templateFilter,
+    ];
+    expect(extractUnsupportedFilters(filters)).toEqual([templateFilter]);
+  });
+
+  it('extracts filters with ${var:format} template variables', () => {
+    const templateFilter = { member: 'orders.status', operator: Operator.Equals, values: ['${status:csv}'] };
+    const filters = [
+      { member: 'orders.region', operator: Operator.Equals, values: ['US'] },
+      templateFilter,
+    ];
+    expect(extractUnsupportedFilters(filters)).toEqual([templateFilter]);
+  });
+
+  it('extracts multiple unsupported filters', () => {
+    const andGroup = { and: [{ member: 'a', operator: Operator.Equals, values: ['x'] }] };
+    const advancedFilter = { member: 'b', operator: Operator.Gt, values: ['100'] };
+    const filters = [
+      { member: 'c', operator: Operator.Equals, values: ['y'] },
+      andGroup,
+      advancedFilter,
+    ];
+    expect(extractUnsupportedFilters(filters)).toEqual([andGroup, advancedFilter]);
+  });
+});
+
+describe('extractVisualBuilderFilters', () => {
+  it('returns empty array for undefined filters', () => {
+    expect(extractVisualBuilderFilters(undefined)).toEqual([]);
+  });
+
+  it('returns empty array for empty filters', () => {
+    expect(extractVisualBuilderFilters([])).toEqual([]);
+  });
+
+  it('returns equals/notEquals filters without template variables', () => {
+    const filters = [
+      { member: 'orders.status', operator: Operator.Equals, values: ['active'] },
+      { member: 'orders.region', operator: Operator.NotEquals, values: ['EU'] },
+    ];
+    expect(extractVisualBuilderFilters(filters)).toEqual(filters);
+  });
+
+  it('excludes AND/OR filter groups', () => {
+    const filters = [
+      { member: 'orders.status', operator: Operator.Equals, values: ['active'] },
+      { and: [{ member: 'a', operator: Operator.Equals, values: ['x'] }] },
+    ];
+    expect(extractVisualBuilderFilters(filters)).toEqual([
+      { member: 'orders.status', operator: Operator.Equals, values: ['active'] },
+    ]);
+  });
+
+  it('excludes filters with advanced operators', () => {
+    const filters = [
+      { member: 'orders.status', operator: Operator.Equals, values: ['active'] },
+      { member: 'orders.amount', operator: Operator.Gt, values: ['100'] },
+    ];
+    expect(extractVisualBuilderFilters(filters)).toEqual([
+      { member: 'orders.status', operator: Operator.Equals, values: ['active'] },
+    ]);
+  });
+
+  it('excludes filters with template variables', () => {
+    const filters = [
+      { member: 'orders.region', operator: Operator.Equals, values: ['US'] },
+      { member: 'orders.status', operator: Operator.Equals, values: ['$statusVar'] },
+    ];
+    expect(extractVisualBuilderFilters(filters)).toEqual([
+      { member: 'orders.region', operator: Operator.Equals, values: ['US'] },
+    ]);
+  });
+
+  it('excludes filters with ${var:format} template variables', () => {
+    const filters = [
+      { member: 'orders.region', operator: Operator.Equals, values: ['US'] },
+      { member: 'orders.status', operator: Operator.Equals, values: ['${status:csv}'] },
+    ];
+    expect(extractVisualBuilderFilters(filters)).toEqual([
+      { member: 'orders.region', operator: Operator.Equals, values: ['US'] },
+    ]);
+  });
+
+  it('returns empty array when all filters are unsupported', () => {
+    const filters = [
+      { and: [{ member: 'a', operator: Operator.Equals, values: ['x'] }] },
+      { member: 'b', operator: Operator.Gt, values: ['100'] },
+    ];
+    expect(extractVisualBuilderFilters(filters)).toEqual([]);
   });
 });

@@ -3,14 +3,14 @@ import { InlineField, Input, Alert, MultiSelect, Text, Field, Tooltip, Icon, use
 import { css } from '@emotion/css';
 import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
-import { CubeDataSourceOptions, CubeQuery, CubeFilter, isCubeFilter, VISUAL_BUILDER_OPERATORS } from '../types';
+import { CubeDataSourceOptions, CubeQuery } from '../types';
 import { SQLPreview } from './SQLPreview';
 import { useMetadataQuery, useCompiledSqlQuery, MetadataOption } from 'queries';
 import { OrderBy } from './OrderBy/OrderBy';
 import { FilterField } from './FilterField/FilterField';
 import { useQueryEditorHandlers } from '../hooks/useQueryEditorHandlers';
 import { buildCubeQueryJson } from '../utils/buildCubeQuery';
-import { detectUnsupportedFeatures, getUnsupportedQueryKeys } from '../utils/detectUnsupportedFeatures';
+import { detectUnsupportedFeatures, getUnsupportedQueryKeys, extractVisualBuilderFilters } from '../utils/detectUnsupportedFeatures';
 import { UnsupportedFieldsViewer } from './UnsupportedFieldsViewer';
 
 type Props = QueryEditorProps<DataSource, CubeQuery, CubeDataSourceOptions>;
@@ -155,9 +155,7 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
         description="Filter results by field values"
       >
         <FilterField
-          filters={query.filters?.filter(
-            (f): f is CubeFilter => isCubeFilter(f) && VISUAL_BUILDER_OPERATORS.has(f.operator)
-          )}
+          filters={extractVisualBuilderFilters(query.filters)}
           dimensions={metadata.dimensions}
           onChange={onFiltersChange}
           datasource={datasource}

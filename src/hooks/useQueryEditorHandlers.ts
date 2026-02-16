@@ -1,10 +1,16 @@
 import type { TQueryOrderArray } from '@cubejs-client/core';
-import { ChangeEvent } from 'react';
-import { CubeQuery, CubeFilter, Order, DEFAULT_ORDER } from '../types';
+import { ChangeEvent, useMemo } from 'react';
+import { CubeQuery, CubeFilter, CubeFilterItem, Order, DEFAULT_ORDER } from '../types';
 import { SelectableValue } from '@grafana/data';
 import { normalizeOrder } from '../utils/normalizeOrder';
+import { extractUnsupportedFilters } from '../utils/detectUnsupportedFeatures';
 
 export function useQueryEditorHandlers(query: CubeQuery, onChange: (query: CubeQuery) => void, onRunQuery: () => void) {
+  // Memoize unsupported filters to preserve them when visual filters change
+  const unsupportedFilters = useMemo(
+    () => extractUnsupportedFilters(query.filters),
+    [query.filters]
+  );
   const updateQueryAndRun = (updates: Partial<CubeQuery>) => {
     onChange({ ...query, ...updates });
     onRunQuery();
@@ -87,7 +93,9 @@ export function useQueryEditorHandlers(query: CubeQuery, onChange: (query: CubeQ
   };
 
   const onFiltersChange = (filters: CubeFilter[]) => {
-    updateQueryAndRun({ filters: filters.length > 0 ? filters : undefined });
+    // Merge visual builder filters with unsupported filters to preserve them
+    const mergedFilters: CubeFilterItem[] = [...filters, ...unsupportedFilters];
+    updateQueryAndRun({ filters: mergedFilters.length > 0 ? mergedFilters : undefined });
   };
 
   return {
