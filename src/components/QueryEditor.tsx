@@ -10,13 +10,65 @@ import { OrderBy } from './OrderBy/OrderBy';
 import { FilterField } from './FilterField/FilterField';
 import { useQueryEditorHandlers } from '../hooks/useQueryEditorHandlers';
 import { buildCubeQueryJson } from '../utils/buildCubeQuery';
+import { detectUnsupportedFeatures } from '../utils/detectUnsupportedFeatures';
+import { JsonQueryViewer } from './JsonQueryViewer';
 
-export function QueryEditor({
+type Props = QueryEditorProps<DataSource, CubeQuery, CubeDataSourceOptions>;
+
+export function QueryEditor(props: Props) {
+  const { query, datasource } = props;
+  const unsupportedFeatures = useMemo(() => detectUnsupportedFeatures(query), [query]);
+
+  if (unsupportedFeatures.length > 0) {
+    return <UnsupportedQueryEditor query={query} datasource={datasource} reasons={unsupportedFeatures} />;
+  }
+
+  return <VisualQueryEditor {...props} />;
+}
+
+/**
+ * Shown when the query contains features the visual builder cannot represent.
+ * Displays the JSON viewer and SQL preview, but skips the metadata fetch
+ * since the visual builder controls are not rendered.
+ */
+function UnsupportedQueryEditor({
   query,
-  onChange,
-  onRunQuery,
   datasource,
-}: QueryEditorProps<DataSource, CubeQuery, CubeDataSourceOptions>) {
+  reasons,
+}: {
+  query: CubeQuery;
+  datasource: DataSource;
+  reasons: string[];
+}) {
+  const cubeQueryJson = useMemo(() => buildCubeQueryJson(query, datasource), [query, datasource]);
+  const { data: compiledSql, isLoading: compiledSqlIsLoading } = useCompiledSqlQuery({
+    datasource,
+    cubeQueryJson,
+  });
+
+  return (
+    <>
+      <JsonQueryViewer query={query} reasons={reasons} />
+
+      {!compiledSql && compiledSqlIsLoading && (
+        <InlineField label="" labelWidth={16}>
+          <Text>Compiling SQL...</Text>
+        </InlineField>
+      )}
+
+      <SQLPreview
+        sql={compiledSql?.sql ?? ''}
+        exploreSqlDatasourceUid={datasource.instanceSettings?.jsonData?.exploreSqlDatasourceUid}
+      />
+    </>
+  );
+}
+
+/**
+ * The full visual query builder with dimensions, measures, filters,
+ * ordering, and SQL preview.
+ */
+function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
   const styles = useStyles2(getStyles);
   const cubeQueryJson = useMemo(() => buildCubeQueryJson(query, datasource), [query, datasource]);
 

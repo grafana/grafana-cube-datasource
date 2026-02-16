@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+- **JSON query viewer**: When a query contains features the visual editor cannot represent (e.g. time dimensions), the query editor switches to a read-only JSON viewer with syntax highlighting and a compiled SQL preview (#58)
+
 ## 0.1.4 (2026-02-13)
 
 ### Changed in 0.1.4

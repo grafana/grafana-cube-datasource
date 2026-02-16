@@ -47,6 +47,16 @@ Per-panel filters support:
 - **Operators**: `equals` and `notEquals`, each accepting multiple values
 - **Multiple filters**: Combine with AND (intersection)
 
+### JSON Query Viewer
+
+When a query uses features that the visual builder cannot represent (such as time dimensions configured in the panel JSON), the editor automatically switches to a **read-only JSON viewer**. This shows:
+
+- An info banner explaining which features triggered JSON mode
+- The full query as syntax-highlighted JSON
+- A compiled SQL preview
+
+This ensures no query configuration is hidden — users always see exactly what is configured, even for advanced queries. To edit these queries, use the **dashboard JSON editor** or **panel JSON editor**.
+
 ### Dashboard Variables
 
 #### AdHoc Filters

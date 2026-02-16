@@ -493,6 +493,120 @@
       ],
       "title": "Supports SQL Expressions! Top 5, name fields merged",
       "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-cube-datasource",
+        "uid": "cube-datasource"
+      },
+      "description": "This panel uses timeDimensions with an explicit dateRange, which the visual editor cannot represent. Open the query editor to see the read-only JSON viewer with syntax-highlighted query JSON.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 25,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 12,
+        "y": 22
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-cube-datasource",
+            "uid": "cube-datasource"
+          },
+          "dimensions": [
+            "orders.raw_orders_order_date"
+          ],
+          "measures": [
+            "orders.raw_payments_count_with_discount",
+            "orders.raw_payments_count"
+          ],
+          "timeDimensions": [
+            {
+              "dimension": "orders.raw_orders_order_date",
+              "dateRange": [
+                "2018-02-28",
+                "2018-03-28"
+              ]
+            }
+          ],
+          "refId": "A"
+        }
+      ],
+      "title": "Advanced: Date-Filtered Orders (JSON viewer demo)",
+      "type": "timeseries"
     }
   ],
   "preload": false,
