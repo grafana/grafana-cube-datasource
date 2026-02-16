@@ -166,4 +166,62 @@ describe('detectUnsupportedFeatures', () => {
     expect(issues).toHaveLength(1);
     expect(issues[0]).toMatch(/AND\/OR filter groups/i);
   });
+
+  it('detects template variables in filter values', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      dimensions: ['orders.status'],
+      filters: [
+        { member: 'orders.raw_customers_first_name', operator: Operator.Equals, values: ['$customerName'] },
+      ],
+    };
+    const issues = detectUnsupportedFeatures(query);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatch(/dashboard variables/i);
+  });
+
+  it('detects template variables in filter values with ${} syntax', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [
+        { member: 'orders.status', operator: Operator.Equals, values: ['${statusVar}'] },
+      ],
+    };
+    const issues = detectUnsupportedFeatures(query);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatch(/dashboard variables/i);
+  });
+
+  it('does not flag filter values without template variables', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      dimensions: ['orders.status'],
+      filters: [
+        { member: 'orders.status', operator: Operator.Equals, values: ['completed'] },
+      ],
+    };
+    expect(detectUnsupportedFeatures(query)).toEqual([]);
+  });
+
+  it('does not flag dollar signs in non-variable contexts (e.g. currency)', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [
+        { member: 'orders.amount', operator: Operator.Equals, values: ['$100'] },
+      ],
+    };
+    const issues = detectUnsupportedFeatures(query);
+    expect(issues).toHaveLength(0);
+  });
+
+  it('does not flag trailing dollar sign', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [
+        { member: 'orders.label', operator: Operator.Equals, values: ['test$'] },
+      ],
+    };
+    const issues = detectUnsupportedFeatures(query);
+    expect(issues).toHaveLength(0);
+  });
 });

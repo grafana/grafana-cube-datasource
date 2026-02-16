@@ -614,13 +614,13 @@
           "refId": "A"
         }
       ],
-      "title": "Advanced: Date-Filtered Orders, No Discounts (JSON viewer demo)",
+      "title": "Advanced (JSON viewer demo): Date-Filtered Orders, No Discounts",
       "type": "timeseries"
     },
     {
       "id": 8,
       "type": "barchart",
-      "title": "Advanced: OR Filter — Credit Card or Active Customer",
+      "title": "Advanced (JSON viewer demo): OR Filter — Credit Card or Active Customer",
       "description": "This panel uses an OR filter group across different field keys (payment_method OR is_active), which the visual editor cannot represent. OR is needed when combining conditions across different fields — equals with an array only works for multiple values on a single field.",
       "gridPos": {
         "x": 0,
@@ -789,6 +789,112 @@
         },
         "colorByField": "orders.raw_customers_first_name"
       }
+    },
+    {
+      "datasource": {
+        "type": "grafana-cube-datasource",
+        "uid": "cube-datasource"
+      },
+      "description": "This panel filters by a dashboard variable ($customerName) in a filter value. Change the Customer Name variable to see orders for a different customer. The query editor shows the JSON viewer because template variables in filter values are not supported by the visual builder.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "orders.raw_payments_total_amount"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "orders.raw_payments_discount"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 43
+      },
+      "id": 9,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "12.3.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-cube-datasource",
+            "uid": "cube-datasource"
+          },
+          "dimensions": [
+            "orders.raw_payments_payment_method",
+            "orders.raw_orders_is_gift",
+            "orders.raw_payments_discount"
+          ],
+          "measures": [
+            "orders.raw_payments_total_amount",
+            "orders.raw_payments_count"
+          ],
+          "filters": [
+            {
+              "member": "orders.raw_customers_first_name",
+              "operator": "equals",
+              "values": [
+                "$customerName"
+              ]
+            }
+          ],
+          "refId": "A"
+        }
+      ],
+      "title": "Advanced (JSON viewer demo): Orders for $customerName",
+      "type": "table"
     }
   ],
   "preload": false,
@@ -819,6 +925,35 @@
           }
         ],
         "query": "orders.raw_orders_order_date,not_a_real_date_field",
+        "type": "custom"
+      },
+      {
+        "allowCustomValue": false,
+        "current": {
+          "text": "Christina",
+          "value": "Christina"
+        },
+        "description": "Customer first name used in the variable filter demo panel",
+        "label": "Customer Name",
+        "name": "customerName",
+        "options": [
+          {
+            "selected": true,
+            "text": "Christina",
+            "value": "Christina"
+          },
+          {
+            "selected": false,
+            "text": "Rose",
+            "value": "Rose"
+          },
+          {
+            "selected": false,
+            "text": "Sara",
+            "value": "Sara"
+          }
+        ],
+        "query": "Christina,Rose,Sara",
         "type": "custom"
       }
     ]
