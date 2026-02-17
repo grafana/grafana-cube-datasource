@@ -1,6 +1,6 @@
 import { CubeFilterItem, CubeQuery, VISUAL_BUILDER_OPERATORS, isCubeFilter, isCubeAndFilter, isCubeOrFilter } from '../types';
 
-const TEMPLATE_VARIABLE_PATTERN = /(?:\$(?:[a-zA-Z_]\w*|\{[a-zA-Z_]\w*\})|\[\[[^\]]+\]\])/;
+const TEMPLATE_VARIABLE_PATTERN = /(?:\$(?:[a-zA-Z_]\w*|\{[a-zA-Z_]\w*(?::[^}]+)?\})|\[\[[^\]]+\]\])/;
 
 /**
  * Detects query features that the visual builder cannot represent.
@@ -98,7 +98,7 @@ function collectAdvancedOperators(filters: CubeFilterItem[]): string[] {
 
 /**
  * Recursively checks whether any filter value contains a Grafana
- * template variable (e.g. $var, ${var}, or [[var]]).
+ * template variable (e.g. $var, ${var}, ${var:raw}, or [[var]]).
  */
 function hasTemplateVariableInFilterValues(filters: CubeFilterItem[]): boolean {
   for (const item of filters) {

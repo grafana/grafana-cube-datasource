@@ -186,6 +186,16 @@ describe('detectUnsupportedFeatures', () => {
     expect(issues[0]).toMatch(/dashboard variables/i);
   });
 
+  it('detects template variables in filter values with ${var:format} syntax', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [{ member: 'orders.status', operator: Operator.Equals, values: ['${statusVar:raw}'] }],
+    };
+    const issues = detectUnsupportedFeatures(query);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatch(/dashboard variables/i);
+  });
+
   it('detects template variables in filter values with [[var]] syntax', () => {
     const query: CubeQuery = {
       ...baseQuery,
@@ -278,6 +288,16 @@ describe('getUnsupportedQueryKeys', () => {
     const query: CubeQuery = {
       ...baseQuery,
       filters: [{ member: 'orders.status', operator: Operator.Equals, values: ['[[statusVar]]'] }],
+    };
+    const keys = getUnsupportedQueryKeys(query);
+    expect(keys.has('filters')).toBe(true);
+    expect(keys.size).toBe(1);
+  });
+
+  it('includes "filters" for ${var:format} template variables', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [{ member: 'orders.status', operator: Operator.Equals, values: ['${statusVar:csv}'] }],
     };
     const keys = getUnsupportedQueryKeys(query);
     expect(keys.has('filters')).toBe(true);
