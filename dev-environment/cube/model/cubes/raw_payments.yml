@@ -9,8 +9,8 @@ cubes:
         type: number
         primary_key: true
 
-      - name: order_id
-        sql: order_id
+      - name: raw_order_id
+        sql: raw_order_id
         type: number
 
       - name: payment_method
