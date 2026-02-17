@@ -5,11 +5,11 @@ cubes:
 
     joins:
       - name: raw_customers
-        sql: '{CUBE}.user_id = {raw_customers}.id'
+        sql: '{CUBE}.raw_customer_id = {raw_customers}.id'
         relationship: many_to_one
 
       - name: raw_payments
-        sql: '{CUBE}.id = {raw_payments}.order_id'
+        sql: '{CUBE}.id = {raw_payments}.raw_order_id'
         # One order can have multiple payments
         relationship: one_to_many
 
