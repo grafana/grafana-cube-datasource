@@ -22,9 +22,9 @@ groups:
               intervalMs: 1000
               maxDataPoints: 43200
               dimensions:
-                - orders.raw_payments_payment_method
+                - orders.payments_payment_method
               measures:
-                - orders.raw_payments_total_amount
+                - orders.payments_total_amount
               range: true
               refId: A
           - refId: B

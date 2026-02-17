@@ -30,8 +30,8 @@ All services will be available at:
 
 The environment includes JaffleShop sample data with:
 
-- `raw_customers` - Customer information
-- `raw_orders` - Order data with status and dates
-- `raw_payments` - Payment information linked to orders
+- `customers` - Customer information
+- `orders` - Order data with status and dates
+- `payments` - Payment information linked to orders
 
 This provides a complete dataset for testing the Grafana-Cube integration.

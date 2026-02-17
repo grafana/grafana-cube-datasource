@@ -1,6 +1,6 @@
 cubes:
-  - name: raw_customers
-    sql_table: raw_customers
+  - name: customers
+    sql_table: customers
     data_source: default
 
     joins: []
