@@ -1,6 +1,10 @@
 import { CubeFilterItem, CubeQuery, VISUAL_BUILDER_OPERATORS, isCubeFilter, isCubeAndFilter, isCubeOrFilter } from '../types';
 
-const TEMPLATE_VARIABLE_PATTERN = /(?:\$(?:[a-zA-Z_]\w*|\{[a-zA-Z_]\w*(?::[^}]+)?\})|\[\[[^\]]+\]\])/;
+/**
+ * Pattern to detect Grafana template variables in filter values.
+ * Matches $var, ${var}, ${var:format}, and [[var]] syntax.
+ */
+export const TEMPLATE_VARIABLE_PATTERN = /(?:\$(?:[a-zA-Z_]\w*|\{[a-zA-Z_]\w*(?::[^}]+)?\})|\[\[[^\]]+\]\])/;
 
 /**
  * Detects query features that the visual builder cannot represent.

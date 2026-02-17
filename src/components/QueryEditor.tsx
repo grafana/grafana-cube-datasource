@@ -10,7 +10,7 @@ import { OrderBy } from './OrderBy/OrderBy';
 import { FilterField } from './FilterField/FilterField';
 import { useQueryEditorHandlers } from '../hooks/useQueryEditorHandlers';
 import { buildCubeQueryJson } from '../utils/buildCubeQuery';
-import { detectUnsupportedFeatures, getUnsupportedQueryKeys } from '../utils/detectUnsupportedFeatures';
+import { detectUnsupportedFeatures, getUnsupportedQueryKeys, TEMPLATE_VARIABLE_PATTERN } from '../utils/detectUnsupportedFeatures';
 import { UnsupportedFieldsViewer } from './UnsupportedFieldsViewer';
 
 type Props = QueryEditorProps<DataSource, CubeQuery, CubeDataSourceOptions>;
@@ -156,7 +156,10 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
       >
         <FilterField
           filters={query.filters?.filter(
-            (f): f is CubeFilter => isCubeFilter(f) && VISUAL_BUILDER_OPERATORS.has(f.operator)
+            (f): f is CubeFilter =>
+              isCubeFilter(f) &&
+              VISUAL_BUILDER_OPERATORS.has(f.operator) &&
+              !f.values?.some((v) => TEMPLATE_VARIABLE_PATTERN.test(v))
           )}
           dimensions={metadata.dimensions}
           onChange={onFiltersChange}
