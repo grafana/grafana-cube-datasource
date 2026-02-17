@@ -1,5 +1,5 @@
 cubes:
-  - name: order_facts
+  - name: orders
     sql_table: orders
     data_source: default
 
