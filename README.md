@@ -197,7 +197,7 @@ Once running, you can:
 
 2. **Test the Cube API directly** (authentication is not required):
    ```console
-   curl -G --data-urlencode 'query={"dimensions":["orders.customers_first_name"],"measures":["orders.payments_total_amount","orders.count"]}' http://localhost:4000/cubejs-api/v1/load | jq '.data[0]'
+   curl -G --data-urlencode 'query={"dimensions":["order_details.customers_first_name"],"measures":["order_details.payments_total_amount","order_details.count"]}' http://localhost:4000/cubejs-api/v1/load | jq '.data[0]'
    ```
 
 ### Individual Build Commands
