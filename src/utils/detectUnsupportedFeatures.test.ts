@@ -172,7 +172,7 @@ describe('detectUnsupportedFeatures', () => {
       ...baseQuery,
       dimensions: ['orders.status'],
       filters: [
-        { member: 'orders.raw_customers_first_name', operator: Operator.Equals, values: ['$customerName'] },
+        { member: 'orders.customers_first_name', operator: Operator.Equals, values: ['$customerName'] },
       ],
     };
     const issues = detectUnsupportedFeatures(query);
