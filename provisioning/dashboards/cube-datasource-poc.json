@@ -76,7 +76,7 @@
       "options": {
         "barRadius": 0.05,
         "barWidth": 0.83,
-        "colorByField": "orders.raw_customers_first_name",
+        "colorByField": "order_details.customers_first_name",
         "fullHighlight": false,
         "groupWidth": 0.7,
         "legend": {
@@ -104,10 +104,10 @@
             "uid": "cube-datasource"
           },
           "dimensions": [
-            "orders.raw_customers_first_name"
+            "order_details.customers_first_name"
           ],
           "measures": [
-            "orders.raw_payments_total_amount"
+            "order_details.payments_total_amount"
           ],
           "refId": "A"
         }
@@ -201,10 +201,10 @@
             "uid": "cube-datasource"
           },
           "dimensions": [
-            "orders.raw_payments_payment_method"
+            "order_details.payments_payment_method"
           ],
           "measures": [
-            "orders.raw_payments_total_amount"
+            "order_details.payments_total_amount"
           ],
           "refId": "A"
         }
@@ -244,7 +244,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "orders.raw_payments_total_amount"
+              "options": "order_details.payments_total_amount"
             },
             "properties": [
               {
@@ -282,12 +282,12 @@
             "uid": "cube-datasource"
           },
           "dimensions": [
-            "orders.raw_customers_first_name",
-            "orders.raw_customers_last_name"
+            "order_details.customers_first_name",
+            "order_details.customers_last_name"
           ],
           "measures": [
-            "orders.raw_payments_total_amount",
-            "orders.raw_payments_count"
+            "order_details.payments_total_amount",
+            "order_details.payments_count"
           ],
           "refId": "A"
         }
@@ -387,11 +387,11 @@
             "uid": "cube-datasource"
           },
           "dimensions": [
-            "orders.raw_orders_order_date"
+            "order_details.order_date"
           ],
           "measures": [
-            "orders.raw_payments_count_with_discount",
-            "orders.raw_payments_count"
+            "order_details.payments_count_with_discount",
+            "order_details.payments_count"
           ],
           "refId": "A"
         }
@@ -431,7 +431,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "orders.raw_payments_total_amount"
+              "options": "order_details.payments_total_amount"
             },
             "properties": [
               {
@@ -469,13 +469,13 @@
             "uid": "cube-datasource"
           },
           "dimensions": [
-            "orders.raw_customers_first_name",
-            "orders.raw_customers_last_name"
+            "order_details.customers_first_name",
+            "order_details.customers_last_name"
           ],
           "hide": true,
           "measures": [
-            "orders.raw_payments_total_amount",
-            "orders.raw_payments_count"
+            "order_details.payments_total_amount",
+            "order_details.payments_count"
           ],
           "refId": "A"
         },
@@ -485,7 +485,7 @@
             "type": "__expr__",
             "uid": "__expr__"
           },
-          "expression": "SELECT\n  CONCAT(`orders.raw_customers_first_name`, ' ', `orders.raw_customers_last_name`) AS full_name,\n  `orders.raw_payments_total_amount`,\n  `orders.raw_payments_count`\nFROM A LIMIT 5",
+          "expression": "SELECT\n  CONCAT(`order_details.customers_first_name`, ' ', `order_details.customers_last_name`) AS full_name,\n  `order_details.payments_total_amount`,\n  `order_details.payments_count`\nFROM A LIMIT 5",
           "hide": false,
           "refId": "B",
           "type": "sql"
@@ -587,15 +587,15 @@
             "uid": "cube-datasource"
           },
           "dimensions": [
-            "orders.raw_orders_order_date"
+            "order_details.order_date"
           ],
           "measures": [
-            "orders.raw_payments_count_with_discount",
-            "orders.raw_payments_count"
+            "order_details.payments_count_with_discount",
+            "order_details.payments_count"
           ],
           "timeDimensions": [
             {
-              "dimension": "orders.raw_orders_order_date",
+              "dimension": "order_details.order_date",
               "dateRange": [
                 "2018-02-28",
                 "2018-03-28"
@@ -604,7 +604,7 @@
           ],
           "filters": [
             {
-              "member": "orders.raw_payments_count_with_discount",
+              "member": "order_details.payments_count_with_discount",
               "operator": "lt",
               "values": [
                 "1"
@@ -676,20 +676,20 @@
             "uid": "cube-datasource"
           },
           "dimensions": [
-            "orders.raw_customers_first_name"
+            "order_details.customers_first_name"
           ],
           "filters": [
             {
               "or": [
                 {
-                  "member": "orders.raw_payments_payment_method",
+                  "member": "order_details.payments_payment_method",
                   "operator": "equals",
                   "values": [
                     "credit_card"
                   ]
                 },
                 {
-                  "member": "orders.raw_customers_is_active",
+                  "member": "order_details.customers_is_active",
                   "operator": "equals",
                   "values": [
                     "true"
@@ -699,7 +699,7 @@
             }
           ],
           "measures": [
-            "orders.raw_payments_total_amount"
+            "order_details.payments_total_amount"
           ],
           "refId": "Credit Card or Active Customer",
           "hide": true
@@ -712,14 +712,14 @@
           "refId": "Credit Card",
           "hide": true,
           "dimensions": [
-            "orders.raw_customers_first_name"
+            "order_details.customers_first_name"
           ],
           "measures": [
-            "orders.raw_payments_total_amount"
+            "order_details.payments_total_amount"
           ],
           "filters": [
             {
-              "member": "orders.raw_payments_payment_method",
+              "member": "order_details.payments_payment_method",
               "operator": "equals",
               "values": [
                 "credit_card"
@@ -735,14 +735,14 @@
           "refId": "Active Customer",
           "hide": true,
           "dimensions": [
-            "orders.raw_customers_first_name"
+            "order_details.customers_first_name"
           ],
           "measures": [
-            "orders.raw_payments_total_amount"
+            "order_details.payments_total_amount"
           ],
           "filters": [
             {
-              "member": "orders.raw_customers_is_active",
+              "member": "order_details.customers_is_active",
               "operator": "equals",
               "values": [
                 "true"
@@ -759,7 +759,7 @@
           },
           "type": "sql",
           "hide": false,
-          "expression": "SELECT\n  ccac.`orders.raw_customers_first_name` AS first_name,\n  ccac.`orders.raw_payments_total_amount` AS total_amount_across_credit_card_OR_active_customer,\n  cc.`orders.raw_payments_total_amount` AS total_amount_across_credit_card,\n  ac.`orders.raw_payments_total_amount` AS total_amount_active_customer\nFROM\n  `Credit Card or Active Customer` AS ccac\nLEFT JOIN\n  `Credit Card` AS cc \n  ON ccac.`orders.raw_customers_first_name` = cc.`orders.raw_customers_first_name`\nLEFT JOIN\n  `Active Customer` AS ac \n  ON ccac.`orders.raw_customers_first_name` = ac.`orders.raw_customers_first_name`"
+          "expression": "SELECT\n  ccac.`order_details.customers_first_name` AS first_name,\n  ccac.`order_details.payments_total_amount` AS total_amount_across_credit_card_OR_active_customer,\n  cc.`order_details.payments_total_amount` AS total_amount_across_credit_card,\n  ac.`order_details.payments_total_amount` AS total_amount_active_customer\nFROM\n  `Credit Card or Active Customer` AS ccac\nLEFT JOIN\n  `Credit Card` AS cc \n  ON ccac.`order_details.customers_first_name` = cc.`order_details.customers_first_name`\nLEFT JOIN\n  `Active Customer` AS ac \n  ON ccac.`order_details.customers_first_name` = ac.`order_details.customers_first_name`"
         }
       ],
       "datasource": {
@@ -787,7 +787,7 @@
           "placement": "right",
           "calcs": []
         },
-        "colorByField": "orders.raw_customers_first_name"
+        "colorByField": "order_details.customers_first_name"
       }
     },
     {
@@ -823,7 +823,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "orders.raw_payments_total_amount"
+              "options": "order_details.payments_total_amount"
             },
             "properties": [
               {
@@ -835,7 +835,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "orders.raw_payments_discount"
+              "options": "order_details.payments_discount"
             },
             "properties": [
               {
@@ -873,17 +873,17 @@
             "uid": "cube-datasource"
           },
           "dimensions": [
-            "orders.raw_payments_payment_method",
-            "orders.raw_orders_is_gift",
-            "orders.raw_payments_discount"
+            "order_details.payments_payment_method",
+            "order_details.is_gift",
+            "order_details.payments_discount"
           ],
           "measures": [
-            "orders.raw_payments_total_amount",
-            "orders.raw_payments_count"
+            "order_details.payments_total_amount",
+            "order_details.payments_count"
           ],
           "filters": [
             {
-              "member": "orders.raw_customers_first_name",
+              "member": "order_details.customers_first_name",
               "operator": "equals",
               "values": [
                 "$customerName"
@@ -906,8 +906,8 @@
       {
         "allowCustomValue": false,
         "current": {
-          "text": "orders.raw_orders_order_date",
-          "value": "orders.raw_orders_order_date"
+          "text": "order_details.order_date",
+          "value": "order_details.order_date"
         },
         "description": "This field will have the Dashboard Time-range applied to it as a filter",
         "label": "Time-range filtering field",
@@ -915,8 +915,8 @@
         "options": [
           {
             "selected": true,
-            "text": "orders.raw_orders_order_date",
-            "value": "orders.raw_orders_order_date"
+            "text": "order_details.order_date",
+            "value": "order_details.order_date"
           },
           {
             "selected": false,
@@ -924,7 +924,7 @@
             "value": "not_a_real_date_field"
           }
         ],
-        "query": "orders.raw_orders_order_date,not_a_real_date_field",
+        "query": "order_details.order_date,not_a_real_date_field",
         "type": "custom"
       },
       {

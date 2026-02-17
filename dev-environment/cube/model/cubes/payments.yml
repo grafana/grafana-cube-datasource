@@ -1,6 +1,6 @@
 cubes:
-  - name: raw_payments
-    sql_table: raw_payments
+  - name: payments
+    sql_table: payments
     data_source: default
 
     dimensions:

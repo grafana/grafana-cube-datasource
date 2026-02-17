@@ -12,8 +12,8 @@ import { FileList } from './FileList';
 import { ModelFile } from '../types';
 
 const mockFiles: ModelFile[] = [
-  { fileName: 'cubes/raw_customers.yml', content: 'cubes:\n  - name: raw_customers' },
-  { fileName: 'cubes/raw_orders.yml', content: 'cubes:\n  - name: raw_orders' },
+  { fileName: 'cubes/customers.yml', content: 'cubes:\n  - name: customers' },
+  { fileName: 'cubes/orders.yml', content: 'cubes:\n  - name: orders' },
   { fileName: 'views/example_view.yml', content: 'views:\n  - name: example' },
 ];
 
@@ -23,16 +23,16 @@ describe('FileList', () => {
       <FileList files={mockFiles} isLoading={false} error={null} onFileSelect={jest.fn()} />
     );
 
-    expect(screen.getByText('cubes/raw_customers.yml')).toBeInTheDocument();
-    expect(screen.getByText('cubes/raw_orders.yml')).toBeInTheDocument();
+    expect(screen.getByText('cubes/customers.yml')).toBeInTheDocument();
+    expect(screen.getByText('cubes/orders.yml')).toBeInTheDocument();
     expect(screen.getByText('views/example_view.yml')).toBeInTheDocument();
   });
 
   it('sorts files: cubes first, then views', () => {
     const unorderedFiles: ModelFile[] = [
       { fileName: 'views/example_view.yml', content: 'view content' },
-      { fileName: 'cubes/raw_orders.yml', content: 'cube content' },
-      { fileName: 'cubes/raw_customers.yml', content: 'cube content' },
+      { fileName: 'cubes/orders.yml', content: 'cube content' },
+      { fileName: 'cubes/customers.yml', content: 'cube content' },
     ];
 
     setup(
@@ -40,8 +40,8 @@ describe('FileList', () => {
     );
 
     const items = screen.getAllByText(/\.yml$/);
-    expect(items[0]).toHaveTextContent('cubes/raw_customers.yml');
-    expect(items[1]).toHaveTextContent('cubes/raw_orders.yml');
+    expect(items[0]).toHaveTextContent('cubes/customers.yml');
+    expect(items[1]).toHaveTextContent('cubes/orders.yml');
     expect(items[2]).toHaveTextContent('views/example_view.yml');
   });
 
@@ -51,7 +51,7 @@ describe('FileList', () => {
       <FileList files={mockFiles} isLoading={false} error={null} onFileSelect={onFileSelect} />
     );
 
-    await user.click(screen.getByText('cubes/raw_customers.yml'));
+    await user.click(screen.getByText('cubes/customers.yml'));
 
     expect(onFileSelect).toHaveBeenCalledWith(mockFiles[0]);
   });

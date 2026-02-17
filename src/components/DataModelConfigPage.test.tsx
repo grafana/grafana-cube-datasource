@@ -23,16 +23,16 @@ const mockGetBackendSrv = getBackendSrv as jest.Mock;
 const mockDbSchema = {
   tablesSchema: {
     public: {
-      raw_customers: [{ name: 'id', type: 'integer', attributes: [] }],
-      raw_orders: [{ name: 'id', type: 'integer', attributes: [] }],
+      customers: [{ name: 'id', type: 'integer', attributes: [] }],
+      orders: [{ name: 'id', type: 'integer', attributes: [] }],
     },
   },
 };
 
 const mockModelFiles = {
   files: [
-    { fileName: 'cubes/raw_customers.yml', content: 'cubes:\n  - name: raw_customers\n    sql_table: public.raw_customers' },
-    { fileName: 'cubes/raw_orders.yml', content: 'cubes:\n  - name: raw_orders\n    sql_table: public.raw_orders' },
+    { fileName: 'cubes/customers.yml', content: 'cubes:\n  - name: customers\n    sql_table: public.customers' },
+    { fileName: 'cubes/orders.yml', content: 'cubes:\n  - name: orders\n    sql_table: public.orders' },
   ],
 };
 
@@ -99,8 +99,8 @@ describe('DataModelConfigPage', () => {
     await waitFor(() => {
       expect(screen.getByText('public')).toBeInTheDocument();
     });
-    expect(screen.getByText('raw_customers')).toBeInTheDocument();
-    expect(screen.getByText('raw_orders')).toBeInTheDocument();
+    expect(screen.getByText('customers')).toBeInTheDocument();
+    expect(screen.getByText('orders')).toBeInTheDocument();
   });
 
   it('Generate button is disabled when no tables are selected', async () => {
@@ -120,10 +120,10 @@ describe('DataModelConfigPage', () => {
     const { user } = setup(<DataModelConfigPage {...mockPluginProps} />);
 
     await waitFor(() => {
-      expect(screen.getByText('raw_customers')).toBeInTheDocument();
+      expect(screen.getByText('customers')).toBeInTheDocument();
     });
 
-    await user.click(screen.getByText('raw_customers'));
+    await user.click(screen.getByText('customers'));
 
     const button = screen.getByRole('button', { name: /Generate Data Model/i });
     expect(button).not.toBeDisabled();
@@ -134,10 +134,10 @@ describe('DataModelConfigPage', () => {
     const { user } = setup(<DataModelConfigPage {...mockPluginProps} />);
 
     await waitFor(() => {
-      expect(screen.getByText('raw_customers')).toBeInTheDocument();
+      expect(screen.getByText('customers')).toBeInTheDocument();
     });
 
-    await user.click(screen.getByText('raw_customers'));
+    await user.click(screen.getByText('customers'));
     await user.click(screen.getByRole('button', { name: /Generate Data Model/i }));
 
     await waitFor(() => {
@@ -145,7 +145,7 @@ describe('DataModelConfigPage', () => {
         '/api/datasources/uid/cube-datasource/resources/generate-schema',
         expect.objectContaining({
           format: 'yaml',
-          tables: [['public', 'raw_customers']],
+          tables: [['public', 'customers']],
           tablesSchema: mockDbSchema.tablesSchema,
         })
       );
@@ -157,15 +157,15 @@ describe('DataModelConfigPage', () => {
     const { user } = setup(<DataModelConfigPage {...mockPluginProps} />);
 
     await waitFor(() => {
-      expect(screen.getByText('raw_customers')).toBeInTheDocument();
+      expect(screen.getByText('customers')).toBeInTheDocument();
     });
 
-    await user.click(screen.getByText('raw_customers'));
+    await user.click(screen.getByText('customers'));
     await user.click(screen.getByRole('button', { name: /Generate Data Model/i }));
 
     // After generation, file list and file header both show the filename
     await waitFor(() => {
-      const matches = screen.getAllByText('cubes/raw_customers.yml');
+      const matches = screen.getAllByText('cubes/customers.yml');
       expect(matches.length).toBeGreaterThanOrEqual(1);
     });
   });
@@ -178,14 +178,14 @@ describe('DataModelConfigPage', () => {
     await user.click(screen.getByText('Files'));
 
     await waitFor(() => {
-      expect(screen.getByText('cubes/raw_customers.yml')).toBeInTheDocument();
+      expect(screen.getByText('cubes/customers.yml')).toBeInTheDocument();
     });
 
-    await user.click(screen.getByText('cubes/raw_customers.yml'));
+    await user.click(screen.getByText('cubes/customers.yml'));
 
     await waitFor(() => {
       const editor = screen.getByTestId('code-editor');
-      expect(editor).toHaveTextContent('raw_customers');
+      expect(editor).toHaveTextContent('customers');
     });
   });
 
@@ -202,13 +202,13 @@ describe('DataModelConfigPage', () => {
     const { user } = setup(<DataModelConfigPage {...mockPluginProps} />);
 
     await waitFor(() => {
-      expect(screen.getByText('raw_customers')).toBeInTheDocument();
+      expect(screen.getByText('customers')).toBeInTheDocument();
     });
 
-    await user.click(screen.getByText('raw_customers'));
+    await user.click(screen.getByText('customers'));
     expect(screen.getByRole('button', { name: /Generate Data Model \(1\)/i })).toBeInTheDocument();
 
-    await user.click(screen.getByText('raw_orders'));
+    await user.click(screen.getByText('orders'));
     expect(screen.getByRole('button', { name: /Generate Data Model \(2\)/i })).toBeInTheDocument();
   });
 
@@ -219,14 +219,14 @@ describe('DataModelConfigPage', () => {
     await user.click(screen.getByText('Files'));
 
     await waitFor(() => {
-      expect(screen.getByText('cubes/raw_customers.yml')).toBeInTheDocument();
+      expect(screen.getByText('cubes/customers.yml')).toBeInTheDocument();
     });
 
     // Click a file in the sidebar
-    await user.click(screen.getByText('cubes/raw_customers.yml'));
+    await user.click(screen.getByText('cubes/customers.yml'));
 
     // The filename should also appear in the file header bar
-    const fileHeaders = screen.getAllByText('cubes/raw_customers.yml');
+    const fileHeaders = screen.getAllByText('cubes/customers.yml');
     expect(fileHeaders.length).toBeGreaterThanOrEqual(2); // sidebar + header
   });
 
@@ -243,11 +243,11 @@ describe('DataModelConfigPage', () => {
     const { user } = setup(<DataModelConfigPage {...mockPluginProps} />);
 
     await waitFor(() => {
-      expect(screen.getByText('raw_customers')).toBeInTheDocument();
+      expect(screen.getByText('customers')).toBeInTheDocument();
     });
 
     // Select a table
-    await user.click(screen.getByText('raw_customers'));
+    await user.click(screen.getByText('customers'));
     expect(screen.getByRole('button', { name: /Generate Data Model \(1\)/i })).toBeInTheDocument();
 
     // Switch to Files tab
@@ -268,16 +268,16 @@ describe('DataModelConfigPage', () => {
     await user.click(screen.getByText(/^Files/));
 
     await waitFor(() => {
-      expect(screen.getByText('cubes/raw_customers.yml')).toBeInTheDocument();
+      expect(screen.getByText('cubes/customers.yml')).toBeInTheDocument();
     });
 
     // Select first file
-    await user.click(screen.getByText('cubes/raw_customers.yml'));
-    expect(screen.getByTestId('code-editor')).toHaveTextContent('raw_customers');
+    await user.click(screen.getByText('cubes/customers.yml'));
+    expect(screen.getByTestId('code-editor')).toHaveTextContent('customers');
 
     // Select second file
-    await user.click(screen.getByText('cubes/raw_orders.yml'));
-    expect(screen.getByTestId('code-editor')).toHaveTextContent('raw_orders');
+    await user.click(screen.getByText('cubes/orders.yml'));
+    expect(screen.getByTestId('code-editor')).toHaveTextContent('orders');
   });
 
   it('shows generation error message when API fails', async () => {
@@ -298,10 +298,10 @@ describe('DataModelConfigPage', () => {
     const { user } = setup(<DataModelConfigPage {...mockPluginProps} />);
 
     await waitFor(() => {
-      expect(screen.getByText('raw_customers')).toBeInTheDocument();
+      expect(screen.getByText('customers')).toBeInTheDocument();
     });
 
-    await user.click(screen.getByText('raw_customers'));
+    await user.click(screen.getByText('customers'));
     await user.click(screen.getByRole('button', { name: /Generate Data Model/i }));
 
     await waitFor(() => {

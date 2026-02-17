@@ -11,10 +11,10 @@
 # resulting in "customers_city" when querying the view.
 
 views:
-  - name: orders
+  - name: order_details
 
     cubes:
-      - join_path: raw_orders
+      - join_path: orders
         includes:
           - status
           - order_date
@@ -25,9 +25,9 @@ views:
           - count
           - gift_count
           - avg_priority
-        prefix: true
+        prefix: false
 
-      - join_path: raw_orders.raw_customers
+      - join_path: orders.customers
         includes:
           - first_name
           - last_name
@@ -39,7 +39,7 @@ views:
           - active_count
         prefix: true
 
-      - join_path: raw_orders.raw_payments
+      - join_path: orders.payments
         includes:
           - payment_method
           - currency

@@ -1,15 +1,15 @@
 cubes:
-  - name: raw_orders
-    sql_table: raw_orders
+  - name: orders
+    sql_table: orders
     data_source: default
 
     joins:
-      - name: raw_customers
-        sql: '{CUBE}.user_id = {raw_customers}.id'
+      - name: customers
+        sql: '{CUBE}.customer_id = {customers}.id'
         relationship: many_to_one
 
-      - name: raw_payments
-        sql: '{CUBE}.id = {raw_payments}.order_id'
+      - name: payments
+        sql: '{CUBE}.id = {payments}.order_id'
         # One order can have multiple payments
         relationship: one_to_many
 
