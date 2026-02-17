@@ -1,6 +1,6 @@
 import { CubeFilterItem, CubeQuery, VISUAL_BUILDER_OPERATORS, isCubeFilter, isCubeAndFilter, isCubeOrFilter } from '../types';
 
-const TEMPLATE_VARIABLE_PATTERN = /(?:\$(?:[a-zA-Z_]\w*|\{[a-zA-Z_]\w*\})|\[\[[^\]]+\]\])/;
+const TEMPLATE_VARIABLE_PATTERN = /(?:\$(?:[a-zA-Z_]\w*|\{[a-zA-Z_]\w*(?::[^}]*)?\})|\[\[[^\]]+\]\])/;
 
 /**
  * Detects query features that the visual builder cannot represent.

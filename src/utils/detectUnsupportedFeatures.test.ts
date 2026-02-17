@@ -186,6 +186,29 @@ describe('detectUnsupportedFeatures', () => {
     expect(issues[0]).toMatch(/dashboard variables/i);
   });
 
+  it('detects template variables in filter values with ${var:format} syntax', () => {
+    const query: CubeQuery = {
+      ...baseQuery,
+      filters: [{ member: 'orders.status', operator: Operator.Equals, values: ['${statusVar:raw}'] }],
+    };
+    const issues = detectUnsupportedFeatures(query);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toMatch(/dashboard variables/i);
+  });
+
+  it('detects template variables with various format specifiers', () => {
+    const formats = ['csv', 'json', 'pipe', 'raw', 'regex', 'glob', 'lucene'];
+    for (const format of formats) {
+      const query: CubeQuery = {
+        ...baseQuery,
+        filters: [{ member: 'orders.status', operator: Operator.Equals, values: [`\${statusVar:${format}}`] }],
+      };
+      const issues = detectUnsupportedFeatures(query);
+      expect(issues).toHaveLength(1);
+      expect(issues[0]).toMatch(/dashboard variables/i);
+    }
+  });
+
   it('detects template variables in filter values with [[var]] syntax', () => {
     const query: CubeQuery = {
       ...baseQuery,
