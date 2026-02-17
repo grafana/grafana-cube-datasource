@@ -17,11 +17,11 @@ const mockGetBackendSrv = getBackendSrv as jest.Mock;
 const mockDbSchema = {
   tablesSchema: {
     public: {
-      raw_customers: [
+      customers: [
         { name: 'id', type: 'integer', attributes: [] },
         { name: 'first_name', type: 'character varying', attributes: [] },
       ],
-      raw_orders: [
+      orders: [
         { name: 'id', type: 'integer', attributes: [] },
         { name: 'status', type: 'character varying', attributes: [] },
       ],
@@ -64,8 +64,8 @@ describe('DatabaseTree', () => {
     await waitFor(() => {
       expect(screen.getByText('public')).toBeInTheDocument();
     });
-    expect(screen.getByText('raw_customers')).toBeInTheDocument();
-    expect(screen.getByText('raw_orders')).toBeInTheDocument();
+    expect(screen.getByText('customers')).toBeInTheDocument();
+    expect(screen.getByText('orders')).toBeInTheDocument();
   });
 
   it('calls onTableSelect when a table is clicked', async () => {
@@ -77,12 +77,12 @@ describe('DatabaseTree', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('raw_customers')).toBeInTheDocument();
+      expect(screen.getByText('customers')).toBeInTheDocument();
     });
 
-    await user.click(screen.getByText('raw_customers'));
+    await user.click(screen.getByText('customers'));
 
-    expect(onTableSelect).toHaveBeenCalledWith([encodeTableKey('public', 'raw_customers')]);
+    expect(onTableSelect).toHaveBeenCalledWith([encodeTableKey('public', 'customers')]);
   });
 
   it('deselects a table when clicking an already selected table', async () => {
@@ -93,15 +93,15 @@ describe('DatabaseTree', () => {
       <DatabaseTree
         datasourceUid="test-uid"
         onTableSelect={onTableSelect}
-        selectedTables={[encodeTableKey('public', 'raw_customers')]}
+        selectedTables={[encodeTableKey('public', 'customers')]}
       />
     );
 
     await waitFor(() => {
-      expect(screen.getByText('raw_customers')).toBeInTheDocument();
+      expect(screen.getByText('customers')).toBeInTheDocument();
     });
 
-    await user.click(screen.getByText('raw_customers'));
+    await user.click(screen.getByText('customers'));
 
     expect(onTableSelect).toHaveBeenCalledWith([]);
   });
@@ -132,7 +132,7 @@ describe('DatabaseTree', () => {
     await user.click(screen.getByLabelText('Select all tables in public'));
 
     expect(onTableSelect).toHaveBeenCalledWith(
-      expect.arrayContaining([encodeTableKey('public', 'raw_customers'), encodeTableKey('public', 'raw_orders')])
+      expect.arrayContaining([encodeTableKey('public', 'customers'), encodeTableKey('public', 'orders')])
     );
     expect(onTableSelect).toHaveBeenCalledWith(expect.any(Array));
     const callArgs = onTableSelect.mock.calls[0][0];
@@ -147,7 +147,7 @@ describe('DatabaseTree', () => {
       <DatabaseTree
         datasourceUid="test-uid"
         onTableSelect={onTableSelect}
-        selectedTables={[encodeTableKey('public', 'raw_customers'), encodeTableKey('public', 'raw_orders')]}
+        selectedTables={[encodeTableKey('public', 'customers'), encodeTableKey('public', 'orders')]}
       />
     );
 
@@ -168,7 +168,7 @@ describe('DatabaseTree', () => {
       <DatabaseTree
         datasourceUid="test-uid"
         onTableSelect={onTableSelect}
-        selectedTables={[encodeTableKey('public', 'raw_customers')]}
+        selectedTables={[encodeTableKey('public', 'customers')]}
       />
     );
 
@@ -179,7 +179,7 @@ describe('DatabaseTree', () => {
     await user.click(screen.getByLabelText('Select all tables in public'));
 
     expect(onTableSelect).toHaveBeenCalledWith(
-      expect.arrayContaining([encodeTableKey('public', 'raw_customers'), encodeTableKey('public', 'raw_orders')])
+      expect.arrayContaining([encodeTableKey('public', 'customers'), encodeTableKey('public', 'orders')])
     );
   });
 
@@ -228,18 +228,18 @@ describe('DatabaseTree', () => {
     });
 
     // Tables should be visible initially (auto-expanded)
-    expect(screen.getByText('raw_customers')).toBeInTheDocument();
+    expect(screen.getByText('customers')).toBeInTheDocument();
 
     // Click the schema row (not checkbox) to collapse
     await user.click(screen.getByText('public'));
 
     // Tables should be hidden
-    expect(screen.queryByText('raw_customers')).not.toBeInTheDocument();
+    expect(screen.queryByText('customers')).not.toBeInTheDocument();
 
     // Click again to expand
     await user.click(screen.getByText('public'));
 
     // Tables visible again
-    expect(screen.getByText('raw_customers')).toBeInTheDocument();
+    expect(screen.getByText('customers')).toBeInTheDocument();
   });
 });

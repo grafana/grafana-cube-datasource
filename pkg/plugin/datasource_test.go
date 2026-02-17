@@ -860,7 +860,7 @@ func TestHandleSQLCompilation(t *testing.T) {
 				SQL []interface{} `json:"sql"`
 			}{
 				SQL: []interface{}{
-					"SELECT\n  \"raw_customers\".city \"orders__users_city\",\n  count(*) \"orders__count\"\nFROM\n  raw_orders AS \"raw_orders\"\n  LEFT JOIN raw_customers AS \"raw_customers\" ON \"raw_orders\".user_id = raw_customers.id\nGROUP BY\n  1\nORDER BY\n  2 DESC\nLIMIT\n  10000",
+					"SELECT\n  \"customers\".city \"orders__users_city\",\n  count(*) \"orders__count\"\nFROM\n  orders AS \"orders\"\n  LEFT JOIN customers AS \"customers\" ON \"orders\".customer_id = customers.id\nGROUP BY\n  1\nORDER BY\n  2 DESC\nLIMIT\n  10000",
 					[]interface{}{},
 				},
 			},
@@ -912,7 +912,7 @@ func TestHandleSQLCompilation(t *testing.T) {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
-	expectedSQL := "SELECT\n  \"raw_customers\".city \"orders__users_city\",\n  count(*) \"orders__count\"\nFROM\n  raw_orders AS \"raw_orders\"\n  LEFT JOIN raw_customers AS \"raw_customers\" ON \"raw_orders\".user_id = raw_customers.id\nGROUP BY\n  1\nORDER BY\n  2 DESC\nLIMIT\n  10000"
+	expectedSQL := "SELECT\n  \"customers\".city \"orders__users_city\",\n  count(*) \"orders__count\"\nFROM\n  orders AS \"orders\"\n  LEFT JOIN customers AS \"customers\" ON \"orders\".customer_id = customers.id\nGROUP BY\n  1\nORDER BY\n  2 DESC\nLIMIT\n  10000"
 	if sqlResponse["sql"] != expectedSQL {
 		t.Fatalf("Expected SQL:\n%s\n\nGot:\n%s", expectedSQL, sqlResponse["sql"])
 	}
@@ -1123,7 +1123,7 @@ func TestHandleMetadata(t *testing.T) {
 			Cubes: []CubeMeta{
 				// Raw cubes - these should be ignored when views are present
 				{
-					Name:  "raw_orders",
+					Name:  "order_facts",
 					Title: "Raw Orders",
 					Type:  "cube",
 					Dimensions: []CubeDimension{
@@ -1134,9 +1134,9 @@ func TestHandleMetadata(t *testing.T) {
 							Type:       "string",
 						},
 						{
-							Name:       "user_id",
-							Title:      "Raw User ID",
-							ShortTitle: "Raw User ID",
+							Name:       "customer_id",
+							Title:      "Customer ID",
+							ShortTitle: "Customer ID",
 							Type:       "number",
 						},
 					},
@@ -1150,7 +1150,7 @@ func TestHandleMetadata(t *testing.T) {
 					},
 				},
 				{
-					Name:  "raw_customers",
+					Name:  "customers",
 					Title: "Raw Customers",
 					Type:  "cube",
 					Dimensions: []CubeDimension{
@@ -2223,10 +2223,10 @@ func TestHandleModelFiles(t *testing.T) {
 				Content  string `json:"content"`
 			}{
 				{
-					FileName: "raw_customers.yml",
+					FileName: "customers.yml",
 					Content: `cubes:
-  - name: raw_customers
-    sql_table: raw_customers
+  - name: customers
+    sql_table: customers
     dimensions:
       - name: id
         sql: id
@@ -2234,10 +2234,10 @@ func TestHandleModelFiles(t *testing.T) {
         primary_key: true`,
 				},
 				{
-					FileName: "raw_orders.yml",
+					FileName: "order_facts.yml",
 					Content: `cubes:
-  - name: raw_orders
-    sql_table: raw_orders
+  - name: order_facts
+    sql_table: orders
     dimensions:
       - name: id
         sql: id
@@ -2294,7 +2294,7 @@ func TestHandleModelFiles(t *testing.T) {
 	}
 
 	// Verify file names
-	expectedFiles := []string{"raw_customers.yml", "raw_orders.yml"}
+	expectedFiles := []string{"customers.yml", "order_facts.yml"}
 	for i, file := range modelFilesResponse.Files {
 		if file.FileName != expectedFiles[i] {
 			t.Errorf("Expected file name %s, got %s", expectedFiles[i], file.FileName)
@@ -2319,7 +2319,7 @@ func TestHandleDbSchema(t *testing.T) {
 		}{
 			TablesSchema: map[string]interface{}{
 				"public": map[string]interface{}{
-					"raw_customers": []map[string]interface{}{
+					"customers": []map[string]interface{}{
 						{
 							"name":       "id",
 							"type":       "integer",
@@ -2336,14 +2336,14 @@ func TestHandleDbSchema(t *testing.T) {
 							"attributes": []string{},
 						},
 					},
-					"raw_orders": []map[string]interface{}{
+					"orders": []map[string]interface{}{
 						{
 							"name":       "id",
 							"type":       "integer",
 							"attributes": []string{},
 						},
 						{
-							"name":       "user_id",
+							"name":       "customer_id",
 							"type":       "integer",
 							"attributes": []string{},
 						},
@@ -2415,7 +2415,7 @@ func TestHandleDbSchema(t *testing.T) {
 		t.Fatalf("Expected public schema to be a map")
 	}
 
-	expectedTables := []string{"raw_customers", "raw_orders"}
+	expectedTables := []string{"customers", "orders"}
 	for _, tableName := range expectedTables {
 		if _, exists := publicSchemaMap[tableName]; !exists {
 			t.Errorf("Expected table %s to exist in public schema", tableName)
@@ -2675,10 +2675,10 @@ func TestHandleGenerateSchema(t *testing.T) {
 				Content  string `json:"content"`
 			}{
 				{
-					FileName: "raw_customers.yml",
+					FileName: "customers.yml",
 					Content: `cubes:
-  - name: raw_customers
-    sql_table: public.raw_customers
+  - name: customers
+    sql_table: public.customers
     data_source: default
 
     joins: []
@@ -2721,10 +2721,10 @@ func TestHandleGenerateSchema(t *testing.T) {
 
 	requestBody := GenerateSchemaRequest{
 		Format: "yaml",
-		Tables: [][]string{{"public", "raw_customers"}},
+		Tables: [][]string{{"public", "customers"}},
 		TablesSchema: map[string]interface{}{
 			"public": map[string]interface{}{
-				"raw_customers": []map[string]interface{}{
+				"customers": []map[string]interface{}{
 					{
 						"name":       "first_name",
 						"type":       "character varying",
@@ -2789,8 +2789,8 @@ func TestHandleGenerateSchema(t *testing.T) {
 	}
 
 	file := generateSchemaResponse.Files[0]
-	if file.FileName != "raw_customers.yml" {
-		t.Errorf("Expected fileName raw_customers.yml, got %s", file.FileName)
+	if file.FileName != "customers.yml" {
+		t.Errorf("Expected fileName customers.yml, got %s", file.FileName)
 	}
 
 	if file.Content == "" {
@@ -2887,10 +2887,10 @@ func TestHandleGenerateSchemaWithAPIError(t *testing.T) {
 
 	requestBody := GenerateSchemaRequest{
 		Format: "yaml",
-		Tables: [][]string{{"public", "raw_customers"}},
+		Tables: [][]string{{"public", "customers"}},
 		TablesSchema: map[string]interface{}{
 			"public": map[string]interface{}{
-				"raw_customers": []map[string]interface{}{
+				"customers": []map[string]interface{}{
 					{
 						"name":       "id",
 						"type":       "integer",
@@ -2956,10 +2956,10 @@ func TestHandleGenerateSchemaWithInvalidAPIResponse(t *testing.T) {
 
 	requestBody := GenerateSchemaRequest{
 		Format: "yaml",
-		Tables: [][]string{{"public", "raw_customers"}},
+		Tables: [][]string{{"public", "customers"}},
 		TablesSchema: map[string]interface{}{
 			"public": map[string]interface{}{
-				"raw_customers": []map[string]interface{}{
+				"customers": []map[string]interface{}{
 					{
 						"name":       "id",
 						"type":       "integer",
@@ -3900,14 +3900,14 @@ func TestConvertTimeDimensionsRegularDimensionWithTimeType(t *testing.T) {
 	dateStr2 := "2018-01-02T00:00:00.000"
 
 	frame := data.NewFrame("test",
-		data.NewField("orders.raw_orders_order_date", nil, []*string{&dateStr1, &dateStr2}),
+		data.NewField("orders.order_date", nil, []*string{&dateStr1, &dateStr2}),
 	)
 
 	// The field appears in Dimensions (not TimeDimensions) but has type "time"
 	annotation := CubeAnnotation{
 		TimeDimensions: map[string]CubeFieldInfo{}, // Empty - not a time dimension query
 		Dimensions: map[string]CubeFieldInfo{
-			"orders.raw_orders_order_date": {Title: "Order Date", Type: "time"},
+			"orders.order_date": {Title: "Order Date", Type: "time"},
 		},
 		Measures: map[string]CubeFieldInfo{},
 		Segments: map[string]CubeFieldInfo{},
