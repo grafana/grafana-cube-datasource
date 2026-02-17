@@ -25,16 +25,21 @@ UPDATE raw_customers SET
 CREATE TABLE IF NOT EXISTS raw_orders (
     id INTEGER PRIMARY KEY,
     user_id INTEGER,
+    raw_customer_id INTEGER,
     order_date DATE,
     status VARCHAR(20),
     created_at TIMESTAMP,
     is_gift BOOLEAN,
-    priority INTEGER
+    priority INTEGER,
+    CONSTRAINT raw_orders_raw_customer_id_fkey
+        FOREIGN KEY (raw_customer_id) REFERENCES raw_customers(id)
 );
 COPY raw_orders (id, user_id, order_date, status) FROM '/data/seeds/raw_orders.csv' DELIMITER ',' CSV HEADER;
 
 -- Add comprehensive test data
 UPDATE raw_orders SET 
+    -- Keep backwards-compatible user_id while also exposing raw_customer_id for Cube join heuristics
+    raw_customer_id = user_id,
     created_at = order_date::timestamp + (RANDOM() * 24 || ' hours')::interval,
     is_gift = (id % 7 = 0),  -- Some orders are gifts
     priority = CASE 
@@ -47,6 +52,7 @@ UPDATE raw_orders SET
 CREATE TABLE IF NOT EXISTS raw_payments (
     id INTEGER PRIMARY KEY,
     order_id INTEGER,
+    raw_order_id INTEGER,
     payment_method VARCHAR(20),
     amount DECIMAL(10,2),
     tax DECIMAL(10,2),
@@ -55,12 +61,16 @@ CREATE TABLE IF NOT EXISTS raw_payments (
     refund_amount DECIMAL(10,2),
     created_at TIMESTAMP,
     is_successful BOOLEAN,
-    currency VARCHAR(3)
+    currency VARCHAR(3),
+    CONSTRAINT raw_payments_raw_order_id_fkey
+        FOREIGN KEY (raw_order_id) REFERENCES raw_orders(id)
 );
 COPY raw_payments (id, order_id, payment_method, amount, tax, discount, processing_fee) FROM '/data/seeds/raw_payments.csv' DELIMITER ',' CSV HEADER;
 
 -- Add comprehensive test data including edge cases
 UPDATE raw_payments SET 
+    -- Keep backwards-compatible order_id while also exposing raw_order_id for Cube join heuristics
+    raw_order_id = order_id,
     -- Add refunds (negative numbers)
     refund_amount = CASE 
         WHEN id % 10 = 0 THEN -amount  -- Full refund
