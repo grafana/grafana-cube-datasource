@@ -1,4 +1,4 @@
-"id","raw_order_id","payment_method","amount","tax","discount","processing_fee"
+"id","order_id","payment_method","amount","tax","discount","processing_fee"
 1,1,"credit_card","1000.50","75.04","0.00","30.02"
 2,2,"credit_card","2000.00","150.00","0.00","60.00"
 3,3,"coupon","100.25","7.52","10.03","0.00"

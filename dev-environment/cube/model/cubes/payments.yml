@@ -1,6 +1,6 @@
 cubes:
-  - name: raw_payments
-    sql_table: raw_payments
+  - name: payments
+    sql_table: payments
     data_source: default
 
     dimensions:
@@ -9,8 +9,8 @@ cubes:
         type: number
         primary_key: true
 
-      - name: raw_order_id
-        sql: raw_order_id
+      - name: order_id
+        sql: order_id
         type: number
 
       - name: payment_method

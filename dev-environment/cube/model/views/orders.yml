@@ -3,8 +3,8 @@
 # as well as the direction of joins between the exposed cubes.
 # You can learn more about views in documentation here - https://cube.dev/docs/schema/reference/view
 
-# The following example shows a view defined on top of orders and customers cubes.
-# Both orders and customers cubes are exposed using the "includes" parameter to
+# The following example shows a view defined on top of order_facts and customers cubes.
+# Both order_facts and customers cubes are exposed using the "includes" parameter to
 # control which measures and dimensions are exposed.
 # Prefixes can also be applied when exposing measures or dimensions.
 # In this case, the customers' city dimension is prefixed with the cube name,
@@ -14,7 +14,7 @@ views:
   - name: orders
 
     cubes:
-      - join_path: raw_orders
+      - join_path: order_facts
         includes:
           - status
           - order_date
@@ -25,9 +25,9 @@ views:
           - count
           - gift_count
           - avg_priority
-        prefix: true
+        prefix: false
 
-      - join_path: raw_orders.raw_customers
+      - join_path: order_facts.customers
         includes:
           - first_name
           - last_name
@@ -39,7 +39,7 @@ views:
           - active_count
         prefix: true
 
-      - join_path: raw_orders.raw_payments
+      - join_path: order_facts.payments
         includes:
           - payment_method
           - currency

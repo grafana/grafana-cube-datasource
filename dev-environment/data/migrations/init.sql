@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS raw_customers (
+CREATE TABLE IF NOT EXISTS customers (
     id INTEGER PRIMARY KEY,
     first_name VARCHAR(50),
     last_name VARCHAR(50),
@@ -7,10 +7,10 @@ CREATE TABLE IF NOT EXISTS raw_customers (
     created_at TIMESTAMP,
     customer_segment VARCHAR(20)
 );
-COPY raw_customers (id, first_name, last_name) FROM '/data/seeds/raw_customers.csv' DELIMITER ',' CSV HEADER;
+COPY customers (id, first_name, last_name) FROM '/data/seeds/customers.csv' DELIMITER ',' CSV HEADER;
 
 -- Add comprehensive test data
-UPDATE raw_customers SET 
+UPDATE customers SET
     email = LOWER(first_name || '.' || last_name || '@example.com'),
     is_active = (id % 3 != 0),  -- Mix of true/false
     created_at = '2017-01-01'::timestamp + (id || ' days')::interval,
@@ -22,21 +22,21 @@ UPDATE raw_customers SET
         ELSE 'startup'
     END;
 
-CREATE TABLE IF NOT EXISTS raw_orders (
+CREATE TABLE IF NOT EXISTS orders (
     id INTEGER PRIMARY KEY,
-    raw_customer_id INTEGER,
+    customer_id INTEGER,
     order_date DATE,
     status VARCHAR(20),
     created_at TIMESTAMP,
     is_gift BOOLEAN,
     priority INTEGER,
-    CONSTRAINT raw_orders_raw_customer_id_fkey
-        FOREIGN KEY (raw_customer_id) REFERENCES raw_customers(id)
+    CONSTRAINT orders_customer_id_fkey
+        FOREIGN KEY (customer_id) REFERENCES customers(id)
 );
-COPY raw_orders (id, raw_customer_id, order_date, status) FROM '/data/seeds/raw_orders.csv' DELIMITER ',' CSV HEADER;
+COPY orders (id, customer_id, order_date, status) FROM '/data/seeds/orders.csv' DELIMITER ',' CSV HEADER;
 
 -- Add comprehensive test data
-UPDATE raw_orders SET 
+UPDATE orders SET
     created_at = order_date::timestamp + (RANDOM() * 24 || ' hours')::interval,
     is_gift = (id % 7 = 0),  -- Some orders are gifts
     priority = CASE 
@@ -46,9 +46,9 @@ UPDATE raw_orders SET
         ELSE 4
     END;
 
-CREATE TABLE IF NOT EXISTS raw_payments (
+CREATE TABLE IF NOT EXISTS payments (
     id INTEGER PRIMARY KEY,
-    raw_order_id INTEGER,
+    order_id INTEGER,
     payment_method VARCHAR(20),
     amount DECIMAL(10,2),
     tax DECIMAL(10,2),
@@ -58,13 +58,13 @@ CREATE TABLE IF NOT EXISTS raw_payments (
     created_at TIMESTAMP,
     is_successful BOOLEAN,
     currency VARCHAR(3),
-    CONSTRAINT raw_payments_raw_order_id_fkey
-        FOREIGN KEY (raw_order_id) REFERENCES raw_orders(id)
+    CONSTRAINT payments_order_id_fkey
+        FOREIGN KEY (order_id) REFERENCES orders(id)
 );
-COPY raw_payments (id, raw_order_id, payment_method, amount, tax, discount, processing_fee) FROM '/data/seeds/raw_payments.csv' DELIMITER ',' CSV HEADER;
+COPY payments (id, order_id, payment_method, amount, tax, discount, processing_fee) FROM '/data/seeds/payments.csv' DELIMITER ',' CSV HEADER;
 
 -- Add comprehensive test data including edge cases
-UPDATE raw_payments SET 
+UPDATE payments SET
     -- Add refunds (negative numbers)
     refund_amount = CASE 
         WHEN id % 10 = 0 THEN -amount  -- Full refund
@@ -81,10 +81,10 @@ UPDATE raw_payments SET
     END;
 
 -- Add some NULL values for comprehensive testing
-UPDATE raw_payments SET 
+UPDATE payments SET
     discount = NULL 
 WHERE id % 25 = 0;
 
-UPDATE raw_payments SET 
+UPDATE payments SET
     processing_fee = NULL 
 WHERE id % 30 = 0;
