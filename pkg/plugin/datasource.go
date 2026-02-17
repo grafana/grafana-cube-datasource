@@ -1,6 +1,7 @@
 package plugin
 
 import (
+	"maps"
 	"context"
 	"encoding/json"
 	"errors"
@@ -368,6 +369,9 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 	// Also adds missing fields (e.g., columns with all null values) as nullable fields
 	frame = d.reorderFrameFields(frame, cubeQuery, apiResponse.Annotation, len(apiResponse.Data))
 
+	// Set human-readable display names from annotation (e.g. Ad Hoc filter keyLabel and query result column headers)
+	d.setDisplayNamesFromAnnotation(frame, apiResponse.Annotation)
+
 	// Mark dimension fields as filterable to enable AdHoc filter buttons
 	d.markFieldsAsFilterable(frame, cubeQuery)
 
@@ -527,6 +531,33 @@ func (d *Datasource) createNullField(fieldName string, rowCount int, annotation 
 		// Default to nullable string
 		values := make([]*string, rowCount)
 		return data.NewField(fieldName, nil, values)
+	}
+}
+
+// annotationFieldMap returns a single map of field name -> CubeFieldInfo by merging
+// Dimensions, Measures, and TimeDimensions from the annotation. Enables a single lookup
+// instead of checking each map separately.
+func annotationFieldMap(a CubeAnnotation) map[string]CubeFieldInfo {
+	n := len(a.Dimensions) + len(a.Measures) + len(a.TimeDimensions)
+	m := make(map[string]CubeFieldInfo, n)
+	maps.Copy(m, a.Dimensions)
+	maps.Copy(m, a.Measures)
+	maps.Copy(m, a.TimeDimensions)
+	return m
+}
+
+// setDisplayNamesFromAnnotation sets DisplayNameFromDS on frame fields from the Cube
+// annotation (Cube always provides Title). Panels and visualisations show these human-readable labels
+// (e.g. in Ad Hoc filter keyLabel and in query result column headers).
+func (d *Datasource) setDisplayNamesFromAnnotation(frame *data.Frame, annotation CubeAnnotation) {
+	fieldMap := annotationFieldMap(annotation)
+	for _, field := range frame.Fields {
+		if info, ok := fieldMap[field.Name]; ok && info.Title != "" {
+			if field.Config == nil {
+				field.Config = &data.FieldConfig{}
+			}
+			field.Config.DisplayNameFromDS = info.Title
+		}
 	}
 }
 
@@ -850,10 +881,11 @@ type CubeAnnotation struct {
 	TimeDimensions map[string]CubeFieldInfo `json:"timeDimensions"`
 }
 
-// CubeFieldInfo represents the metadata for a field
+// CubeFieldInfo represents the metadata for a field (from Cube load annotation).
+// We use Title only; ShortTitle is kept for API response unmarshalling.
 type CubeFieldInfo struct {
 	Title      string `json:"title"`
-	ShortTitle string `json:"shortTitle"`
+	ShortTitle string `json:"shortTitle"` // unmarshalled from API only; not used
 	Type       string `json:"type"`
 }
 
@@ -956,7 +988,7 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 		for _, dimension := range item.Dimensions {
 			if !processedDimensions[dimension.Name] {
 				dimensions = append(dimensions, SelectOption{
-					Label: dimension.Name,
+					Label: dimension.Title,
 					Value: dimension.Name,
 					Type:  dimension.Type,
 				})
@@ -968,7 +1000,7 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 		for _, measure := range item.Measures {
 			if !processedMeasures[measure.Name] {
 				measures = append(measures, SelectOption{
-					Label: measure.Name,
+					Label: measure.Title,
 					Value: measure.Name,
 					Type:  measure.Type,
 				})
@@ -1311,20 +1343,22 @@ type CubeMeta struct {
 	Measures   []CubeMeasure   `json:"measures"`
 }
 
-// CubeDimension represents a dimension in a cube
+// CubeDimension represents a dimension in a cube (from Cube /v1/meta).
+// We use Title only; ShortTitle is kept for API response unmarshalling.
 type CubeDimension struct {
 	Name       string `json:"name"`
 	Title      string `json:"title"`
 	Type       string `json:"type"`
-	ShortTitle string `json:"shortTitle"`
+	ShortTitle string `json:"shortTitle"` // unmarshalled from API only; not used
 }
 
-// CubeMeasure represents a measure in a cube
+// CubeMeasure represents a measure in a cube (from Cube /v1/meta).
+// We use Title only; ShortTitle is kept for API response unmarshalling.
 type CubeMeasure struct {
 	Name       string `json:"name"`
 	Title      string `json:"title"`
 	Type       string `json:"type"`
-	ShortTitle string `json:"shortTitle"`
+	ShortTitle string `json:"shortTitle"` // unmarshalled from API only; not used
 }
 
 // TagKey represents a tag key for AdHoc filtering
