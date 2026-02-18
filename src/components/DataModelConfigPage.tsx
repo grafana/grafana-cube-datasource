@@ -4,7 +4,7 @@ import { GrafanaTheme2, PluginConfigPageProps, PluginMeta } from '@grafana/data'
 import { useStyles2, Button, Alert, CodeEditor, Icon, Badge, LinkButton } from '@grafana/ui';
 import { DatabaseTree, decodeTableKey } from './DatabaseTree';
 import { FileList, sortFiles } from './FileList';
-import { useDbSchemaQuery, useGenerateSchemaMutation, useModelFilesQuery } from '../queries';
+import { useDatasourceQuery, useDbSchemaQuery, useGenerateSchemaMutation, useModelFilesQuery } from '../queries';
 import { ModelFile } from '../types';
 
 /**
@@ -29,6 +29,7 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
   const dbSchemaQuery = useDbSchemaQuery(datasourceUid || '');
   const modelFilesQuery = useModelFilesQuery(datasourceUid || '');
   const generateMutation = useGenerateSchemaMutation(datasourceUid || '');
+  const { data: datasource } = useDatasourceQuery(datasourceUid || '');
 
   if (!datasourceUid) {
     return <Alert severity="error" title="Unable to determine datasource" />;
@@ -185,7 +186,7 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
           building a dashboard
         </LinkButton>
         , or by querying data in the{' '}
-        <LinkButton variant="primary" size="sm" fill="text" href={`/explore?left={"datasource":"${datasourceUid}"}`}>
+        <LinkButton variant="primary" size="sm" fill="text" href={`/explore?left=${encodeURIComponent(JSON.stringify({ datasource: datasource ? { type: datasource.type, uid: datasource.uid } : datasourceUid }))}`}>
           Explore view
         </LinkButton>
         .
