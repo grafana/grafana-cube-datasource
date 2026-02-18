@@ -24,6 +24,7 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
   const [activeTab, setActiveTab] = useState<'tables' | 'files'>('tables');
   const [selectedTables, setSelectedTables] = useState<string[]>([]);
   const [selectedFile, setSelectedFile] = useState<ModelFile | null>(null);
+  const [generationComplete, setGenerationComplete] = useState(false);
 
   const dbSchemaQuery = useDbSchemaQuery(datasourceUid || '');
   const modelFilesQuery = useModelFilesQuery(datasourceUid || '');
@@ -38,6 +39,7 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
       return;
     }
 
+    setGenerationComplete(false);
     const tables = selectedTables.map((key) => decodeTableKey(key));
 
     try {
@@ -47,7 +49,7 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
         tablesSchema: dbSchemaQuery.data.tablesSchema,
       });
 
-      // Switch to files tab and select the first file in sorted (visible) order
+      setGenerationComplete(true);
       setActiveTab('files');
       const result = await modelFilesQuery.refetch();
       if (result.data?.files?.length) {
@@ -67,8 +69,15 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
   };
 
   const fileCount = modelFilesQuery.data?.files?.length || 0;
+  const pluginType = 'grafana-cube-datasource';
+  const exploreUrl = `/explore?left=${encodeURIComponent(JSON.stringify({
+    datasource: { type: pluginType, uid: datasourceUid },
+    queries: [{ refId: 'A', datasource: { type: pluginType, uid: datasourceUid } }],
+    range: { from: 'now-1h', to: 'now' },
+  }))}`;
 
   return (
+    <>
     <div className={styles.container}>
       {/* Sidebar */}
       <div className={styles.sidebar}>
@@ -175,6 +184,16 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
         )}
       </div>
     </div>
+
+    {generationComplete && fileCount > 0 && (
+      <Alert severity="success" title="Data model generated successfully" className={styles.successAlert}>
+        Next, you can start to visualize data by{' '}
+        <a href="/dashboard/new" className={styles.successLink}>building a dashboard</a>, or by querying
+        data in the{' '}
+        <a href={exploreUrl} className={styles.successLink}>Explore view</a>.
+      </Alert>
+    )}
+    </>
   );
 }
 
@@ -296,5 +315,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   emptyStateText: css`
     max-width: 400px;
     line-height: 1.5;
+  `,
+  successAlert: css`
+    margin-top: ${theme.spacing(2)};
+  `,
+  successLink: css`
+    color: ${theme.colors.text.link};
+    text-decoration: none;
   `,
 });
