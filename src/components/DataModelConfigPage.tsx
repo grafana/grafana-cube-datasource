@@ -70,126 +70,131 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
 
   return (
     <>
-    <div className={styles.container}>
-      {/* Sidebar */}
-      <div className={styles.sidebar}>
-        {/* Tab bar */}
-        <div className={styles.tabBar}>
-          <button
-            className={`${styles.tab} ${activeTab === 'tables' ? styles.tabActive : ''}`}
-            onClick={() => setActiveTab('tables')}
-            type="button"
-          >
-            Tables
-            {selectedTables.length > 0 && (
-              <Badge text={String(selectedTables.length)} color="blue" className={styles.badge} />
-            )}
-          </button>
-          <button
-            className={`${styles.tab} ${activeTab === 'files' ? styles.tabActive : ''}`}
-            onClick={() => setActiveTab('files')}
-            type="button"
-          >
-            Files
-            {fileCount > 0 && <Badge text={String(fileCount)} color="green" className={styles.badge} />}
-          </button>
-        </div>
-
-        {/* Generate button (only on tables tab) */}
-        {activeTab === 'tables' && (
-          <div className={styles.generateContainer}>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleGenerate}
-              icon={generateMutation.isPending ? 'spinner' : 'cog'}
-              disabled={selectedTables.length === 0 || generateMutation.isPending}
-              fullWidth
+      <div className={styles.container}>
+        {/* Sidebar */}
+        <div className={styles.sidebar}>
+          {/* Tab bar */}
+          <div className={styles.tabBar}>
+            <button
+              className={`${styles.tab} ${activeTab === 'tables' ? styles.tabActive : ''}`}
+              onClick={() => setActiveTab('tables')}
+              type="button"
             >
-              {generateMutation.isPending ? 'Generating...' : `Generate Data Model (${selectedTables.length})`}
-            </Button>
+              Tables
+              {selectedTables.length > 0 && (
+                <Badge text={String(selectedTables.length)} color="blue" className={styles.badge} />
+              )}
+            </button>
+            <button
+              className={`${styles.tab} ${activeTab === 'files' ? styles.tabActive : ''}`}
+              onClick={() => setActiveTab('files')}
+              type="button"
+            >
+              Files
+              {fileCount > 0 && <Badge text={String(fileCount)} color="green" className={styles.badge} />}
+            </button>
           </div>
-        )}
 
-        {generateMutation.isError && (
-          <div className={styles.errorContainer}>
-            <Alert severity="error" title="Generation failed">
-              {generateMutation.error instanceof Error
-                ? generateMutation.error.message
-                : 'An error occurred while generating the data model.'}
-            </Alert>
-          </div>
-        )}
-
-        {/* Tab content */}
-        <div className={styles.tabContent}>
+          {/* Generate button (only on tables tab) */}
           {activeTab === 'tables' && (
-            <DatabaseTree
-              datasourceUid={datasourceUid}
-              onTableSelect={setSelectedTables}
-              selectedTables={selectedTables}
-            />
+            <div className={styles.generateContainer}>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleGenerate}
+                icon={generateMutation.isPending ? 'spinner' : 'cog'}
+                disabled={selectedTables.length === 0 || generateMutation.isPending}
+                fullWidth
+              >
+                {generateMutation.isPending ? 'Generating...' : `Generate Data Model (${selectedTables.length})`}
+              </Button>
+            </div>
           )}
-          {activeTab === 'files' && (
-            <FileList
-              files={modelFilesQuery.data?.files || []}
-              isLoading={modelFilesQuery.isLoading}
-              error={modelFilesQuery.error}
-              selectedFile={selectedFile?.fileName}
-              onFileSelect={handleFileSelect}
-            />
+
+          {generateMutation.isError && (
+            <div className={styles.errorContainer}>
+              <Alert severity="error" title="Generation failed">
+                {generateMutation.error instanceof Error
+                  ? generateMutation.error.message
+                  : 'An error occurred while generating the data model.'}
+              </Alert>
+            </div>
+          )}
+
+          {/* Tab content */}
+          <div className={styles.tabContent}>
+            {activeTab === 'tables' && (
+              <DatabaseTree
+                datasourceUid={datasourceUid}
+                onTableSelect={setSelectedTables}
+                selectedTables={selectedTables}
+              />
+            )}
+            {activeTab === 'files' && (
+              <FileList
+                files={modelFilesQuery.data?.files || []}
+                isLoading={modelFilesQuery.isLoading}
+                error={modelFilesQuery.error}
+                selectedFile={selectedFile?.fileName}
+                onFileSelect={handleFileSelect}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Main content - YAML preview */}
+        <div className={styles.mainContent}>
+          {selectedFile ? (
+            <>
+              <div className={styles.fileHeader}>
+                <Icon name="file-alt" className={styles.fileHeaderIcon} />
+                <span className={styles.fileHeaderName}>{selectedFile.fileName}</span>
+              </div>
+              <div className={styles.codeEditorWrapper}>
+                <CodeEditor
+                  value={selectedFile.content}
+                  language="yaml"
+                  showMiniMap={false}
+                  showLineNumbers={true}
+                  readOnly={true}
+                  height="464px"
+                />
+              </div>
+            </>
+          ) : (
+            <div className={styles.emptyState}>
+              <Icon name="cube" size="xxxl" className={styles.emptyStateIcon} />
+              <h4 className={styles.emptyStateTitle}>
+                {activeTab === 'tables' ? 'Generate Data Models' : 'Preview Files'}
+              </h4>
+              <p className={styles.emptyStateText}>
+                {activeTab === 'tables'
+                  ? 'Select tables from the sidebar and click "Generate Data Model" to create Cube data model files.'
+                  : 'Select a file from the sidebar to preview its YAML contents.'}
+              </p>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Main content - YAML preview */}
-      <div className={styles.mainContent}>
-        {selectedFile ? (
-          <>
-            <div className={styles.fileHeader}>
-              <Icon name="file-alt" className={styles.fileHeaderIcon} />
-              <span className={styles.fileHeaderName}>{selectedFile.fileName}</span>
-            </div>
-            <div className={styles.codeEditorWrapper}>
-              <CodeEditor
-                value={selectedFile.content}
-                language="yaml"
-                showMiniMap={false}
-                showLineNumbers={true}
-                readOnly={true}
-                height="464px"
-              />
-            </div>
-          </>
-        ) : (
-          <div className={styles.emptyState}>
-            <Icon name="cube" size="xxxl" className={styles.emptyStateIcon} />
-            <h4 className={styles.emptyStateTitle}>
-              {activeTab === 'tables' ? 'Generate Data Models' : 'Preview Files'}
-            </h4>
-            <p className={styles.emptyStateText}>
-              {activeTab === 'tables'
-                ? 'Select tables from the sidebar and click "Generate Data Model" to create Cube data model files.'
-                : 'Select a file from the sidebar to preview its YAML contents.'}
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
-
-    {generateMutation.isSuccess && fileCount > 0 && (
-      <Alert severity="success" title="Data model generated successfully" className={styles.successAlert}>
-        Next, you can start to visualize data by{' '}
-        <LinkButton variant="primary" size="sm" fill="text" href="/dashboard/new">
-          building a dashboard
-        </LinkButton>
-        , or by querying data in the{' '}
-        <LinkButton variant="primary" size="sm" fill="text" href={`/explore?left={"datasource":"${datasourceUid}"}`}>
-          Explore view
-        </LinkButton>
-        .
-      </Alert>
-    )}
+      {generateMutation.isSuccess && fileCount > 0 && (
+        <Alert severity="success" title="Data model generated successfully" className={styles.successAlert}>
+          Next, you can start to visualize data by{' '}
+          <LinkButton variant="primary" size="sm" fill="text" href="/dashboard/new">
+            building a dashboard
+          </LinkButton>
+          , or by querying data in the{' '}
+          <LinkButton
+            variant="primary"
+            size="sm"
+            fill="text"
+            href={`/explore?left=${encodeURIComponent(JSON.stringify({ datasource: datasourceUid }))}`}
+          >
+            Explore view
+          </LinkButton>
+          .
+        </Alert>
+      )}
     </>
   );
 }
