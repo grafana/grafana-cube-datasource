@@ -10,7 +10,7 @@ import { OrderBy } from './OrderBy/OrderBy';
 import { FilterField } from './FilterField/FilterField';
 import { useQueryEditorHandlers } from '../hooks/useQueryEditorHandlers';
 import { buildCubeQueryJson } from '../utils/buildCubeQuery';
-import { detectUnsupportedFeatures, getUnsupportedQueryKeys } from '../utils/detectUnsupportedFeatures';
+import { detectUnsupportedFeaturesAndKeys } from '../utils/detectUnsupportedFeatures';
 import { UnsupportedFieldsViewer } from './UnsupportedFieldsViewer';
 
 type Props = QueryEditorProps<DataSource, CubeQuery, CubeDataSourceOptions>;
@@ -22,8 +22,10 @@ type Props = QueryEditorProps<DataSource, CubeQuery, CubeDataSourceOptions>;
  */
 export function QueryEditor(props: Props) {
   const { query, datasource } = props;
-  const unsupportedFeatures = useMemo(() => detectUnsupportedFeatures(query), [query]);
-  const unsupportedKeys = useMemo(() => getUnsupportedQueryKeys(query), [query]);
+  const { reasons: unsupportedFeatures, unsupportedKeys } = useMemo(
+    () => detectUnsupportedFeaturesAndKeys(query),
+    [query]
+  );
 
   const cubeQueryJson = useMemo(() => buildCubeQueryJson(query, datasource), [query, datasource]);
   const { data: compiledSql, isLoading: compiledSqlIsLoading } = useCompiledSqlQuery({

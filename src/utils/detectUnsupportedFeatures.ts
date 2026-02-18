@@ -2,45 +2,61 @@ import { CubeFilterItem, CubeQuery, VISUAL_BUILDER_OPERATORS, isCubeFilter, isCu
 
 const TEMPLATE_VARIABLE_PATTERN = /(?:\$(?:[a-zA-Z_]\w*|\{[a-zA-Z_]\w*(?::[^}]+)?\})|\[\[[^\]]+\]\])/;
 
+export interface UnsupportedFeaturesResult {
+  reasons: string[];
+  unsupportedKeys: Set<string>;
+}
+
 /**
- * Detects query features that the visual builder cannot represent.
+ * Detects query features that the visual builder cannot represent,
+ * returning both human-readable reasons and the set of affected query keys.
  *
  * Uses a blocklist approach: we check for specific patterns we know are
  * unsupported and return human-readable descriptions for each.
  * Everything else is assumed to be supported by the visual editor.
+ */
+export function detectUnsupportedFeaturesAndKeys(query: CubeQuery): UnsupportedFeaturesResult {
+  const reasons: string[] = [];
+  const unsupportedKeys = new Set<string>();
+
+  if (query.timeDimensions && query.timeDimensions.length > 0) {
+    reasons.push('Time dimensions are not yet supported in the visual editor');
+    unsupportedKeys.add('timeDimensions');
+  }
+
+  if (query.filters?.length) {
+    const hasLogicalGroups = query.filters.some(
+      (f) => isCubeAndFilter(f) || isCubeOrFilter(f)
+    );
+    const advancedOperators = collectAdvancedOperators(query.filters);
+    const hasTemplateVars = hasTemplateVariableInFilterValues(query.filters);
+
+    if (hasLogicalGroups) {
+      reasons.push('AND/OR filter groups are not yet supported in the visual editor');
+    }
+    if (advancedOperators.length > 0) {
+      reasons.push(`Filter operators not yet supported in the visual editor: ${advancedOperators.join(', ')}`);
+    }
+    if (hasTemplateVars) {
+      reasons.push('Filter values containing dashboard variables are not yet supported in the visual editor');
+    }
+
+    if (hasLogicalGroups || advancedOperators.length > 0 || hasTemplateVars) {
+      unsupportedKeys.add('filters');
+    }
+  }
+
+  return { reasons, unsupportedKeys };
+}
+
+/**
+ * Detects query features that the visual builder cannot represent.
  *
  * Returns an empty array when the query can be fully represented in
  * the visual builder.
  */
 export function detectUnsupportedFeatures(query: CubeQuery): string[] {
-  const issues: string[] = [];
-
-  if (query.timeDimensions && query.timeDimensions.length > 0) {
-    issues.push('Time dimensions are not yet supported in the visual editor');
-  }
-
-  if (query.filters?.length) {
-    // Check for AND/OR logical filter groups
-    const hasLogicalGroups = query.filters.some(
-      (f) => isCubeAndFilter(f) || isCubeOrFilter(f)
-    );
-    if (hasLogicalGroups) {
-      issues.push('AND/OR filter groups are not yet supported in the visual editor');
-    }
-
-    // Check for filter operators beyond equals/notEquals (in flat filters only;
-    // nested filters inside groups are covered by the logical groups check above)
-    const advancedOperators = collectAdvancedOperators(query.filters);
-    if (advancedOperators.length > 0) {
-      issues.push(`Filter operators not yet supported in the visual editor: ${advancedOperators.join(', ')}`);
-    }
-    // Check for template variables in filter values
-    if (hasTemplateVariableInFilterValues(query.filters)) {
-      issues.push('Filter values containing dashboard variables are not yet supported in the visual editor');
-    }
-  }
-
-  return issues;
+  return detectUnsupportedFeaturesAndKeys(query).reasons;
 }
 
 /**
@@ -50,24 +66,7 @@ export function detectUnsupportedFeatures(query: CubeQuery): string[] {
  * query fields that the visual builder cannot represent.
  */
 export function getUnsupportedQueryKeys(query: CubeQuery): Set<string> {
-  const keys = new Set<string>();
-
-  if (query.timeDimensions && query.timeDimensions.length > 0) {
-    keys.add('timeDimensions');
-  }
-
-  if (query.filters?.length) {
-    const hasLogicalGroups = query.filters.some(
-      (f) => isCubeAndFilter(f) || isCubeOrFilter(f)
-    );
-    const advancedOperators = collectAdvancedOperators(query.filters);
-
-    if (hasLogicalGroups || advancedOperators.length > 0 || hasTemplateVariableInFilterValues(query.filters)) {
-      keys.add('filters');
-    }
-  }
-
-  return keys;
+  return detectUnsupportedFeaturesAndKeys(query).unsupportedKeys;
 }
 
 /**
