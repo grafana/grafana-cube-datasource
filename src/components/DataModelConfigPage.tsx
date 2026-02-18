@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, PluginConfigPageProps, PluginMeta } from '@grafana/data';
-import { useStyles2, Button, Alert, CodeEditor, Icon, Badge } from '@grafana/ui';
+import { useStyles2, Button, Alert, CodeEditor, Icon, Badge, LinkButton } from '@grafana/ui';
 import { DatabaseTree, decodeTableKey } from './DatabaseTree';
 import { FileList, sortFiles } from './FileList';
 import { useDbSchemaQuery, useGenerateSchemaMutation, useModelFilesQuery } from '../queries';
@@ -24,6 +24,7 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
   const [activeTab, setActiveTab] = useState<'tables' | 'files'>('tables');
   const [selectedTables, setSelectedTables] = useState<string[]>([]);
   const [selectedFile, setSelectedFile] = useState<ModelFile | null>(null);
+  const [generationComplete, setGenerationComplete] = useState(false);
 
   const dbSchemaQuery = useDbSchemaQuery(datasourceUid || '');
   const modelFilesQuery = useModelFilesQuery(datasourceUid || '');
@@ -47,7 +48,7 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
         tablesSchema: dbSchemaQuery.data.tablesSchema,
       });
 
-      // Switch to files tab and select the first file in sorted (visible) order
+      setGenerationComplete(true);
       setActiveTab('files');
       const result = await modelFilesQuery.refetch();
       if (result.data?.files?.length) {
@@ -69,6 +70,7 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
   const fileCount = modelFilesQuery.data?.files?.length || 0;
 
   return (
+    <>
     <div className={styles.container}>
       {/* Sidebar */}
       <div className={styles.sidebar}>
@@ -175,6 +177,21 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
         )}
       </div>
     </div>
+
+    {generationComplete && fileCount > 0 && (
+      <Alert severity="success" title="Data model generated successfully" className={styles.successAlert}>
+        Next, you can start to visualize data by{' '}
+        <LinkButton variant="primary" size="sm" fill="text" href="/dashboard/new">
+          building a dashboard
+        </LinkButton>
+        , or by querying data in the{' '}
+        <LinkButton variant="primary" size="sm" fill="text" href={`/explore?left={"datasource":"${datasourceUid}"}`}>
+          Explore view
+        </LinkButton>
+        .
+      </Alert>
+    )}
+    </>
   );
 }
 
@@ -296,5 +313,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   emptyStateText: css`
     max-width: 400px;
     line-height: 1.5;
+  `,
+  successAlert: css`
+    margin-top: ${theme.spacing(2)};
   `,
 });

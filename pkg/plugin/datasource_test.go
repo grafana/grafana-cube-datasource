@@ -3476,8 +3476,10 @@ func TestCheckHealth(t *testing.T) {
 		secureJsonData map[string]string
 		mockServer     bool
 		mockResponse   int
+		mockBody       string // custom response body for 200 OK; defaults to empty cubes
 		expectedStatus backend.HealthStatus
 		expectedMsg    string
+		notExpectedMsg string // if set, message must NOT contain this substring
 	}{
 		{
 			name:           "missing cube API URL",
@@ -3536,22 +3538,33 @@ func TestCheckHealth(t *testing.T) {
 			expectedMsg:    "missing protocol scheme",
 		},
 		{
-			name:           "self-hosted-dev successful connection",
+			name:           "self-hosted-dev successful connection, no data model",
 			jsonData:       `{"cubeApiUrl": "%s", "deploymentType": "self-hosted-dev"}`,
 			secureJsonData: map[string]string{},
 			mockServer:     true,
 			mockResponse:   http.StatusOK,
 			expectedStatus: backend.HealthStatusOk,
-			expectedMsg:    "Successfully connected to Cube API",
+			expectedMsg:    "Successfully connected to Cube API. ℹ️ No data model found yet",
 		},
 		{
-			name:           "cloud successful connection with auth verification",
+			name:           "cloud successful connection, no data model",
 			jsonData:       `{"cubeApiUrl": "%s", "deploymentType": "cloud"}`,
 			secureJsonData: map[string]string{"apiKey": "test-api-key"},
 			mockServer:     true,
 			mockResponse:   http.StatusOK,
 			expectedStatus: backend.HealthStatusOk,
+			expectedMsg:    "ℹ️ No data model found yet",
+		},
+		{
+			name:           "successful connection with existing data model",
+			jsonData:       `{"cubeApiUrl": "%s", "deploymentType": "self-hosted"}`,
+			secureJsonData: map[string]string{"apiSecret": "test-api-secret"},
+			mockServer:     true,
+			mockResponse:   http.StatusOK,
+			mockBody:       `{"cubes": [{"name": "orders", "type": "cube", "dimensions": [], "measures": []}]}`,
+			expectedStatus: backend.HealthStatusOk,
 			expectedMsg:    "Successfully connected to Cube API and verified authentication",
+			notExpectedMsg: "No data model",
 		},
 		{
 			name:           "self-hosted successful connection with auth verification",
@@ -3560,7 +3573,7 @@ func TestCheckHealth(t *testing.T) {
 			mockServer:     true,
 			mockResponse:   http.StatusOK,
 			expectedStatus: backend.HealthStatusOk,
-			expectedMsg:    "Successfully connected to Cube API and verified authentication",
+			expectedMsg:    "ℹ️ No data model found yet",
 		},
 		{
 			name:           "authentication failure - unauthorized",
@@ -3615,11 +3628,15 @@ func TestCheckHealth(t *testing.T) {
 						}
 					}
 
-					w.WriteHeader(tt.mockResponse)
-					if tt.mockResponse == http.StatusOK {
-						w.Header().Set("Content-Type", "application/json")
-						_, _ = w.Write([]byte(`{"cubes": []}`))
-					} else if tt.mockResponse >= 400 {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tt.mockResponse)
+				if tt.mockResponse == http.StatusOK {
+					body := tt.mockBody
+					if body == "" {
+						body = `{"cubes": []}`
+					}
+					_, _ = w.Write([]byte(body))
+				} else if tt.mockResponse >= 400 {
 						_, _ = w.Write([]byte(`{"error": "test error"}`))
 					}
 				}))
@@ -3653,6 +3670,10 @@ func TestCheckHealth(t *testing.T) {
 
 			if !strings.Contains(res.Message, tt.expectedMsg) {
 				t.Errorf("Expected message to contain '%s', got '%s'", tt.expectedMsg, res.Message)
+			}
+
+			if tt.notExpectedMsg != "" && strings.Contains(res.Message, tt.notExpectedMsg) {
+				t.Errorf("Expected message NOT to contain '%s', got '%s'", tt.notExpectedMsg, res.Message)
 			}
 		})
 	}
