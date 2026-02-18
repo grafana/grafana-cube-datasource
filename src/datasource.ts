@@ -1,8 +1,8 @@
 import { DataSourceInstanceSettings, CoreApp, ScopedVars } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
+import { DataSourceWithBackend } from '@grafana/runtime';
 
-import { CubeQuery, CubeDataSourceOptions, DEFAULT_QUERY, CubeFilter, CubeFilterItem, Operator, isCubeFilter, isCubeAndFilter, isCubeOrFilter } from './types';
-import { filterValidCubeFilters } from './utils/filterValidation';
+import { CubeQuery, CubeDataSourceOptions, DEFAULT_QUERY, Operator } from './types';
+import { normalizeCubeQuery } from './utils/normalizeCubeQuery';
 
 export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceOptions> {
   readonly instanceSettings: DataSourceInstanceSettings<CubeDataSourceOptions>;
@@ -17,102 +17,18 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
   }
 
   applyTemplateVariables(query: CubeQuery, scopedVars: ScopedVars): CubeQuery {
-    const templateSrv = getTemplateSrv();
-
-    // Dimensions and measures: pass through as-is (no interpolation of dashboard variables)
-    // Why? YAGNI - don't implement until we need them.
-    // They will likely be more complex to implement than filter-values, for two reasons:
-    // 1. Visual query builder likely fails to show the dash-var name, and needs updating.
-    //    Failing that, issue 58 will need to include them in a detectUnsupportedFeatures check.
-    // 2. More work may be required in general - Cube API might reject them anyway
-
-    // Apply template variable substitution to filter VALUES only (not member)
-    // Filter values with variables like $user_id work correctly and render in the visual builder
-    // Handles both flat filters and logical AND/OR groups recursively
-    const interpolateFilterItem = (item: CubeFilterItem): CubeFilterItem => {
-      if (isCubeFilter(item)) {
-        return { ...item, values: item.values?.map((v) => templateSrv.replace(v, scopedVars)) };
-      }
-      if (isCubeAndFilter(item)) {
-        return { and: item.and.map(interpolateFilterItem) };
-      }
-      if (isCubeOrFilter(item)) {
-        return { or: item.or.map(interpolateFilterItem) };
-      }
-      return item;
-    };
-
-    const interpolatedFilters = query.filters?.map(interpolateFilterItem);
-
-    // Check for AdHoc filters and inject them
-    const adHocFilters = (templateSrv as any).getAdhocFilters ? (templateSrv as any).getAdhocFilters(this.name) : [];
-
-    let filters: CubeFilterItem[] = interpolatedFilters ? [...interpolatedFilters] : [];
-
-    if (adHocFilters && adHocFilters.length > 0) {
-      // Convert AdHoc filters to Cube format
-      const cubeFilters: CubeFilter[] = adHocFilters.map((filter: any) => ({
-        member: filter.key,
-        operator: this.mapOperator(filter.operator),
-        // Multi-value operators (=| and !=|) use the values array; single-value operators use value
-        values: filter.values && filter.values.length > 0 ? filter.values : [filter.value],
-      }));
-
-      filters = [...filters, ...cubeFilters];
-    }
-
-    // Apply template variable substitution to timeDimensions
-    // timeDimensions is an array of objects, so we need to interpolate string values within each object
-    let interpolatedTimeDimensions = query.timeDimensions?.map((td: any) => {
-      if (typeof td === 'object' && td !== null) {
-        const interpolated: any = {};
-        for (const [key, value] of Object.entries(td)) {
-          if (typeof value === 'string') {
-            interpolated[key] = templateSrv.replace(value, scopedVars);
-          } else if (Array.isArray(value)) {
-            interpolated[key] = value.map((v) => (typeof v === 'string' ? templateSrv.replace(v, scopedVars) : v));
-          } else {
-            interpolated[key] = value;
-          }
-        }
-        return interpolated;
-      }
-      return td;
+    // Keep runtime execution behavior aligned with SQL preview query shaping.
+    const normalized = normalizeCubeQuery(query, {
+      datasourceName: this.name,
+      mapOperator: (operator) => this.mapOperator(operator),
+      scopedVars,
     });
-
-    // Dashboard-level time dimension support:
-    // If query has no timeDimensions and $cubeTimeDimension dashboard variable is set,
-    // inject a time dimension using Grafana's dashboard time range
-    if (!interpolatedTimeDimensions?.length) {
-      const dashboardTimeDimension = templateSrv.replace('$cubeTimeDimension', scopedVars);
-
-      // Only inject if the variable was actually replaced (not returned as literal '$cubeTimeDimension')
-      if (dashboardTimeDimension && dashboardTimeDimension !== '$cubeTimeDimension') {
-        // Get Grafana's time range from scopedVars or template variables
-        const fromTime = templateSrv.replace('$__from', scopedVars);
-        const toTime = templateSrv.replace('$__to', scopedVars);
-
-        // $__from and $__to are milliseconds timestamps - convert to ISO strings for Cube
-        if (fromTime && toTime && fromTime !== '$__from' && toTime !== '$__to') {
-          const fromDate = new Date(parseInt(fromTime, 10)).toISOString();
-          const toDate = new Date(parseInt(toTime, 10)).toISOString();
-
-          interpolatedTimeDimensions = [
-            {
-              dimension: dashboardTimeDimension,
-              dateRange: [fromDate, toDate],
-            },
-          ];
-        }
-      }
-    }
-
-    const validFilters = filterValidCubeFilters(filters);
 
     return {
       ...query,
-      timeDimensions: interpolatedTimeDimensions,
-      filters: validFilters.length > 0 ? validFilters : undefined,
+      timeDimensions: normalized.timeDimensions,
+      filters: normalized.filters,
+      order: normalized.order,
     };
   }
 

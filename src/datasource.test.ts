@@ -1,6 +1,6 @@
 import { DataSource } from './datasource';
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { CubeDataSourceOptions, CubeFilter, Operator } from './types';
+import { CubeDataSourceOptions, CubeFilter, CubeQuery, Operator } from './types';
 import { getTemplateSrv } from '@grafana/runtime';
 
 // Mock @grafana/runtime
@@ -326,6 +326,38 @@ describe('DataSource', () => {
 
         expect(result.timeDimensions).toBeUndefined();
       });
+
+      it('should not inject time dimension when $__from or $__to are invalid', () => {
+        const mockReplace = jest.fn((str: string) => {
+          if (str === '$cubeTimeDimension') {
+            return 'orders.created_at';
+          }
+          if (str === '$__from') {
+            return 'invalid';
+          }
+          if (str === '$__to') {
+            return '1701475200000';
+          }
+          return str;
+        });
+
+        mockGetTemplateSrv.mockReturnValue({
+          replace: mockReplace,
+          getAdhocFilters: () => [],
+        });
+
+        const datasource = createDataSource();
+
+        const query = {
+          refId: 'A',
+          dimensions: ['orders.status'],
+          measures: ['orders.count'],
+        };
+
+        const result = datasource.applyTemplateVariables(query, {});
+
+        expect(result.timeDimensions).toBeUndefined();
+      });
     });
 
     describe('AdHoc filter operators', () => {
@@ -481,6 +513,38 @@ describe('DataSource', () => {
         expect(result.filters).toHaveLength(2);
         expect((result.filters![0] as CubeFilter).member).toBe('orders.status');
         expect((result.filters![1] as CubeFilter).member).toBe('orders.customer');
+      });
+
+      it('should strip values from unary operators for runtime parity', () => {
+        const datasource = createDataSource();
+
+        const query = {
+          refId: 'A',
+          measures: ['orders.count'],
+          filters: [{ member: 'orders.discount', operator: Operator.Set, values: ['unexpected'] }],
+        };
+
+        const result = datasource.applyTemplateVariables(query, {});
+
+        expect(result.filters).toEqual([{ member: 'orders.discount', operator: 'set' }]);
+      });
+    });
+
+    describe('order normalization', () => {
+      it('should normalize legacy object order format to array format', () => {
+        const datasource = createDataSource();
+        const query = {
+          refId: 'A',
+          measures: ['orders.count'],
+          order: { 'orders.count': 'desc', 'orders.status': 'asc' } as CubeQuery['order'],
+        };
+
+        const result = datasource.applyTemplateVariables(query, {});
+
+        expect(result.order).toEqual([
+          ['orders.count', 'desc'],
+          ['orders.status', 'asc'],
+        ]);
       });
     });
   });

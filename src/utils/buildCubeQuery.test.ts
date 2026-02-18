@@ -103,4 +103,48 @@ describe('buildCubeQueryJson', () => {
       },
     ]);
   });
+
+  it('normalizes legacy object order format to array format', () => {
+    const datasource = createDatasourceStub();
+    const query: CubeQuery = {
+      refId: 'A',
+      measures: ['orders.count'],
+      order: { 'orders.count': 'desc', 'orders.status': 'asc' },
+    };
+
+    const result = JSON.parse(buildCubeQueryJson(query, datasource));
+
+    expect(result.order).toEqual([
+      ['orders.count', 'desc'],
+      ['orders.status', 'asc'],
+    ]);
+  });
+
+  it('omits injected dashboard time dimension when $__from/$__to are invalid', () => {
+    mockGetTemplateSrv.mockReturnValue({
+      replace: (value: string) => {
+        if (value === '$cubeTimeDimension') {
+          return 'orders.created_at';
+        }
+        if (value === '$__from') {
+          return 'invalid';
+        }
+        if (value === '$__to') {
+          return '1701475200000';
+        }
+        return value;
+      },
+      getAdhocFilters: () => [],
+    });
+
+    const datasource = createDatasourceStub();
+    const query: CubeQuery = {
+      refId: 'A',
+      measures: ['orders.count'],
+    };
+
+    const result = JSON.parse(buildCubeQueryJson(query, datasource));
+
+    expect(result).not.toHaveProperty('timeDimensions');
+  });
 });
