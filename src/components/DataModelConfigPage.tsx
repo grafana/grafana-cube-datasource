@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, PluginConfigPageProps, PluginMeta } from '@grafana/data';
-import { useStyles2, Button, Alert, CodeEditor, Icon, Badge } from '@grafana/ui';
+import { useStyles2, Button, Alert, CodeEditor, Icon, Badge, LinkButton } from '@grafana/ui';
 import { DatabaseTree, decodeTableKey } from './DatabaseTree';
 import { FileList, sortFiles } from './FileList';
 import { useDbSchemaQuery, useGenerateSchemaMutation, useModelFilesQuery } from '../queries';
@@ -69,6 +69,7 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
   const fileCount = modelFilesQuery.data?.files?.length || 0;
 
   return (
+    <>
     <div className={styles.container}>
       {/* Sidebar */}
       <div className={styles.sidebar}>
@@ -175,6 +176,21 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
         )}
       </div>
     </div>
+
+    {generateMutation.isSuccess && fileCount > 0 && (
+      <Alert severity="success" title="Data model generated successfully" className={styles.successAlert}>
+        Next, you can start to visualize data by{' '}
+        <LinkButton variant="primary" size="sm" fill="text" href="/dashboard/new">
+          building a dashboard
+        </LinkButton>
+        , or by querying data in the{' '}
+        <LinkButton variant="primary" size="sm" fill="text" href={`/explore?left={"datasource":"${datasourceUid}"}`}>
+          Explore view
+        </LinkButton>
+        .
+      </Alert>
+    )}
+    </>
   );
 }
 
@@ -296,5 +312,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   emptyStateText: css`
     max-width: 400px;
     line-height: 1.5;
+  `,
+  successAlert: css`
+    margin-top: ${theme.spacing(2)};
   `,
 });
