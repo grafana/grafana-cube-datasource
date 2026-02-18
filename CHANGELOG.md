@@ -2,12 +2,22 @@
 
 ## Unreleased
 
+## 0.2.0 (2026-02-18)
+
 ### Features
 
-- **JSON query viewer**: When a query contains features the visual editor cannot represent (e.g. time dimensions), the query editor switches to a read-only JSON viewer with syntax highlighting and a compiled SQL preview (#58)
-- **All Cube filter operators**: Support all Cube filter operators (`contains`, `gt`, `gte`, `lt`, `lte`, `set`, `notSet`, `inDateRange`, and more) and measure filters via panel JSON (#58)
-- **AND/OR filter groups**: Support logical AND/OR filter groups for complex conditions via panel JSON (#58)
-- **Advanced filter hint**: The visual builder shows a hint linking to the Cube filter docs for users who need advanced filtering features
+- **Data Model config page**: Full config page for generating Cube data model YAML files from connected database schemas (#132)
+- **JSON query viewer**: When a query contains features the visual editor cannot represent (e.g. time dimensions), the query editor switches to a read-only JSON viewer with syntax highlighting and a compiled SQL preview (#136)
+- **All Cube filter operators**: Support all Cube filter operators (`contains`, `gt`, `gte`, `lt`, `lte`, `set`, `notSet`, `inDateRange`, and more) and measure filters via panel JSON (#138)
+- **AND/OR filter groups**: Support logical AND/OR filter groups for complex conditions via panel JSON (#139)
+- **Template variable detection in filters**: Filter values containing template variables automatically trigger the JSON viewer to avoid corrupting the variable syntax (#140)
+- **No-cubes guidance**: When no cubes are detected, the query editor guides users to the Data Model configuration tab (#148)
+
+### Bug Fixes
+
+- **Preserve limit zero and legacy template vars**: Correctly handle `limit: 0` (unlimited) and detect legacy `$variable` template variable syntax (#143)
+
+**Full Changelog**: [v0.1.4...v0.2.0](https://github.com/grafana/grafana-cube-datasource/compare/v0.1.4...v0.2.0)
 
 ## 0.1.4 (2026-02-13)
 
