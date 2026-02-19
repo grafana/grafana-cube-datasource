@@ -35,6 +35,7 @@ jobs:
     uses: grafana/plugin-ci-workflows/.github/workflows/cd.yml@ci-cd-workflows/v6.1.0
     permissions:
       contents: write
+      pull-requests: read
       id-token: write
       attestations: write
     with:
@@ -46,6 +47,12 @@ jobs:
       # - 'universal': on-prem + cloud (default)
       # - 'grafana_cloud': cloud only, hidden for on-prem users
       scopes: universal
+      # Skip the grafana-dev image in Playwright tests (image may be temporarily unavailable)
+      run-playwright-with-skip-grafana-dev-image: true
+      # Skip react-19 preview image (currently unstable during startup in this repo)
+      run-playwright-with-skip-grafana-react-19-preview-image: true
+      # Prefer policy-based versions to avoid flaky intermediary patch releases
+      run-playwright-with-version-resolver-type: version-support-policy
 
       # TODO: add here any other CI custom inputs you may need. You most likely also have to add the same options to push.yaml:
       #   https://enghub.grafana-ops.net/docs/default/component/grafana-plugins-platform/plugins-ci-github-actions/010-plugins-ci-github-actions/#customizing-the-workflows-with-inputs
