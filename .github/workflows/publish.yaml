@@ -47,5 +47,8 @@ jobs:
       # - 'grafana_cloud': cloud only, hidden for on-prem users
       scopes: universal
 
+      # Skip the grafana-dev image in Playwright E2E tests (currently unavailable)
+      run-playwright-with-skip-grafana-dev-image: true
+
       # TODO: add here any other CI custom inputs you may need. You most likely also have to add the same options to push.yaml:
       #   https://enghub.grafana-ops.net/docs/default/component/grafana-plugins-platform/plugins-ci-github-actions/010-plugins-ci-github-actions/#customizing-the-workflows-with-inputs
