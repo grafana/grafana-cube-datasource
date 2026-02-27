@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { InlineField, Input, Alert, MultiSelect, Text, Field, TextLink, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import { DataSource } from '../datasource';
 import { CubeDataSourceOptions, CubeQuery, CubeFilter, isCubeFilter } from '../types';
 import { SQLPreview } from './SQLPreview';
@@ -14,6 +15,31 @@ import { detectUnsupportedFeatures } from '../utils/detectUnsupportedFeatures';
 import { JsonQueryViewer } from './JsonQueryViewer';
 
 type Props = QueryEditorProps<DataSource, CubeQuery, CubeDataSourceOptions>;
+
+/**
+ * Builds the Cube query JSON with proper React reactivity for template service
+ * values (ad-hoc filters, $cubeTimeDimension, $__from/$__to) that are read
+ * inside buildCubeQueryJson via normalizeCubeQuery.
+ *
+ * Without surfacing these as useMemo dependencies, the SQL preview goes stale
+ * when dashboard-level values change. See grafana/semantic-layer#13.
+ */
+function useCubeQueryJson(query: CubeQuery, datasource: DataSource): string {
+  const templateSrv = getTemplateSrv();
+  const withAdHoc = templateSrv as ReturnType<typeof getTemplateSrv> & {
+    getAdhocFilters?: (name: string) => unknown[];
+  };
+  const adHocFiltersKey = JSON.stringify(withAdHoc.getAdhocFilters?.(datasource.name) ?? []);
+  const cubeTimeDimension = templateSrv.replace('$cubeTimeDimension', {});
+  const fromTime = templateSrv.replace('$__from', {});
+  const toTime = templateSrv.replace('$__to', {});
+
+  return useMemo(
+    () => buildCubeQueryJson(query, datasource),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [query, datasource, adHocFiltersKey, cubeTimeDimension, fromTime, toTime]
+  );
+}
 
 export function QueryEditor(props: Props) {
   const { query, datasource } = props;
@@ -40,7 +66,7 @@ function UnsupportedQueryEditor({
   datasource: DataSource;
   reasons: string[];
 }) {
-  const cubeQueryJson = useMemo(() => buildCubeQueryJson(query, datasource), [query, datasource]);
+  const cubeQueryJson = useCubeQueryJson(query, datasource);
   const { data: compiledSql, isLoading: compiledSqlIsLoading } = useCompiledSqlQuery({
     datasource,
     cubeQueryJson,
@@ -70,7 +96,7 @@ function UnsupportedQueryEditor({
  */
 function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
   const styles = useStyles2(getStyles);
-  const cubeQueryJson = useMemo(() => buildCubeQueryJson(query, datasource), [query, datasource]);
+  const cubeQueryJson = useCubeQueryJson(query, datasource);
 
   const { data, isLoading: metadataIsLoading, isError: metadataIsError } = useMetadataQuery({ datasource });
   const metadata = data ?? { dimensions: [], measures: [] };
