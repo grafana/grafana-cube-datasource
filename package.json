@@ -16,9 +16,9 @@
   "author": "Grafana",
   "license": "AGPL-3.0",
   "devDependencies": {
-    "@cubejs-client/core": "1.6.15",
+    "@cubejs-client/core": "1.6.16",
     "@grafana/eslint-config": "9.0.0",
-    "@grafana/plugin-e2e": "3.3.3",
+    "@grafana/plugin-e2e": "3.4.0",
     "@grafana/tsconfig": "2.0.1",
     "@playwright/test": "1.58.2",
     "@stylistic/eslint-plugin-ts": "4.4.1",
@@ -83,7 +83,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
-  "packageManager": "npm@11.10.1",
+  "packageManager": "npm@11.11.0",
   "volta": {
     "node": "24.14.0"
   },
