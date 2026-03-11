@@ -21,6 +21,31 @@
   "links": [],
   "panels": [
     {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "# Basic dashboard to support auto-generated Cube Data Model\n\nThis dashboard uses the minimum of dimensions and measures\nthat are provided when the data model is automatically generated\nby Cube from this URL:\n\nhttp://localhost:3000/connections/datasources/edit/cube-datasource/?page=data-model\n",
+        "mode": "markdown"
+      },
+      "pluginVersion": "13.0.0-22160373891",
+      "title": "",
+      "type": "text"
+    },
+    {
       "datasource": {
         "type": "grafana-cube-datasource",
         "uid": "cube-datasource"
@@ -68,7 +93,7 @@
         "h": 11,
         "w": 12,
         "x": 0,
-        "y": 0
+        "y": 4
       },
       "id": 1,
       "options": {
@@ -160,7 +185,7 @@
         "h": 11,
         "w": 12,
         "x": 12,
-        "y": 0
+        "y": 4
       },
       "id": 2,
       "options": {
@@ -241,7 +266,7 @@
         "h": 11,
         "w": 12,
         "x": 0,
-        "y": 11
+        "y": 15
       },
       "id": 3,
       "options": {
@@ -330,7 +355,7 @@
         "h": 11,
         "w": 12,
         "x": 12,
-        "y": 11
+        "y": 15
       },
       "id": 4,
       "options": {
@@ -406,6 +431,6 @@
   "timezone": "browser",
   "title": "Cube DS, via 'Generate data model' button",
   "uid": "cube-ds-via-generate-data-model-button",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
