@@ -24,7 +24,7 @@
     {
       "datasource": {
         "type": "grafana-cube-datasource",
-        "uid": "cube-datasource"
+        "uid": "grafana-cube-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -101,7 +101,7 @@
         {
           "datasource": {
             "type": "grafana-cube-datasource",
-            "uid": "cube-datasource"
+            "uid": "grafana-cube-datasource"
           },
           "dimensions": [
             "order_details.customers_first_name"
@@ -118,7 +118,7 @@
     {
       "datasource": {
         "type": "grafana-cube-datasource",
-        "uid": "cube-datasource"
+        "uid": "grafana-cube-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -198,7 +198,7 @@
         {
           "datasource": {
             "type": "grafana-cube-datasource",
-            "uid": "cube-datasource"
+            "uid": "grafana-cube-datasource"
           },
           "dimensions": [
             "order_details.payments_payment_method"
@@ -215,7 +215,7 @@
     {
       "datasource": {
         "type": "grafana-cube-datasource",
-        "uid": "cube-datasource"
+        "uid": "grafana-cube-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -279,7 +279,7 @@
         {
           "datasource": {
             "type": "grafana-cube-datasource",
-            "uid": "cube-datasource"
+            "uid": "grafana-cube-datasource"
           },
           "dimensions": [
             "order_details.customers_first_name",
@@ -298,7 +298,7 @@
     {
       "datasource": {
         "type": "grafana-cube-datasource",
-        "uid": "cube-datasource"
+        "uid": "grafana-cube-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -384,7 +384,7 @@
         {
           "datasource": {
             "type": "grafana-cube-datasource",
-            "uid": "cube-datasource"
+            "uid": "grafana-cube-datasource"
           },
           "dimensions": [
             "order_details.order_date"
@@ -402,7 +402,7 @@
     {
       "datasource": {
         "type": "grafana-cube-datasource",
-        "uid": "cube-datasource"
+        "uid": "grafana-cube-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -466,7 +466,7 @@
         {
           "datasource": {
             "type": "grafana-cube-datasource",
-            "uid": "cube-datasource"
+            "uid": "grafana-cube-datasource"
           },
           "dimensions": [
             "order_details.customers_first_name",
@@ -497,7 +497,7 @@
     {
       "datasource": {
         "type": "grafana-cube-datasource",
-        "uid": "cube-datasource"
+        "uid": "grafana-cube-datasource"
       },
       "description": "This panel uses timeDimensions with an explicit dateRange and an 'lt' filter, which the visual editor cannot represent. Open the query editor to see the read-only JSON viewer with syntax-highlighted query JSON.",
       "fieldConfig": {
@@ -584,7 +584,7 @@
         {
           "datasource": {
             "type": "grafana-cube-datasource",
-            "uid": "cube-datasource"
+            "uid": "grafana-cube-datasource"
           },
           "dimensions": [
             "order_details.order_date"
@@ -673,7 +673,7 @@
         {
           "datasource": {
             "type": "grafana-cube-datasource",
-            "uid": "cube-datasource"
+            "uid": "grafana-cube-datasource"
           },
           "dimensions": [
             "order_details.customers_first_name"
@@ -706,7 +706,7 @@
         },
         {
           "datasource": {
-            "uid": "cube-datasource",
+            "uid": "grafana-cube-datasource",
             "type": "grafana-cube-datasource"
           },
           "refId": "Credit Card",
@@ -729,7 +729,7 @@
         },
         {
           "datasource": {
-            "uid": "cube-datasource",
+            "uid": "grafana-cube-datasource",
             "type": "grafana-cube-datasource"
           },
           "refId": "Active Customer",
@@ -764,7 +764,7 @@
       ],
       "datasource": {
         "type": "grafana-cube-datasource",
-        "uid": "cube-datasource"
+        "uid": "grafana-cube-datasource"
       },
       "options": {
         "orientation": "auto",
@@ -793,7 +793,7 @@
     {
       "datasource": {
         "type": "grafana-cube-datasource",
-        "uid": "cube-datasource"
+        "uid": "grafana-cube-datasource"
       },
       "description": "This panel filters by a dashboard variable ($customerName) in a filter value. Change the Customer Name variable to see orders for a different customer. The query editor shows the JSON viewer because template variables in filter values are not supported by the visual builder.",
       "fieldConfig": {
@@ -870,7 +870,7 @@
         {
           "datasource": {
             "type": "grafana-cube-datasource",
-            "uid": "cube-datasource"
+            "uid": "grafana-cube-datasource"
           },
           "dimensions": [
             "order_details.payments_payment_method",

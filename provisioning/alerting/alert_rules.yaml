@@ -13,11 +13,11 @@ groups:
             relativeTimeRange:
               from: 21600
               to: 0
-            datasourceUid: cube-datasource
+            datasourceUid: grafana-cube-datasource
             model:
               datasource:
                 type: grafana-cube-datasource
-                uid: cube-datasource
+                uid: grafana-cube-datasource
               instant: false
               intervalMs: 1000
               maxDataPoints: 43200

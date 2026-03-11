@@ -8,7 +8,7 @@ datasources:
     orgId: 1
     version: 1
     editable: true
-    uid: 'cube-datasource'
+    uid: 'grafana-cube-datasource'
     jsonData:
       cubeApiUrl: 'http://cube:4000'
       deploymentType: 'self-hosted'

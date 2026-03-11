@@ -38,7 +38,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "# Basic dashboard to support auto-generated Cube Data Model\n\nThis dashboard uses the minimum of dimensions and measures\nthat are provided when the data model is automatically generated\nby Cube from this URL:\n\nhttp://localhost:3000/connections/datasources/edit/cube-datasource/?page=data-model\n",
+        "content": "# Basic dashboard to support auto-generated Cube Data Model\n\nThis dashboard uses the minimum of dimensions and measures\nthat are provided when the data model is automatically generated\nby Cube from this URL:\n\nhttp://localhost:3000/connections/datasources/edit/grafana-cube-datasource/?page=data-model\n",
         "mode": "markdown"
       },
       "pluginVersion": "13.0.0-22160373891",
@@ -48,7 +48,7 @@
     {
       "datasource": {
         "type": "grafana-cube-datasource",
-        "uid": "cube-datasource"
+        "uid": "grafana-cube-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -123,7 +123,7 @@
         {
           "datasource": {
             "type": "grafana-cube-datasource",
-            "uid": "cube-datasource"
+            "uid": "grafana-cube-datasource"
           },
           "dimensions": [
             "customers.first_name"
@@ -140,7 +140,7 @@
     {
       "datasource": {
         "type": "grafana-cube-datasource",
-        "uid": "cube-datasource"
+        "uid": "grafana-cube-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -215,7 +215,7 @@
         {
           "datasource": {
             "type": "grafana-cube-datasource",
-            "uid": "cube-datasource"
+            "uid": "grafana-cube-datasource"
           },
           "dimensions": [
             "payments.payment_method"
@@ -232,7 +232,7 @@
     {
       "datasource": {
         "type": "grafana-cube-datasource",
-        "uid": "cube-datasource"
+        "uid": "grafana-cube-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -278,7 +278,7 @@
         {
           "datasource": {
             "type": "grafana-cube-datasource",
-            "uid": "cube-datasource"
+            "uid": "grafana-cube-datasource"
           },
           "dimensions": [
             "customers.first_name",
@@ -297,7 +297,7 @@
     {
       "datasource": {
         "type": "grafana-cube-datasource",
-        "uid": "cube-datasource"
+        "uid": "grafana-cube-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -379,7 +379,7 @@
         {
           "datasource": {
             "type": "grafana-cube-datasource",
-            "uid": "cube-datasource"
+            "uid": "grafana-cube-datasource"
           },
           "dimensions": [
             "orders.order_date"
