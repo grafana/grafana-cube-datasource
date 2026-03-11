@@ -48,7 +48,7 @@ function setLocationPathname(pathname: string) {
 
 describe('extractDatasourceUid', () => {
   it('extracts UID from standard datasource edit path', () => {
-    expect(extractDatasourceUid('/connections/datasources/edit/cube-datasource/')).toBe('cube-datasource');
+    expect(extractDatasourceUid('/connections/datasources/edit/grafana-cube-datasource/')).toBe('grafana-cube-datasource');
   });
 
   it('extracts UID from path with trailing slash', () => {
@@ -67,7 +67,7 @@ describe('extractDatasourceUid', () => {
 describe('DataModelConfigPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    setLocationPathname('/connections/datasources/edit/cube-datasource/?page=data-model');
+    setLocationPathname('/connections/datasources/edit/grafana-cube-datasource/?page=data-model');
   });
 
   function mockApi({ dbSchema = mockDbSchema, modelFiles = { files: [] as any[] }, generateResponse = { files: [] } } = {}) {
@@ -142,7 +142,7 @@ describe('DataModelConfigPage', () => {
 
     await waitFor(() => {
       expect(mockPost).toHaveBeenCalledWith(
-        '/api/datasources/uid/cube-datasource/resources/generate-schema',
+        '/api/datasources/uid/grafana-cube-datasource/resources/generate-schema',
         expect.objectContaining({
           format: 'yaml',
           tables: [['public', 'customers']],
