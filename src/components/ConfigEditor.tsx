@@ -19,6 +19,9 @@ export function ConfigEditor({ onOptionsChange, options }: ConfigEditorProps) {
   // No default - user must explicitly select deployment type
   const deploymentType = jsonData.deploymentType;
 
+  // Read from standard top-level url, falling back to legacy jsonData.cubeApiUrl
+  const cubeApiUrl = options.url || jsonData.cubeApiUrl || '';
+
   // Memoized datasource options for Combobox
   const sqlDatasourceOptions = useMemo(
     () =>
@@ -28,6 +31,8 @@ export function ConfigEditor({ onOptionsChange, options }: ConfigEditorProps) {
       })),
     [sqlDatasources]
   );
+
+  const updateUrl = (value: string) => onOptionsChange({ ...options, url: value });
 
   const updateJsonData = (field: keyof CubeDataSourceOptions, value: string | undefined) =>
     onOptionsChange({ ...options, jsonData: { ...jsonData, [field]: value } });
@@ -70,8 +75,8 @@ export function ConfigEditor({ onOptionsChange, options }: ConfigEditorProps) {
       >
         <Input
           id="config-editor-cube-api-url"
-          onChange={(e: ChangeEvent<HTMLInputElement>) => updateJsonData('cubeApiUrl', e.target.value)}
-          value={jsonData.cubeApiUrl}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => updateUrl(e.target.value)}
+          value={cubeApiUrl}
           placeholder="e.g. http://localhost:4000 or https://my-cube-api.com"
           width={FIELD_WIDTHS.input}
           required

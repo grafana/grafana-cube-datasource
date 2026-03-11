@@ -1359,6 +1359,7 @@ func TestBuildAPIURL(t *testing.T) {
 	tests := []struct {
 		name            string
 		cubeApiUrl      string
+		sourceURL       string // top-level datasource URL field
 		baseURLOverride string
 		endpoint        string
 		expectError     bool
@@ -1372,6 +1373,21 @@ func TestBuildAPIURL(t *testing.T) {
 			endpoint:    "load",
 			expectError: false,
 			expectedURL: "http://localhost:4000/cubejs-api/v1/load",
+		},
+		{
+			name:        "top-level URL preferred over jsonData.cubeApiUrl",
+			cubeApiUrl:  "http://legacy:4000",
+			sourceURL:   "http://standard:4000",
+			endpoint:    "load",
+			expectError: false,
+			expectedURL: "http://standard:4000/cubejs-api/v1/load",
+		},
+		{
+			name:        "top-level URL used when jsonData.cubeApiUrl is empty",
+			sourceURL:   "http://standard:4000",
+			endpoint:    "meta",
+			expectError: false,
+			expectedURL: "http://standard:4000/cubejs-api/v1/meta",
 		},
 		{
 			name:        "valid HTTPS URL",
@@ -1465,6 +1481,7 @@ func TestBuildAPIURL(t *testing.T) {
 			// Create mock plugin context
 			pluginContext := backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					URL:      tt.sourceURL,
 					JSONData: []byte(`{"cubeApiUrl": "` + tt.cubeApiUrl + `"}`),
 				},
 			}
@@ -1497,11 +1514,11 @@ func TestBuildAPIURL(t *testing.T) {
 				t.Fatalf("Expected config to be returned, got nil")
 			}
 
-			// Verify config contains the expected URL (unless overridden)
+			// Verify config contains the resolved URL.
+			// Top-level sourceURL takes precedence over jsonData.cubeApiUrl.
 			expectedConfigURL := tt.cubeApiUrl
-			if tt.baseURLOverride != "" {
-				// When overridden, config should still contain original URL
-				expectedConfigURL = tt.cubeApiUrl
+			if tt.sourceURL != "" {
+				expectedConfigURL = tt.sourceURL
 			}
 			if apiReq.Config.CubeApiUrl != expectedConfigURL {
 				t.Fatalf("Expected config.CubeApiUrl '%s', got '%s'", expectedConfigURL, apiReq.Config.CubeApiUrl)

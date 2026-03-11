@@ -9,8 +9,8 @@ datasources:
     version: 1
     editable: true
     uid: 'grafana-cube-datasource'
+    url: 'http://cube:4000'
     jsonData:
-      cubeApiUrl: 'http://cube:4000'
       deploymentType: 'self-hosted'
       exploreSqlDatasourceUid: 'postgres-datasource'
     secureJsonData:
