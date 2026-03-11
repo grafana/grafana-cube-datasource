@@ -130,9 +130,14 @@ export interface DataSourceResponse {
 }
 
 /**
- * These are options configured for each DataSource instance
+ * These are options configured for each DataSource instance.
+ *
+ * The Cube API URL is stored in the standard top-level datasource `url` field.
+ * The backend prefers `url` when set, falling back to `cubeApiUrl` for backward
+ * compatibility with existing instances.
  */
 export interface CubeDataSourceOptions extends DataSourceJsonData {
+  /** @deprecated Use the standard datasource `url` field instead. Kept for backward compatibility. */
   cubeApiUrl?: string;
   deploymentType?: 'cloud' | 'self-hosted' | 'self-hosted-dev';
   /** UID of the SQL datasource to use when clicking "Edit SQL in Explore" */
