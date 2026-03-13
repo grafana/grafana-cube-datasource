@@ -79,7 +79,8 @@ func TestQueryData(t *testing.T) {
 		&backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+					URL:      server.URL,
+					JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 				},
 			},
 			Queries: []backend.DataQuery{
@@ -175,7 +176,8 @@ func TestQueryDataWithCubeQuery(t *testing.T) {
 		&backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+					URL:      server.URL,
+					JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 				},
 			},
 			Queries: []backend.DataQuery{
@@ -266,7 +268,8 @@ func TestQueryDataContinueWaitThenSuccess(t *testing.T) {
 		&backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+					URL:      server.URL,
+					JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 				},
 			},
 			Queries: []backend.DataQuery{
@@ -319,7 +322,8 @@ func TestQueryDataContinueWaitContextCancelled(t *testing.T) {
 		&backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+					URL:      server.URL,
+					JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 				},
 			},
 			Queries: []backend.DataQuery{
@@ -367,7 +371,8 @@ func TestQueryDataHTTPTimeoutWrapped(t *testing.T) {
 		&backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+					URL:      server.URL,
+					JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 				},
 			},
 			Queries: []backend.DataQuery{
@@ -416,7 +421,8 @@ func TestQueryDataContinueWaitCancelledIncludesElapsedTime(t *testing.T) {
 		&backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+					URL:      server.URL,
+					JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 				},
 			},
 			Queries: []backend.DataQuery{
@@ -538,7 +544,8 @@ func TestQueryDataWithMultipleDimensions(t *testing.T) {
 		&backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+					URL:      server.URL,
+					JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 				},
 			},
 			Queries: []backend.DataQuery{
@@ -636,7 +643,8 @@ func TestQueryDataWithAllNullColumn(t *testing.T) {
 				&backend.QueryDataRequest{
 					PluginContext: backend.PluginContext{
 						DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-							JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+							URL:      server.URL,
+							JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 						},
 					},
 					Queries: []backend.DataQuery{
@@ -713,7 +721,8 @@ func TestQueryDataWithAllColumnsNull(t *testing.T) {
 		&backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+					URL:      server.URL,
+					JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 				},
 			},
 			Queries: []backend.DataQuery{
@@ -822,7 +831,8 @@ func TestQueryDataWithOrderField(t *testing.T) {
 	resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: []byte(`{"cubeApiUrl":"` + server.URL + `","deploymentType":"self-hosted-dev"}`),
+				URL:      server.URL,
+				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 			},
 		},
 		Queries: []backend.DataQuery{{RefID: "A", JSON: queryJSON}},
@@ -880,7 +890,8 @@ func TestHandleSQLCompilation(t *testing.T) {
 	req := &backend.CallResourceRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				URL:      server.URL,
+				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 			},
 		},
 		Path:   "sql",
@@ -931,7 +942,8 @@ func TestHandleSQLCompilationInvalidJSON(t *testing.T) {
 	req := &backend.CallResourceRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				URL:      server.URL,
+				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 			},
 		},
 		Path:   "sql",
@@ -975,7 +987,8 @@ func TestHandleSQLCompilationMissingQuery(t *testing.T) {
 	req := &backend.CallResourceRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: []byte(`{"cubeApiUrl": "http://localhost:4000", "deploymentType": "self-hosted-dev"}`),
+				URL:      "http://localhost:4000",
+				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 			},
 		},
 		Path:   "sql",
@@ -1218,7 +1231,8 @@ func TestHandleMetadata(t *testing.T) {
 		URL:    "/metadata",
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData:                []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				URL:                     server.URL,
+				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
 				DecryptedSecureJSONData: map[string]string{},
 			},
 		},
@@ -1358,112 +1372,112 @@ func TestHandleMetadata(t *testing.T) {
 func TestBuildAPIURL(t *testing.T) {
 	tests := []struct {
 		name            string
-		cubeApiUrl      string
-		sourceURL       string // top-level datasource URL field
+		sourceURL       string // top-level datasource URL field (preferred)
+		legacyJsonUrl   string // legacy jsonData.cubeApiUrl (backward-compat tests only)
 		baseURLOverride string
 		endpoint        string
 		expectError     bool
 		expectedURL     string
 		errorContains   string
 	}{
-		// Valid URL cases
+		// Valid URL cases (using standard top-level URL field)
 		{
 			name:        "valid HTTP URL",
-			cubeApiUrl:  "http://localhost:4000",
+			sourceURL:   "http://localhost:4000",
 			endpoint:    "load",
 			expectError: false,
 			expectedURL: "http://localhost:4000/cubejs-api/v1/load",
 		},
 		{
-			name:        "top-level URL preferred over jsonData.cubeApiUrl",
-			cubeApiUrl:  "http://legacy:4000",
-			sourceURL:   "http://standard:4000",
-			endpoint:    "load",
-			expectError: false,
-			expectedURL: "http://standard:4000/cubejs-api/v1/load",
-		},
-		{
-			name:        "top-level URL used when jsonData.cubeApiUrl is empty",
-			sourceURL:   "http://standard:4000",
-			endpoint:    "meta",
-			expectError: false,
-			expectedURL: "http://standard:4000/cubejs-api/v1/meta",
-		},
-		{
 			name:        "valid HTTPS URL",
-			cubeApiUrl:  "https://my-cube-api.com",
+			sourceURL:   "https://my-cube-api.com",
 			endpoint:    "meta",
 			expectError: false,
 			expectedURL: "https://my-cube-api.com/cubejs-api/v1/meta",
 		},
 		{
 			name:        "valid URL with port",
-			cubeApiUrl:  "https://api.example.com:8080",
+			sourceURL:   "https://api.example.com:8080",
 			endpoint:    "sql",
 			expectError: false,
 			expectedURL: "https://api.example.com:8080/cubejs-api/v1/sql",
 		},
 		{
 			name:        "valid URL with trailing slash",
-			cubeApiUrl:  "http://localhost:4000/",
+			sourceURL:   "http://localhost:4000/",
 			endpoint:    "load",
 			expectError: false,
-			expectedURL: "http://localhost:4000/cubejs-api/v1/load", // Trailing slash is properly handled
+			expectedURL: "http://localhost:4000/cubejs-api/v1/load",
 		},
 		{
 			name:        "valid URL with existing path",
-			cubeApiUrl:  "http://example.com/cube",
+			sourceURL:   "http://example.com/cube",
 			endpoint:    "meta",
 			expectError: false,
 			expectedURL: "http://example.com/cube/cubejs-api/v1/meta",
 		},
 		{
 			name:            "test override functionality",
-			cubeApiUrl:      "http://localhost:4000",
+			sourceURL:       "http://localhost:4000",
 			baseURLOverride: "http://test-server:3000",
 			endpoint:        "sql",
 			expectError:     false,
 			expectedURL:     "http://test-server:3000/cubejs-api/v1/sql",
 		},
+		// Backward-compatibility: top-level URL takes precedence over legacy jsonData.cubeApiUrl
+		{
+			name:          "top-level URL preferred over legacy jsonData.cubeApiUrl",
+			legacyJsonUrl: "http://legacy:4000",
+			sourceURL:     "http://standard:4000",
+			endpoint:      "load",
+			expectError:   false,
+			expectedURL:   "http://standard:4000/cubejs-api/v1/load",
+		},
+		{
+			name:        "top-level URL used when legacy jsonData.cubeApiUrl is empty",
+			sourceURL:   "http://standard:4000",
+			endpoint:    "meta",
+			expectError: false,
+			expectedURL: "http://standard:4000/cubejs-api/v1/meta",
+		},
 		// Invalid URL cases
 		{
 			name:          "empty URL",
-			cubeApiUrl:    "",
 			endpoint:      "load",
 			expectError:   true,
 			errorContains: "Cube API URL is required",
 		},
 		{
 			name:          "whitespace only URL",
-			cubeApiUrl:    "   ",
+			sourceURL:     "   ",
 			endpoint:      "load",
 			expectError:   true,
 			errorContains: "Cube API URL is required",
 		},
 		{
 			name:          "invalid URL - no protocol",
-			cubeApiUrl:    "not-a-url",
+			sourceURL:     "not-a-url",
 			endpoint:      "load",
 			expectError:   true,
 			errorContains: "invalid Cube API URL format",
 		},
 		{
 			name:          "invalid URL - missing scheme",
-			cubeApiUrl:    "://invalid",
+			sourceURL:     "://invalid",
 			endpoint:      "load",
 			expectError:   true,
 			errorContains: "invalid Cube API URL format",
 		},
 		{
 			name:          "invalid URL - incomplete",
-			cubeApiUrl:    "http://",
+			sourceURL:     "http://",
 			endpoint:      "load",
 			expectError:   true,
 			errorContains: "invalid Cube API URL format",
 		},
 		{
 			name:          "invalid URL - missing protocol scheme",
-			cubeApiUrl:    "localhost:4000",
+			sourceURL:     "localhost:4000",
 			endpoint:      "load",
 			expectError:   true,
 			errorContains: "missing protocol scheme",
@@ -1472,24 +1486,20 @@ func TestBuildAPIURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create datasource instance
 			ds := &Datasource{}
 			if tt.baseURLOverride != "" {
 				ds.BaseURL = tt.baseURLOverride
 			}
 
-			// Create mock plugin context
 			pluginContext := backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
 					URL:      tt.sourceURL,
-					JSONData: []byte(`{"cubeApiUrl": "` + tt.cubeApiUrl + `"}`),
+					JSONData: []byte(`{"cubeApiUrl": "` + tt.legacyJsonUrl + `"}`),
 				},
 			}
 
-			// Call buildAPIURL
 			apiReq, err := ds.buildAPIURL(pluginContext, tt.endpoint)
 
-			// Check error expectation
 			if tt.expectError {
 				if err == nil {
 					t.Fatalf("Expected error but got none")
@@ -1500,7 +1510,6 @@ func TestBuildAPIURL(t *testing.T) {
 				return
 			}
 
-			// Check success case
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
@@ -1509,14 +1518,13 @@ func TestBuildAPIURL(t *testing.T) {
 				t.Fatalf("Expected URL '%s', got '%s'", tt.expectedURL, apiReq.URL.String())
 			}
 
-			// Verify config is returned
 			if apiReq.Config == nil {
 				t.Fatalf("Expected config to be returned, got nil")
 			}
 
 			// Verify config contains the resolved URL.
-			// Top-level sourceURL takes precedence over jsonData.cubeApiUrl.
-			expectedConfigURL := tt.cubeApiUrl
+			// Top-level sourceURL takes precedence over legacy jsonData.cubeApiUrl.
+			expectedConfigURL := tt.legacyJsonUrl
 			if tt.sourceURL != "" {
 				expectedConfigURL = tt.sourceURL
 			}
@@ -1546,7 +1554,7 @@ func TestQueryDataWithInvalidURL(t *testing.T) {
 		&backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					JSONData: []byte(`{"cubeApiUrl": ""}`),
+					JSONData: []byte(`{}`),
 				},
 			},
 			Queries: []backend.DataQuery{
@@ -1619,7 +1627,8 @@ func TestHandleTagValues(t *testing.T) {
 		URL:    "/tag-values?key=orders.status",
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData:                []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				URL:                     server.URL,
+				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
 				DecryptedSecureJSONData: map[string]string{},
 			},
 		},
@@ -1706,7 +1715,8 @@ func TestHandleTagValuesWithDuplicates(t *testing.T) {
 		URL:    "/tag-values?key=orders.status",
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData:                []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				URL:                     server.URL,
+				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
 				DecryptedSecureJSONData: map[string]string{},
 			},
 		},
@@ -1748,7 +1758,8 @@ func TestHandleTagValuesMissingKey(t *testing.T) {
 		URL:    "/tag-values", // No key parameter
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData:                []byte(`{"cubeApiUrl": "http://example.com", "deploymentType": "self-hosted-dev"}`),
+				URL:                     "http://example.com",
+				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
 				DecryptedSecureJSONData: map[string]string{},
 			},
 		},
@@ -1797,7 +1808,8 @@ func TestHandleTagValuesWithNumericValues(t *testing.T) {
 		URL:    "/tag-values?key=orders.year",
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData:                []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				URL:                     server.URL,
+				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
 				DecryptedSecureJSONData: map[string]string{},
 			},
 		},
@@ -1877,7 +1889,8 @@ func TestHandleTagValuesWithScopingFilters(t *testing.T) {
 		URL:    "/tag-values?key=orders.customer_name&filters=" + encodedFilters,
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData:                []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				URL:                     server.URL,
+				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
 				DecryptedSecureJSONData: map[string]string{},
 			},
 		},
@@ -1952,7 +1965,8 @@ func TestHandleTagValuesEmptyResponse(t *testing.T) {
 		URL:    "/tag-values?key=orders.status",
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData:                []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				URL:                     server.URL,
+				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
 				DecryptedSecureJSONData: map[string]string{},
 			},
 		},
@@ -2027,7 +2041,8 @@ func TestHandleTagValuesContinueWaitThenSuccess(t *testing.T) {
 		URL:    "/tag-values?key=orders.status",
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData:                []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				URL:                     server.URL,
+				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
 				DecryptedSecureJSONData: map[string]string{},
 			},
 		},
@@ -2082,7 +2097,8 @@ func TestHandleTagValuesContinueWaitContextCancelled(t *testing.T) {
 		URL:    "/tag-values?key=orders.status",
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData:                []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				URL:                     server.URL,
+				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
 				DecryptedSecureJSONData: map[string]string{},
 			},
 		},
@@ -2134,7 +2150,8 @@ func TestHandleTagValuesForwardsCubeErrorStatusAndBody(t *testing.T) {
 		URL:    "/tag-values?key=orders.status",
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData:                []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				URL:                     server.URL,
+				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
 				DecryptedSecureJSONData: map[string]string{},
 			},
 		},
@@ -2164,7 +2181,7 @@ func TestFetchCubeMetadataWithInvalidURL(t *testing.T) {
 
 	pluginContext := backend.PluginContext{
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-			JSONData: []byte(`{"cubeApiUrl": ""}`),
+			JSONData: []byte(`{}`),
 		},
 	}
 
@@ -2185,7 +2202,7 @@ func TestHandleSQLCompilationWithInvalidURL(t *testing.T) {
 	req := &backend.CallResourceRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: []byte(`{"cubeApiUrl": ""}`),
+				JSONData: []byte(`{}`),
 			},
 		},
 		Path:   "sql",
@@ -2276,7 +2293,8 @@ func TestHandleModelFiles(t *testing.T) {
 	req := &backend.CallResourceRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				URL:      server.URL,
+				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 			},
 		},
 		Path:   "model-files",
@@ -2386,7 +2404,8 @@ func TestHandleDbSchema(t *testing.T) {
 	req := &backend.CallResourceRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				URL:      server.URL,
+				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 			},
 		},
 		Path:   "db-schema",
@@ -2455,7 +2474,8 @@ func TestHandleDbSchemaWithAPIError(t *testing.T) {
 	req := &backend.CallResourceRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				URL:      server.URL,
+				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 			},
 		},
 		Path:   "db-schema",
@@ -2504,7 +2524,8 @@ func TestHandleDbSchemaWithInvalidJSON(t *testing.T) {
 	req := &backend.CallResourceRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				URL:      server.URL,
+				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 			},
 		},
 		Path:   "db-schema",
@@ -2544,7 +2565,7 @@ func TestHandleDbSchemaWithMissingURL(t *testing.T) {
 	req := &backend.CallResourceRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: []byte(`{}`), // No cubeApiUrl configured
+				JSONData: []byte(`{}`), // No URL configured
 			},
 		},
 		Path:   "db-schema",
@@ -2608,7 +2629,8 @@ func TestCallResourceDbSchemaRouting(t *testing.T) {
 	req := &backend.CallResourceRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				URL:      server.URL,
+				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 			},
 		},
 		Path:   "db-schema",
@@ -2770,7 +2792,8 @@ func TestHandleGenerateSchema(t *testing.T) {
 	req := &backend.CallResourceRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				URL:      server.URL,
+				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 			},
 		},
 		Path:   "generate-schema",
@@ -2926,7 +2949,8 @@ func TestHandleGenerateSchemaWithAPIError(t *testing.T) {
 	req := &backend.CallResourceRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				URL:      server.URL,
+				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 			},
 		},
 		Path:   "generate-schema",
@@ -2995,7 +3019,8 @@ func TestHandleGenerateSchemaWithInvalidAPIResponse(t *testing.T) {
 	req := &backend.CallResourceRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				URL:      server.URL,
+				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 			},
 		},
 		Path:   "generate-schema",
@@ -3080,7 +3105,8 @@ func TestCallResourceGenerateSchemaRouting(t *testing.T) {
 	req := &backend.CallResourceRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+				URL:      server.URL,
+				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 			},
 		},
 		Path:   "generate-schema",
@@ -3489,6 +3515,7 @@ func TestGenerateJWTConcurrentExpiredCache(t *testing.T) {
 func TestCheckHealth(t *testing.T) {
 	tests := []struct {
 		name           string
+		sourceURL      string // top-level datasource URL field (preferred)
 		jsonData       string
 		secureJsonData map[string]string
 		mockServer     bool
@@ -3508,7 +3535,8 @@ func TestCheckHealth(t *testing.T) {
 		},
 		{
 			name:           "missing deployment type",
-			jsonData:       `{"cubeApiUrl": "http://localhost:4000"}`,
+			sourceURL:      "http://localhost:4000",
+			jsonData:       `{}`,
 			secureJsonData: map[string]string{"apiKey": "test-key"},
 			mockServer:     false,
 			expectedStatus: backend.HealthStatusError,
@@ -3516,7 +3544,8 @@ func TestCheckHealth(t *testing.T) {
 		},
 		{
 			name:           "cloud deployment without API key",
-			jsonData:       `{"cubeApiUrl": "http://localhost:4000", "deploymentType": "cloud"}`,
+			sourceURL:      "http://localhost:4000",
+			jsonData:       `{"deploymentType": "cloud"}`,
 			secureJsonData: map[string]string{},
 			mockServer:     false,
 			expectedStatus: backend.HealthStatusError,
@@ -3524,7 +3553,8 @@ func TestCheckHealth(t *testing.T) {
 		},
 		{
 			name:           "self-hosted deployment without API secret",
-			jsonData:       `{"cubeApiUrl": "http://localhost:4000", "deploymentType": "self-hosted"}`,
+			sourceURL:      "http://localhost:4000",
+			jsonData:       `{"deploymentType": "self-hosted"}`,
 			secureJsonData: map[string]string{},
 			mockServer:     false,
 			expectedStatus: backend.HealthStatusError,
@@ -3532,7 +3562,8 @@ func TestCheckHealth(t *testing.T) {
 		},
 		{
 			name:           "unknown deployment type",
-			jsonData:       `{"cubeApiUrl": "http://localhost:4000", "deploymentType": "unknown"}`,
+			sourceURL:      "http://localhost:4000",
+			jsonData:       `{"deploymentType": "unknown"}`,
 			secureJsonData: map[string]string{},
 			mockServer:     false,
 			expectedStatus: backend.HealthStatusError,
@@ -3540,7 +3571,8 @@ func TestCheckHealth(t *testing.T) {
 		},
 		{
 			name:           "invalid cube API URL",
-			jsonData:       `{"cubeApiUrl": "://invalid-url", "deploymentType": "self-hosted-dev"}`,
+			sourceURL:      "://invalid-url",
+			jsonData:       `{"deploymentType": "self-hosted-dev"}`,
 			secureJsonData: map[string]string{},
 			mockServer:     false,
 			expectedStatus: backend.HealthStatusError,
@@ -3548,7 +3580,8 @@ func TestCheckHealth(t *testing.T) {
 		},
 		{
 			name:           "URL without protocol scheme should fail",
-			jsonData:       `{"cubeApiUrl": "localhost:4000", "deploymentType": "self-hosted-dev"}`,
+			sourceURL:      "localhost:4000",
+			jsonData:       `{"deploymentType": "self-hosted-dev"}`,
 			secureJsonData: map[string]string{},
 			mockServer:     false,
 			expectedStatus: backend.HealthStatusError,
@@ -3556,7 +3589,7 @@ func TestCheckHealth(t *testing.T) {
 		},
 		{
 			name:           "self-hosted-dev successful connection, no data model",
-			jsonData:       `{"cubeApiUrl": "%s", "deploymentType": "self-hosted-dev"}`,
+			jsonData:       `{"deploymentType": "self-hosted-dev"}`,
 			secureJsonData: map[string]string{},
 			mockServer:     true,
 			mockResponse:   http.StatusOK,
@@ -3565,7 +3598,7 @@ func TestCheckHealth(t *testing.T) {
 		},
 		{
 			name:           "cloud successful connection, no data model",
-			jsonData:       `{"cubeApiUrl": "%s", "deploymentType": "cloud"}`,
+			jsonData:       `{"deploymentType": "cloud"}`,
 			secureJsonData: map[string]string{"apiKey": "test-api-key"},
 			mockServer:     true,
 			mockResponse:   http.StatusOK,
@@ -3574,7 +3607,7 @@ func TestCheckHealth(t *testing.T) {
 		},
 		{
 			name:           "successful connection with existing data model",
-			jsonData:       `{"cubeApiUrl": "%s", "deploymentType": "self-hosted"}`,
+			jsonData:       `{"deploymentType": "self-hosted"}`,
 			secureJsonData: map[string]string{"apiSecret": "test-api-secret"},
 			mockServer:     true,
 			mockResponse:   http.StatusOK,
@@ -3585,7 +3618,7 @@ func TestCheckHealth(t *testing.T) {
 		},
 		{
 			name:           "self-hosted successful connection with auth verification",
-			jsonData:       `{"cubeApiUrl": "%s", "deploymentType": "self-hosted"}`,
+			jsonData:       `{"deploymentType": "self-hosted"}`,
 			secureJsonData: map[string]string{"apiSecret": "test-api-secret"},
 			mockServer:     true,
 			mockResponse:   http.StatusOK,
@@ -3594,7 +3627,7 @@ func TestCheckHealth(t *testing.T) {
 		},
 		{
 			name:           "authentication failure - unauthorized",
-			jsonData:       `{"cubeApiUrl": "%s", "deploymentType": "cloud"}`,
+			jsonData:       `{"deploymentType": "cloud"}`,
 			secureJsonData: map[string]string{"apiKey": "invalid-key"},
 			mockServer:     true,
 			mockResponse:   http.StatusUnauthorized,
@@ -3603,7 +3636,7 @@ func TestCheckHealth(t *testing.T) {
 		},
 		{
 			name:           "authentication failure - forbidden",
-			jsonData:       `{"cubeApiUrl": "%s", "deploymentType": "self-hosted"}`,
+			jsonData:       `{"deploymentType": "self-hosted"}`,
 			secureJsonData: map[string]string{"apiSecret": "invalid-secret"},
 			mockServer:     true,
 			mockResponse:   http.StatusForbidden,
@@ -3612,7 +3645,7 @@ func TestCheckHealth(t *testing.T) {
 		},
 		{
 			name:           "cube API error response",
-			jsonData:       `{"cubeApiUrl": "%s", "deploymentType": "self-hosted-dev"}`,
+			jsonData:       `{"deploymentType": "self-hosted-dev"}`,
 			secureJsonData: map[string]string{},
 			mockServer:     true,
 			mockResponse:   http.StatusInternalServerError,
@@ -3624,17 +3657,14 @@ func TestCheckHealth(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var server *httptest.Server
-			var jsonData string
+			sourceURL := tt.sourceURL
 
 			if tt.mockServer {
-				// Create mock Cube API server
 				server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					// Verify the endpoint is /cubejs-api/v1/meta
 					if !strings.HasSuffix(r.URL.Path, "/cubejs-api/v1/meta") {
 						t.Errorf("Expected /cubejs-api/v1/meta endpoint, got %s", r.URL.Path)
 					}
 
-					// Verify Authorization header for authenticated deployment types
 					if tt.secureJsonData["apiKey"] != "" || tt.secureJsonData["apiSecret"] != "" {
 						authHeader := r.Header.Get("Authorization")
 						if authHeader == "" && tt.mockResponse == http.StatusOK {
@@ -3658,11 +3688,7 @@ func TestCheckHealth(t *testing.T) {
 					}
 				}))
 				defer server.Close()
-
-				// Replace %s in jsonData with server URL
-				jsonData = strings.Replace(tt.jsonData, "%s", server.URL, 1)
-			} else {
-				jsonData = tt.jsonData
+				sourceURL = server.URL
 			}
 
 			ds := &Datasource{}
@@ -3670,7 +3696,8 @@ func TestCheckHealth(t *testing.T) {
 			req := &backend.CheckHealthRequest{
 				PluginContext: backend.PluginContext{
 					DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-						JSONData:                []byte(jsonData),
+						URL:                     sourceURL,
+						JSONData:                []byte(tt.jsonData),
 						DecryptedSecureJSONData: tt.secureJsonData,
 					},
 				},
@@ -3702,7 +3729,8 @@ func TestCheckHealthConnectionFailure(t *testing.T) {
 	req := &backend.CheckHealthRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData:                []byte(`{"cubeApiUrl": "http://localhost:9999", "deploymentType": "self-hosted-dev"}`),
+				URL:                     "http://localhost:9999",
+				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
 				DecryptedSecureJSONData: map[string]string{},
 			},
 		},
@@ -4029,7 +4057,8 @@ func TestConvertTimeDimensionsIntegration(t *testing.T) {
 		&backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					JSONData: []byte(`{"cubeApiUrl": "` + server.URL + `", "deploymentType": "self-hosted-dev"}`),
+					URL:      server.URL,
+					JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
 				},
 			},
 			Queries: []backend.DataQuery{
