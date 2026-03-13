@@ -223,7 +223,7 @@ mage -l
 # Production build
 npm run build
 
-# Alternative Docker setup (without auto-reload)
+# Build frontend + start all services (auto-builds before compose)
 npm run server
 ```
 
