@@ -429,8 +429,8 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Cube DS, via 'Generate data model' button",
-  "uid": "cube-ds-via-generate-data-model-button",
+  "title": "CubeDS e-commerce: Generated Data Model",
+  "uid": "cubeds-ecom-generated-data-model",
   "version": 2,
   "weekStart": ""
 }

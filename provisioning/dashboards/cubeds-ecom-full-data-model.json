@@ -964,8 +964,8 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Cube Datasource PoC",
-  "uid": "cube-datasource-poc",
+  "title": "CubeDS e-commerce: Full Data Model",
+  "uid": "cubeds-ecom-full-data-model",
   "version": 4,
   "weekStart": ""
 }

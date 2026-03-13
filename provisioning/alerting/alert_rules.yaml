@@ -77,13 +77,13 @@ groups:
               maxDataPoints: 43200
               refId: C
               type: threshold
-        dashboardUid: cube-datasource-poc
+        dashboardUid: cubeds-ecom-full-data-model
         panelId: 2
         noDataState: NoData
         execErrState: Error
         for: 1m
         annotations:
-          __dashboardUid__: cube-datasource-poc
+          __dashboardUid__: cubeds-ecom-full-data-model
           __panelId__: '2'
         labels: {}
         isPaused: false
