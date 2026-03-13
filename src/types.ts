@@ -99,6 +99,17 @@ export function isCubeOrFilter(item: CubeFilterItem): item is CubeOrFilter {
   return 'or' in item;
 }
 
+/**
+ * Pattern to detect Grafana template variables in filter values.
+ * Matches: $var, ${var}, ${var:format}, [[var]]
+ */
+const TEMPLATE_VARIABLE_PATTERN = /(?:\$(?:[a-zA-Z_]\w*|\{[a-zA-Z_]\w*(?::[^}]+)?\})|\[\[[^\]]+\]\])/;
+
+/** Checks if a CubeFilter contains template variable values (e.g., $var, ${var}, [[var]]). */
+export function filterHasTemplateVariables(filter: CubeFilter): boolean {
+  return filter.values?.some((v) => TEMPLATE_VARIABLE_PATTERN.test(v)) ?? false;
+}
+
 export interface CubeQuery extends DataQuery {
   dimensions?: string[];
   measures?: string[];

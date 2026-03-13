@@ -1,6 +1,4 @@
-import { CubeFilterItem, CubeQuery, VISUAL_BUILDER_OPERATORS, isCubeFilter, isCubeAndFilter, isCubeOrFilter } from '../types';
-
-const TEMPLATE_VARIABLE_PATTERN = /(?:\$(?:[a-zA-Z_]\w*|\{[a-zA-Z_]\w*(?::[^}]+)?\})|\[\[[^\]]+\]\])/;
+import { CubeFilterItem, CubeQuery, VISUAL_BUILDER_OPERATORS, isCubeFilter, isCubeAndFilter, isCubeOrFilter, filterHasTemplateVariables } from '../types';
 
 /**
  * Detects query features that the visual builder cannot represent.
@@ -103,7 +101,7 @@ function collectAdvancedOperators(filters: CubeFilterItem[]): string[] {
 function hasTemplateVariableInFilterValues(filters: CubeFilterItem[]): boolean {
   for (const item of filters) {
     if (isCubeFilter(item)) {
-      if (item.values?.some((v) => TEMPLATE_VARIABLE_PATTERN.test(v))) {
+      if (filterHasTemplateVariables(item)) {
         return true;
       }
     } else if (isCubeAndFilter(item)) {

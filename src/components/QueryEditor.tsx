@@ -4,7 +4,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataSource } from '../datasource';
-import { CubeDataSourceOptions, CubeQuery, CubeFilter, isCubeFilter, VISUAL_BUILDER_OPERATORS } from '../types';
+import { CubeDataSourceOptions, CubeQuery, CubeFilter, isCubeFilter, VISUAL_BUILDER_OPERATORS, filterHasTemplateVariables } from '../types';
 import { SQLPreview } from './SQLPreview';
 import { useMetadataQuery, useCompiledSqlQuery, MetadataOption } from 'queries';
 import { OrderBy } from './OrderBy/OrderBy';
@@ -182,7 +182,7 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
       >
         <FilterField
           filters={query.filters?.filter(
-            (f): f is CubeFilter => isCubeFilter(f) && VISUAL_BUILDER_OPERATORS.has(f.operator)
+            (f): f is CubeFilter => isCubeFilter(f) && VISUAL_BUILDER_OPERATORS.has(f.operator) && !filterHasTemplateVariables(f)
           )}
           dimensions={metadata.dimensions}
           onChange={onFiltersChange}
