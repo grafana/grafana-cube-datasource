@@ -18,6 +18,32 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+func newTestPluginContext(url string) backend.PluginContext {
+	return backend.PluginContext{
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+			URL:      url,
+			JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
+		},
+	}
+}
+
+func callHandler(t *testing.T, fn func(context.Context, *backend.CallResourceRequest, backend.CallResourceResponseSender) error, req *backend.CallResourceRequest) *backend.CallResourceResponse {
+	return callHandlerWithContext(context.Background(), t, fn, req)
+}
+
+func callHandlerWithContext(ctx context.Context, t *testing.T, fn func(context.Context, *backend.CallResourceRequest, backend.CallResourceResponseSender) error, req *backend.CallResourceRequest) *backend.CallResourceResponse {
+	t.Helper()
+	var resp *backend.CallResourceResponse
+	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+		resp = res
+		return nil
+	})
+	if err := fn(ctx, req, sender); err != nil {
+		t.Fatalf("Handler returned error: %v", err)
+	}
+	return resp
+}
+
 func TestJSONErrorResponseEscapesSpecialCharacters(t *testing.T) {
 	specialErr := errors.New("error with \"quotes\", backslash \\\\, and newline\nhere")
 	response := jsonErrorResponse(http.StatusInternalServerError, specialErr)
@@ -77,12 +103,7 @@ func TestQueryData(t *testing.T) {
 	resp, err := ds.QueryData(
 		context.Background(),
 		&backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					URL:      server.URL,
-					JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-				},
-			},
+			PluginContext: newTestPluginContext(server.URL),
 			Queries: []backend.DataQuery{
 				{RefID: "A", JSON: []byte(query)},
 			},
@@ -174,12 +195,7 @@ func TestQueryDataWithCubeQuery(t *testing.T) {
 	resp, err := ds.QueryData(
 		context.Background(),
 		&backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					URL:      server.URL,
-					JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-				},
-			},
+			PluginContext: newTestPluginContext(server.URL),
 			Queries: []backend.DataQuery{
 				{RefID: "B", JSON: queryJSON},
 			},
@@ -266,12 +282,7 @@ func TestQueryDataContinueWaitThenSuccess(t *testing.T) {
 	resp, err := ds.QueryData(
 		context.Background(),
 		&backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					URL:      server.URL,
-					JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-				},
-			},
+			PluginContext: newTestPluginContext(server.URL),
 			Queries: []backend.DataQuery{
 				{RefID: "A", JSON: queryJSON},
 			},
@@ -320,12 +331,7 @@ func TestQueryDataContinueWaitContextCancelled(t *testing.T) {
 	resp, err := ds.QueryData(
 		ctx,
 		&backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					URL:      server.URL,
-					JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-				},
-			},
+			PluginContext: newTestPluginContext(server.URL),
 			Queries: []backend.DataQuery{
 				{RefID: "A", JSON: queryJSON},
 			},
@@ -369,12 +375,7 @@ func TestQueryDataHTTPTimeoutWrapped(t *testing.T) {
 	resp, err := ds.QueryData(
 		ctx,
 		&backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					URL:      server.URL,
-					JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-				},
-			},
+			PluginContext: newTestPluginContext(server.URL),
 			Queries: []backend.DataQuery{
 				{RefID: "A", JSON: queryJSON},
 			},
@@ -389,7 +390,6 @@ func TestQueryDataHTTPTimeoutWrapped(t *testing.T) {
 		t.Fatal("Expected an error when HTTP request times out")
 	}
 
-	// The error should mention "timed out" — not just raw "context deadline exceeded"
 	errMsg := result.Error.Error()
 	if !strings.Contains(errMsg, "timed out") {
 		t.Errorf("Expected timeout error to mention 'timed out', got: %s", errMsg)
@@ -419,12 +419,7 @@ func TestQueryDataContinueWaitCancelledIncludesElapsedTime(t *testing.T) {
 	resp, err := ds.QueryData(
 		ctx,
 		&backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					URL:      server.URL,
-					JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-				},
-			},
+			PluginContext: newTestPluginContext(server.URL),
 			Queries: []backend.DataQuery{
 				{RefID: "A", JSON: queryJSON},
 			},
@@ -440,11 +435,9 @@ func TestQueryDataContinueWaitCancelledIncludesElapsedTime(t *testing.T) {
 	}
 
 	errMsg := result.Error.Error()
-	// Should mention the elapsed time from Cube's response
 	if !strings.Contains(errMsg, "25") {
 		t.Errorf("Expected error to include timeElapsed (25), got: %s", errMsg)
 	}
-	// Should mention the stage
 	if !strings.Contains(errMsg, "Executing query") {
 		t.Errorf("Expected error to include stage ('Executing query'), got: %s", errMsg)
 	}
@@ -542,12 +535,7 @@ func TestQueryDataWithMultipleDimensions(t *testing.T) {
 	resp, err := ds.QueryData(
 		context.Background(),
 		&backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					URL:      server.URL,
-					JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-				},
-			},
+			PluginContext: newTestPluginContext(server.URL),
 			Queries: []backend.DataQuery{
 				{RefID: "C", JSON: queryJSON},
 			},
@@ -641,12 +629,7 @@ func TestQueryDataWithAllNullColumn(t *testing.T) {
 			resp, err := ds.QueryData(
 				context.Background(),
 				&backend.QueryDataRequest{
-					PluginContext: backend.PluginContext{
-						DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-							URL:      server.URL,
-							JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-						},
-					},
+					PluginContext: newTestPluginContext(server.URL),
 					Queries: []backend.DataQuery{
 						{RefID: "A", JSON: queryJSON},
 					},
@@ -719,12 +702,7 @@ func TestQueryDataWithAllColumnsNull(t *testing.T) {
 	resp, err := ds.QueryData(
 		context.Background(),
 		&backend.QueryDataRequest{
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					URL:      server.URL,
-					JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-				},
-			},
+			PluginContext: newTestPluginContext(server.URL),
 			Queries: []backend.DataQuery{
 				{RefID: "A", JSON: queryJSON},
 			},
@@ -829,12 +807,7 @@ func TestQueryDataWithOrderField(t *testing.T) {
 	})
 
 	resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:      server.URL,
-				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 		Queries: []backend.DataQuery{{RefID: "A", JSON: queryJSON}},
 	})
 	if err != nil {
@@ -888,38 +861,22 @@ func TestHandleSQLCompilation(t *testing.T) {
 
 	// Create a mock request with the SQL compilation path
 	req := &backend.CallResourceRequest{
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:      server.URL,
-				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 		Path:   "sql",
 		Method: "GET",
 		URL:    "/sql?query=" + `{"measures":["orders.count"],"dimensions":["orders.users_city"]}`,
 	}
 
-	// Create a response sender to capture the response
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
-
-	// Call the handler
-	err := ds.handleSQLCompilation(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
+	resp := callHandler(t, ds.handleSQLCompilation, req)
 
 	// Verify we got a successful response
-	if capturedResponse.Status != 200 {
-		t.Fatalf("Expected status 200, got %d. Response: %s", capturedResponse.Status, string(capturedResponse.Body))
+	if resp.Status != 200 {
+		t.Fatalf("Expected status 200, got %d. Response: %s", resp.Status, string(resp.Body))
 	}
 
 	// Parse the response and verify it contains the SQL
 	var sqlResponse map[string]string
-	if err := json.Unmarshal(capturedResponse.Body, &sqlResponse); err != nil {
+	if err := json.Unmarshal(resp.Body, &sqlResponse); err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
@@ -940,38 +897,22 @@ func TestHandleSQLCompilationInvalidJSON(t *testing.T) {
 
 	// Create a mock request with invalid JSON
 	req := &backend.CallResourceRequest{
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:      server.URL,
-				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 		Path:   "sql",
 		Method: "GET",
 		URL:    "/sql?query=invalid-json",
 	}
 
-	// Create a response sender to capture the response
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
-
-	// Call the handler
-	err := ds.handleSQLCompilation(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
+	resp := callHandler(t, ds.handleSQLCompilation, req)
 
 	// Verify we got a 400 error for invalid JSON
-	if capturedResponse.Status != 400 {
-		t.Fatalf("Expected status 400, got %d", capturedResponse.Status)
+	if resp.Status != 400 {
+		t.Fatalf("Expected status 400, got %d", resp.Status)
 	}
 
 	// Verify error message
 	var errorResponse map[string]string
-	if err := json.Unmarshal(capturedResponse.Body, &errorResponse); err != nil {
+	if err := json.Unmarshal(resp.Body, &errorResponse); err != nil {
 		t.Fatalf("Failed to parse error response: %v", err)
 	}
 
@@ -983,40 +924,21 @@ func TestHandleSQLCompilationInvalidJSON(t *testing.T) {
 func TestHandleSQLCompilationMissingQuery(t *testing.T) {
 	ds := Datasource{}
 
-	// Create a mock request without query parameter
 	req := &backend.CallResourceRequest{
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:      "http://localhost:4000",
-				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-			},
-		},
-		Path:   "sql",
-		Method: "GET",
-		URL:    "/sql",
+		PluginContext: newTestPluginContext("http://localhost:4000"),
+		Path:          "sql",
+		Method:        "GET",
+		URL:           "/sql",
 	}
 
-	// Create a response sender to capture the response
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
+	resp := callHandler(t, ds.handleSQLCompilation, req)
 
-	// Call the handler
-	err := ds.handleSQLCompilation(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
+	if resp.Status != 400 {
+		t.Fatalf("Expected status 400, got %d", resp.Status)
 	}
 
-	// Verify we got a 400 error for missing query
-	if capturedResponse.Status != 400 {
-		t.Fatalf("Expected status 400, got %d", capturedResponse.Status)
-	}
-
-	// Verify error message
 	var errorResponse map[string]string
-	if err := json.Unmarshal(capturedResponse.Body, &errorResponse); err != nil {
+	if err := json.Unmarshal(resp.Body, &errorResponse); err != nil {
 		t.Fatalf("Failed to parse error response: %v", err)
 	}
 
@@ -1229,42 +1151,25 @@ func TestHandleMetadata(t *testing.T) {
 		Path:   "metadata",
 		Method: "GET",
 		URL:    "/metadata",
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:                     server.URL,
-				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
-				DecryptedSecureJSONData: map[string]string{},
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 	}
 
-	// Create a response sender to capture the response
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
-
-	// Call the handler
-	err := ds.handleMetadata(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
+	resp := callHandler(t, ds.handleMetadata, req)
 
 	// Verify we got a successful response
-	if capturedResponse.Status != 200 {
-		t.Fatalf("Expected status 200, got %d. Response: %s", capturedResponse.Status, string(capturedResponse.Body))
+	if resp.Status != 200 {
+		t.Fatalf("Expected status 200, got %d. Response: %s", resp.Status, string(resp.Body))
 	}
 
 	// Parse the response and verify it contains the expected metadata
 	var metadata MetadataResponse
-	if err := json.Unmarshal(capturedResponse.Body, &metadata); err != nil {
+	if err := json.Unmarshal(resp.Body, &metadata); err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
 	// Also verify that the raw JSON contains the Type field by parsing as generic JSON
 	var genericResponse map[string]interface{}
-	if err := json.Unmarshal(capturedResponse.Body, &genericResponse); err != nil {
+	if err := json.Unmarshal(resp.Body, &genericResponse); err != nil {
 		t.Fatalf("Failed to parse response as generic JSON: %v", err)
 	}
 
@@ -1504,7 +1409,7 @@ func TestBuildAPIURL(t *testing.T) {
 				if err == nil {
 					t.Fatalf("Expected error but got none")
 				}
-				if tt.errorContains != "" && !containsString(err.Error(), tt.errorContains) {
+				if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
 					t.Fatalf("Expected error to contain '%s', got '%s'", tt.errorContains, err.Error())
 				}
 				return
@@ -1533,16 +1438,6 @@ func TestBuildAPIURL(t *testing.T) {
 			}
 		})
 	}
-}
-
-// Helper function to check if a string contains a substring
-func containsString(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
 
 func TestQueryDataWithInvalidURL(t *testing.T) {
@@ -1577,7 +1472,7 @@ func TestQueryDataWithInvalidURL(t *testing.T) {
 		t.Fatalf("Expected error response, got none")
 	}
 
-	if !containsString(response.Error.Error(), "Cube API URL is required") {
+	if !strings.Contains(response.Error.Error(), "Cube API URL is required") {
 		t.Fatalf("Expected error about URL not configured, got: %s", response.Error.Error())
 	}
 }
@@ -1625,36 +1520,19 @@ func TestHandleTagValues(t *testing.T) {
 		Path:   "tag-values",
 		Method: "GET",
 		URL:    "/tag-values?key=orders.status",
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:                     server.URL,
-				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
-				DecryptedSecureJSONData: map[string]string{},
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 	}
 
-	// Create a response sender to capture the response
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
-
-	// Call the handler
-	err := ds.handleTagValues(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
+	resp := callHandler(t, ds.handleTagValues, req)
 
 	// Verify we got a successful response
-	if capturedResponse.Status != 200 {
-		t.Fatalf("Expected status 200, got %d. Response: %s", capturedResponse.Status, string(capturedResponse.Body))
+	if resp.Status != 200 {
+		t.Fatalf("Expected status 200, got %d. Response: %s", resp.Status, string(resp.Body))
 	}
 
 	// Parse the response and verify it contains the expected tag values
 	var tagValues []TagValue
-	if err := json.Unmarshal(capturedResponse.Body, &tagValues); err != nil {
+	if err := json.Unmarshal(resp.Body, &tagValues); err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
@@ -1713,32 +1591,17 @@ func TestHandleTagValuesWithDuplicates(t *testing.T) {
 		Path:   "tag-values",
 		Method: "GET",
 		URL:    "/tag-values?key=orders.status",
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:                     server.URL,
-				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
-				DecryptedSecureJSONData: map[string]string{},
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
+	resp := callHandler(t, ds.handleTagValues, req)
 
-	err := ds.handleTagValues(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
-
-	if capturedResponse.Status != 200 {
-		t.Fatalf("Expected status 200, got %d", capturedResponse.Status)
+	if resp.Status != 200 {
+		t.Fatalf("Expected status 200, got %d", resp.Status)
 	}
 
 	var tagValues []TagValue
-	if err := json.Unmarshal(capturedResponse.Body, &tagValues); err != nil {
+	if err := json.Unmarshal(resp.Body, &tagValues); err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
@@ -1751,34 +1614,17 @@ func TestHandleTagValuesWithDuplicates(t *testing.T) {
 func TestHandleTagValuesMissingKey(t *testing.T) {
 	ds := Datasource{}
 
-	// Request without key parameter
 	req := &backend.CallResourceRequest{
-		Path:   "tag-values",
-		Method: "GET",
-		URL:    "/tag-values", // No key parameter
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:                     "http://example.com",
-				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
-				DecryptedSecureJSONData: map[string]string{},
-			},
-		},
+		Path:         "tag-values",
+		Method:       "GET",
+		URL:          "/tag-values",
+		PluginContext: newTestPluginContext("http://example.com"),
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
+	resp := callHandler(t, ds.handleTagValues, req)
 
-	err := ds.handleTagValues(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
-
-	// Should return 400 for missing key
-	if capturedResponse.Status != 400 {
-		t.Fatalf("Expected status 400, got %d. Response: %s", capturedResponse.Status, string(capturedResponse.Body))
+	if resp.Status != 400 {
+		t.Fatalf("Expected status 400, got %d. Response: %s", resp.Status, string(resp.Body))
 	}
 }
 
@@ -1806,32 +1652,17 @@ func TestHandleTagValuesWithNumericValues(t *testing.T) {
 		Path:   "tag-values",
 		Method: "GET",
 		URL:    "/tag-values?key=orders.year",
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:                     server.URL,
-				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
-				DecryptedSecureJSONData: map[string]string{},
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
+	resp := callHandler(t, ds.handleTagValues, req)
 
-	err := ds.handleTagValues(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
-
-	if capturedResponse.Status != 200 {
-		t.Fatalf("Expected status 200, got %d", capturedResponse.Status)
+	if resp.Status != 200 {
+		t.Fatalf("Expected status 200, got %d", resp.Status)
 	}
 
 	var tagValues []TagValue
-	if err := json.Unmarshal(capturedResponse.Body, &tagValues); err != nil {
+	if err := json.Unmarshal(resp.Body, &tagValues); err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
@@ -1887,28 +1718,13 @@ func TestHandleTagValuesWithScopingFilters(t *testing.T) {
 		Path:   "tag-values",
 		Method: "GET",
 		URL:    "/tag-values?key=orders.customer_name&filters=" + encodedFilters,
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:                     server.URL,
-				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
-				DecryptedSecureJSONData: map[string]string{},
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
+	resp := callHandler(t, ds.handleTagValues, req)
 
-	err := ds.handleTagValues(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
-
-	if capturedResponse.Status != 200 {
-		t.Fatalf("Expected status 200, got %d. Response: %s", capturedResponse.Status, string(capturedResponse.Body))
+	if resp.Status != 200 {
+		t.Fatalf("Expected status 200, got %d. Response: %s", resp.Status, string(resp.Body))
 	}
 
 	// Verify the query includes the scoping filters
@@ -1963,40 +1779,25 @@ func TestHandleTagValuesEmptyResponse(t *testing.T) {
 		Path:   "tag-values",
 		Method: "GET",
 		URL:    "/tag-values?key=orders.status",
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:                     server.URL,
-				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
-				DecryptedSecureJSONData: map[string]string{},
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
+	resp := callHandler(t, ds.handleTagValues, req)
 
-	err := ds.handleTagValues(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
-
-	if capturedResponse.Status != 200 {
-		t.Fatalf("Expected status 200, got %d", capturedResponse.Status)
+	if resp.Status != 200 {
+		t.Fatalf("Expected status 200, got %d", resp.Status)
 	}
 
 	// Critical: verify the response is "[]" not "null"
 	// This ensures Grafana AdHoc filter dropdown receives an empty array, not null
-	responseBody := string(capturedResponse.Body)
+	responseBody := string(resp.Body)
 	if responseBody != "[]" {
 		t.Errorf("Expected empty array '[]', got '%s'", responseBody)
 	}
 
 	// Also verify it parses as an empty slice
 	var tagValues []TagValue
-	if err := json.Unmarshal(capturedResponse.Body, &tagValues); err != nil {
+	if err := json.Unmarshal(resp.Body, &tagValues); err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
@@ -2039,28 +1840,13 @@ func TestHandleTagValuesContinueWaitThenSuccess(t *testing.T) {
 		Path:   "tag-values",
 		Method: "GET",
 		URL:    "/tag-values?key=orders.status",
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:                     server.URL,
-				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
-				DecryptedSecureJSONData: map[string]string{},
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
+	resp := callHandler(t, ds.handleTagValues, req)
 
-	err := ds.handleTagValues(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
-
-	if capturedResponse.Status != 200 {
-		t.Fatalf("Expected status 200, got %d. Body: %s", capturedResponse.Status, string(capturedResponse.Body))
+	if resp.Status != 200 {
+		t.Fatalf("Expected status 200, got %d. Body: %s", resp.Status, string(resp.Body))
 	}
 
 	// Verify we actually polled (3 requests total)
@@ -2070,7 +1856,7 @@ func TestHandleTagValuesContinueWaitThenSuccess(t *testing.T) {
 
 	// Verify correct tag values were returned
 	var tagValues []TagValue
-	if err := json.Unmarshal(capturedResponse.Body, &tagValues); err != nil {
+	if err := json.Unmarshal(resp.Body, &tagValues); err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 	if len(tagValues) != 2 {
@@ -2095,37 +1881,21 @@ func TestHandleTagValuesContinueWaitContextCancelled(t *testing.T) {
 		Path:   "tag-values",
 		Method: "GET",
 		URL:    "/tag-values?key=orders.status",
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:                     server.URL,
-				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
-				DecryptedSecureJSONData: map[string]string{},
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
-
-	// Create a context that cancels after a short time
 	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
 
-	err := ds.handleTagValues(ctx, req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
+	resp := callHandlerWithContext(ctx, t, ds.handleTagValues, req)
 
 	// The response should be an error because we cancelled while waiting
-	if capturedResponse.Status != 500 {
-		t.Fatalf("Expected status 500 (context cancelled), got %d. Body: %s", capturedResponse.Status, string(capturedResponse.Body))
+	if resp.Status != 500 {
+		t.Fatalf("Expected status 500 (context cancelled), got %d. Body: %s", resp.Status, string(resp.Body))
 	}
 
 	// The context expired via WithTimeout (deadline), so the message should say "timed out"
-	responseBody := string(capturedResponse.Body)
+	responseBody := string(resp.Body)
 	if !strings.Contains(responseBody, "timed out") {
 		t.Errorf("Expected error about timeout, got: %s", responseBody)
 	}
@@ -2148,31 +1918,16 @@ func TestHandleTagValuesForwardsCubeErrorStatusAndBody(t *testing.T) {
 		Path:   "tag-values",
 		Method: "GET",
 		URL:    "/tag-values?key=orders.status",
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:                     server.URL,
-				JSONData:                []byte(`{"deploymentType": "self-hosted-dev"}`),
-				DecryptedSecureJSONData: map[string]string{},
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
+	resp := callHandler(t, ds.handleTagValues, req)
 
-	err := ds.handleTagValues(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
+	if resp.Status != http.StatusTooManyRequests {
+		t.Fatalf("Expected status %d, got %d. Body: %s", http.StatusTooManyRequests, resp.Status, string(resp.Body))
 	}
-
-	if capturedResponse.Status != http.StatusTooManyRequests {
-		t.Fatalf("Expected status %d, got %d. Body: %s", http.StatusTooManyRequests, capturedResponse.Status, string(capturedResponse.Body))
-	}
-	if strings.TrimSpace(string(capturedResponse.Body)) != expectedBody {
-		t.Fatalf("Expected body %s, got %s", expectedBody, string(capturedResponse.Body))
+	if strings.TrimSpace(string(resp.Body)) != expectedBody {
+		t.Fatalf("Expected body %s, got %s", expectedBody, string(resp.Body))
 	}
 }
 
@@ -2191,7 +1946,7 @@ func TestFetchCubeMetadataWithInvalidURL(t *testing.T) {
 		t.Fatalf("Expected error, got none")
 	}
 
-	if !containsString(err.Error(), "Cube API URL is required") {
+	if !strings.Contains(err.Error(), "Cube API URL is required") {
 		t.Fatalf("Expected error about URL not configured, got: %s", err.Error())
 	}
 }
@@ -2210,29 +1965,20 @@ func TestHandleSQLCompilationWithInvalidURL(t *testing.T) {
 		URL:    "/sql?query=" + `{"measures":["orders.count"]}`,
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
-
-	err := ds.handleSQLCompilation(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
+	resp := callHandler(t, ds.handleSQLCompilation, req)
 
 	// Verify we got a 500 error response (server configuration issue)
-	if capturedResponse.Status != 500 {
-		t.Fatalf("Expected status 500, got %d", capturedResponse.Status)
+	if resp.Status != 500 {
+		t.Fatalf("Expected status 500, got %d", resp.Status)
 	}
 
 	// Verify error message
 	var errorResponse map[string]string
-	if err := json.Unmarshal(capturedResponse.Body, &errorResponse); err != nil {
+	if err := json.Unmarshal(resp.Body, &errorResponse); err != nil {
 		t.Fatalf("Failed to parse error response: %v", err)
 	}
 
-	if !containsString(errorResponse["error"], "Cube API URL is required") {
+	if !strings.Contains(errorResponse["error"], "Cube API URL is required") {
 		t.Fatalf("Expected error about URL not configured, got: %s", errorResponse["error"])
 	}
 }
@@ -2291,35 +2037,21 @@ func TestHandleModelFiles(t *testing.T) {
 	ds := &Datasource{BaseURL: server.URL}
 
 	req := &backend.CallResourceRequest{
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:      server.URL,
-				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 		Path:   "model-files",
 		Method: "GET",
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
-
-	err := ds.handleModelFiles(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
+	resp := callHandler(t, ds.handleModelFiles, req)
 
 	// Verify we got a 200 response
-	if capturedResponse.Status != 200 {
-		t.Fatalf("Expected status 200, got %d", capturedResponse.Status)
+	if resp.Status != 200 {
+		t.Fatalf("Expected status 200, got %d", resp.Status)
 	}
 
 	// Parse and verify the response
 	var modelFilesResponse ModelFilesResponse
-	if err := json.Unmarshal(capturedResponse.Body, &modelFilesResponse); err != nil {
+	if err := json.Unmarshal(resp.Body, &modelFilesResponse); err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
@@ -2402,35 +2134,21 @@ func TestHandleDbSchema(t *testing.T) {
 	ds := &Datasource{BaseURL: server.URL}
 
 	req := &backend.CallResourceRequest{
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:      server.URL,
-				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 		Path:   "db-schema",
 		Method: "GET",
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
-
-	err := ds.handleDbSchema(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
+	resp := callHandler(t, ds.handleDbSchema, req)
 
 	// Verify we got a 200 response
-	if capturedResponse.Status != 200 {
-		t.Fatalf("Expected status 200, got %d", capturedResponse.Status)
+	if resp.Status != 200 {
+		t.Fatalf("Expected status 200, got %d", resp.Status)
 	}
 
 	// Parse and verify the response
 	var dbSchemaResponse DbSchemaResponse
-	if err := json.Unmarshal(capturedResponse.Body, &dbSchemaResponse); err != nil {
+	if err := json.Unmarshal(resp.Body, &dbSchemaResponse); err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
@@ -2472,35 +2190,21 @@ func TestHandleDbSchemaWithAPIError(t *testing.T) {
 	ds := &Datasource{BaseURL: server.URL}
 
 	req := &backend.CallResourceRequest{
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:      server.URL,
-				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 		Path:   "db-schema",
 		Method: "GET",
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
-
-	err := ds.handleDbSchema(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
+	resp := callHandler(t, ds.handleDbSchema, req)
 
 	// Verify we got a 500 response
-	if capturedResponse.Status != 500 {
-		t.Fatalf("Expected status 500, got %d", capturedResponse.Status)
+	if resp.Status != 500 {
+		t.Fatalf("Expected status 500, got %d", resp.Status)
 	}
 
 	// Verify error message
 	var errorResponse map[string]string
-	if err := json.Unmarshal(capturedResponse.Body, &errorResponse); err != nil {
+	if err := json.Unmarshal(resp.Body, &errorResponse); err != nil {
 		t.Fatalf("Failed to parse error response: %v", err)
 	}
 
@@ -2522,35 +2226,21 @@ func TestHandleDbSchemaWithInvalidJSON(t *testing.T) {
 	ds := &Datasource{BaseURL: server.URL}
 
 	req := &backend.CallResourceRequest{
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:      server.URL,
-				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 		Path:   "db-schema",
 		Method: "GET",
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
-
-	err := ds.handleDbSchema(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
+	resp := callHandler(t, ds.handleDbSchema, req)
 
 	// Verify we got a 500 response
-	if capturedResponse.Status != 500 {
-		t.Fatalf("Expected status 500, got %d", capturedResponse.Status)
+	if resp.Status != 500 {
+		t.Fatalf("Expected status 500, got %d", resp.Status)
 	}
 
 	// Verify error message
 	var errorResponse map[string]string
-	if err := json.Unmarshal(capturedResponse.Body, &errorResponse); err != nil {
+	if err := json.Unmarshal(resp.Body, &errorResponse); err != nil {
 		t.Fatalf("Failed to parse error response: %v", err)
 	}
 
@@ -2572,25 +2262,16 @@ func TestHandleDbSchemaWithMissingURL(t *testing.T) {
 		Method: "GET",
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
-
-	err := ds.handleDbSchema(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
+	resp := callHandler(t, ds.handleDbSchema, req)
 
 	// Verify we got a 500 response
-	if capturedResponse.Status != 500 {
-		t.Fatalf("Expected status 500, got %d", capturedResponse.Status)
+	if resp.Status != 500 {
+		t.Fatalf("Expected status 500, got %d", resp.Status)
 	}
 
 	// Verify error message
 	var errorResponse map[string]string
-	if err := json.Unmarshal(capturedResponse.Body, &errorResponse); err != nil {
+	if err := json.Unmarshal(resp.Body, &errorResponse); err != nil {
 		t.Fatalf("Failed to parse error response: %v", err)
 	}
 
@@ -2627,36 +2308,22 @@ func TestCallResourceDbSchemaRouting(t *testing.T) {
 	ds := &Datasource{BaseURL: server.URL}
 
 	req := &backend.CallResourceRequest{
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:      server.URL,
-				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 		Path:   "db-schema",
 		Method: "GET",
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
-
 	// Test that CallResource correctly routes to handleDbSchema
-	err := ds.CallResource(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("CallResource returned error: %v", err)
-	}
+	resp := callHandler(t, ds.CallResource, req)
 
 	// Verify we got a 200 response
-	if capturedResponse.Status != 200 {
-		t.Fatalf("Expected status 200, got %d", capturedResponse.Status)
+	if resp.Status != 200 {
+		t.Fatalf("Expected status 200, got %d", resp.Status)
 	}
 
 	// Verify the response contains expected schema data
 	var dbSchemaResponse DbSchemaResponse
-	if err := json.Unmarshal(capturedResponse.Body, &dbSchemaResponse); err != nil {
+	if err := json.Unmarshal(resp.Body, &dbSchemaResponse); err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
@@ -2790,36 +2457,22 @@ func TestHandleGenerateSchema(t *testing.T) {
 	}
 
 	req := &backend.CallResourceRequest{
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:      server.URL,
-				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 		Path:   "generate-schema",
 		Method: "POST",
 		Body:   requestBodyBytes,
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
-
-	err = ds.handleGenerateSchema(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
+	resp := callHandler(t, ds.handleGenerateSchema, req)
 
 	// Verify we got a 200 response
-	if capturedResponse.Status != 200 {
-		t.Fatalf("Expected status 200, got %d", capturedResponse.Status)
+	if resp.Status != 200 {
+		t.Fatalf("Expected status 200, got %d", resp.Status)
 	}
 
 	// Parse and verify the response
 	var generateSchemaResponse GenerateSchemaResponse
-	if err := json.Unmarshal(capturedResponse.Body, &generateSchemaResponse); err != nil {
+	if err := json.Unmarshal(resp.Body, &generateSchemaResponse); err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
@@ -2852,25 +2505,16 @@ func TestHandleGenerateSchemaWithInvalidMethod(t *testing.T) {
 		Method: "GET", // Should be POST
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
-
-	err := ds.handleGenerateSchema(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
+	resp := callHandler(t, ds.handleGenerateSchema, req)
 
 	// Verify we got a 405 response
-	if capturedResponse.Status != 405 {
-		t.Fatalf("Expected status 405, got %d", capturedResponse.Status)
+	if resp.Status != 405 {
+		t.Fatalf("Expected status 405, got %d", resp.Status)
 	}
 
 	// Verify error message
 	var errorResponse map[string]string
-	if err := json.Unmarshal(capturedResponse.Body, &errorResponse); err != nil {
+	if err := json.Unmarshal(resp.Body, &errorResponse); err != nil {
 		t.Fatalf("Failed to parse error response: %v", err)
 	}
 
@@ -2888,25 +2532,16 @@ func TestHandleGenerateSchemaWithInvalidJSON(t *testing.T) {
 		Body:   []byte(`{invalid json`), // Invalid JSON
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
-
-	err := ds.handleGenerateSchema(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
+	resp := callHandler(t, ds.handleGenerateSchema, req)
 
 	// Verify we got a 400 response
-	if capturedResponse.Status != 400 {
-		t.Fatalf("Expected status 400, got %d", capturedResponse.Status)
+	if resp.Status != 400 {
+		t.Fatalf("Expected status 400, got %d", resp.Status)
 	}
 
 	// Verify error message
 	var errorResponse map[string]string
-	if err := json.Unmarshal(capturedResponse.Body, &errorResponse); err != nil {
+	if err := json.Unmarshal(resp.Body, &errorResponse); err != nil {
 		t.Fatalf("Failed to parse error response: %v", err)
 	}
 
@@ -2947,36 +2582,22 @@ func TestHandleGenerateSchemaWithAPIError(t *testing.T) {
 	}
 
 	req := &backend.CallResourceRequest{
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:      server.URL,
-				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 		Path:   "generate-schema",
 		Method: "POST",
 		Body:   requestBodyBytes,
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
-
-	err = ds.handleGenerateSchema(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
+	resp := callHandler(t, ds.handleGenerateSchema, req)
 
 	// Verify we got a 500 response
-	if capturedResponse.Status != 500 {
-		t.Fatalf("Expected status 500, got %d", capturedResponse.Status)
+	if resp.Status != 500 {
+		t.Fatalf("Expected status 500, got %d", resp.Status)
 	}
 
 	// Verify error message
 	var errorResponse map[string]string
-	if err := json.Unmarshal(capturedResponse.Body, &errorResponse); err != nil {
+	if err := json.Unmarshal(resp.Body, &errorResponse); err != nil {
 		t.Fatalf("Failed to parse error response: %v", err)
 	}
 
@@ -3017,36 +2638,22 @@ func TestHandleGenerateSchemaWithInvalidAPIResponse(t *testing.T) {
 	}
 
 	req := &backend.CallResourceRequest{
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:      server.URL,
-				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 		Path:   "generate-schema",
 		Method: "POST",
 		Body:   requestBodyBytes,
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
-
-	err = ds.handleGenerateSchema(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("Handler returned error: %v", err)
-	}
+	resp := callHandler(t, ds.handleGenerateSchema, req)
 
 	// Verify we got a 500 response
-	if capturedResponse.Status != 500 {
-		t.Fatalf("Expected status 500, got %d", capturedResponse.Status)
+	if resp.Status != 500 {
+		t.Fatalf("Expected status 500, got %d", resp.Status)
 	}
 
 	// Verify error message
 	var errorResponse map[string]string
-	if err := json.Unmarshal(capturedResponse.Body, &errorResponse); err != nil {
+	if err := json.Unmarshal(resp.Body, &errorResponse); err != nil {
 		t.Fatalf("Failed to parse error response: %v", err)
 	}
 
@@ -3103,37 +2710,23 @@ func TestCallResourceGenerateSchemaRouting(t *testing.T) {
 	}
 
 	req := &backend.CallResourceRequest{
-		PluginContext: backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				URL:      server.URL,
-				JSONData: []byte(`{"deploymentType": "self-hosted-dev"}`),
-			},
-		},
+		PluginContext: newTestPluginContext(server.URL),
 		Path:   "generate-schema",
 		Method: "POST",
 		Body:   requestBodyBytes,
 	}
 
-	var capturedResponse *backend.CallResourceResponse
-	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		capturedResponse = res
-		return nil
-	})
-
 	// Test that CallResource correctly routes to handleGenerateSchema
-	err = ds.CallResource(context.Background(), req, sender)
-	if err != nil {
-		t.Fatalf("CallResource returned error: %v", err)
-	}
+	resp := callHandler(t, ds.CallResource, req)
 
 	// Verify we got a 200 response
-	if capturedResponse.Status != 200 {
-		t.Fatalf("Expected status 200, got %d", capturedResponse.Status)
+	if resp.Status != 200 {
+		t.Fatalf("Expected status 200, got %d", resp.Status)
 	}
 
 	// Verify the response contains expected schema data
 	var generateSchemaResponse GenerateSchemaResponse
-	if err := json.Unmarshal(capturedResponse.Body, &generateSchemaResponse); err != nil {
+	if err := json.Unmarshal(resp.Body, &generateSchemaResponse); err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
