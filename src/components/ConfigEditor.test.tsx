@@ -17,14 +17,13 @@ const createMockEditorProps = (
       type: 'cube-datasource',
       typeName: 'Cube',
       access: 'proxy',
-      url: '',
+      url: 'http://localhost:4000',
       user: '',
       database: '',
       basicAuth: false,
       basicAuthUser: '',
       isDefault: false,
       jsonData: {
-        cubeApiUrl: 'http://localhost:4000',
         deploymentType: 'self-hosted-dev',
       },
       secureJsonFields: {
@@ -50,12 +49,12 @@ describe('ConfigEditor', () => {
       expect(screen.getByLabelText('Cube API URL')).toBeInTheDocument();
     });
 
-    it('should display existing Cube API URL value', () => {
+    it('should display URL from standard top-level url field', () => {
       const props = createMockEditorProps({
         options: {
           ...createMockEditorProps().options,
+          url: 'https://standard-url.com',
           jsonData: {
-            cubeApiUrl: 'https://my-cube-api.com',
             deploymentType: 'self-hosted-dev',
           },
         },
@@ -63,10 +62,44 @@ describe('ConfigEditor', () => {
       setup(<ConfigEditor {...props} />);
 
       const urlInput = screen.getByLabelText('Cube API URL') as HTMLInputElement;
-      expect(urlInput.value).toBe('https://my-cube-api.com');
+      expect(urlInput.value).toBe('https://standard-url.com');
     });
 
-    it('should call onOptionsChange when URL is modified', () => {
+    it('should fall back to jsonData.cubeApiUrl for backward compatibility', () => {
+      const props = createMockEditorProps({
+        options: {
+          ...createMockEditorProps().options,
+          url: '',
+          jsonData: {
+            cubeApiUrl: 'https://legacy-url.com',
+            deploymentType: 'self-hosted-dev',
+          },
+        },
+      });
+      setup(<ConfigEditor {...props} />);
+
+      const urlInput = screen.getByLabelText('Cube API URL') as HTMLInputElement;
+      expect(urlInput.value).toBe('https://legacy-url.com');
+    });
+
+    it('should prefer top-level url over jsonData.cubeApiUrl', () => {
+      const props = createMockEditorProps({
+        options: {
+          ...createMockEditorProps().options,
+          url: 'https://standard-url.com',
+          jsonData: {
+            cubeApiUrl: 'https://legacy-url.com',
+            deploymentType: 'self-hosted-dev',
+          },
+        },
+      });
+      setup(<ConfigEditor {...props} />);
+
+      const urlInput = screen.getByLabelText('Cube API URL') as HTMLInputElement;
+      expect(urlInput.value).toBe('https://standard-url.com');
+    });
+
+    it('should write to both standard url and jsonData.cubeApiUrl when URL is modified', () => {
       const props = createMockEditorProps();
       setup(<ConfigEditor {...props} />);
 
@@ -75,6 +108,7 @@ describe('ConfigEditor', () => {
 
       expect(props.onOptionsChange).toHaveBeenCalledWith({
         ...props.options,
+        url: 'http://new-url:4000',
         jsonData: {
           ...props.options.jsonData,
           cubeApiUrl: 'http://new-url:4000',
@@ -98,7 +132,6 @@ describe('ConfigEditor', () => {
         options: {
           ...createMockEditorProps().options,
           jsonData: {
-            cubeApiUrl: 'http://localhost:4000',
             // deploymentType not set
           },
         },
@@ -136,7 +169,6 @@ describe('ConfigEditor', () => {
         options: {
           ...createMockEditorProps().options,
           jsonData: {
-            cubeApiUrl: 'http://localhost:4000',
             deploymentType: 'cloud',
           },
         },
@@ -151,7 +183,6 @@ describe('ConfigEditor', () => {
         options: {
           ...createMockEditorProps().options,
           jsonData: {
-            cubeApiUrl: 'http://localhost:4000',
             deploymentType: 'self-hosted',
           },
         },
@@ -166,7 +197,6 @@ describe('ConfigEditor', () => {
         options: {
           ...createMockEditorProps().options,
           jsonData: {
-            cubeApiUrl: 'http://localhost:4000',
             deploymentType: 'cloud',
           },
           secureJsonFields: {
@@ -188,7 +218,6 @@ describe('ConfigEditor', () => {
         options: {
           ...createMockEditorProps().options,
           jsonData: {
-            cubeApiUrl: 'http://localhost:4000',
             deploymentType: 'cloud',
           },
         },
@@ -211,7 +240,6 @@ describe('ConfigEditor', () => {
         options: {
           ...createMockEditorProps().options,
           jsonData: {
-            cubeApiUrl: 'http://localhost:4000',
             deploymentType: 'cloud',
           },
           secureJsonFields: {
@@ -245,7 +273,6 @@ describe('ConfigEditor', () => {
         options: {
           ...createMockEditorProps().options,
           jsonData: {
-            cubeApiUrl: 'http://localhost:4000',
             deploymentType: 'self-hosted',
           },
         },
@@ -260,7 +287,6 @@ describe('ConfigEditor', () => {
         options: {
           ...createMockEditorProps().options,
           jsonData: {
-            cubeApiUrl: 'http://localhost:4000',
             deploymentType: 'cloud',
           },
         },
@@ -275,7 +301,6 @@ describe('ConfigEditor', () => {
         options: {
           ...createMockEditorProps().options,
           jsonData: {
-            cubeApiUrl: 'http://localhost:4000',
             deploymentType: 'self-hosted',
           },
           secureJsonFields: {
@@ -297,7 +322,6 @@ describe('ConfigEditor', () => {
         options: {
           ...createMockEditorProps().options,
           jsonData: {
-            cubeApiUrl: 'http://localhost:4000',
             deploymentType: 'self-hosted',
           },
         },
@@ -320,7 +344,6 @@ describe('ConfigEditor', () => {
         options: {
           ...createMockEditorProps().options,
           jsonData: {
-            cubeApiUrl: 'http://localhost:4000',
             deploymentType: 'self-hosted',
           },
           secureJsonFields: {
@@ -354,7 +377,6 @@ describe('ConfigEditor', () => {
         options: {
           ...createMockEditorProps().options,
           jsonData: {
-            cubeApiUrl: 'http://localhost:4000',
             deploymentType: 'self-hosted-dev',
           },
         },
@@ -371,7 +393,6 @@ describe('ConfigEditor', () => {
         options: {
           ...createMockEditorProps().options,
           jsonData: {
-            cubeApiUrl: 'http://localhost:4000',
             deploymentType: 'self-hosted-dev',
           },
         },
@@ -389,7 +410,6 @@ describe('ConfigEditor', () => {
         options: {
           ...createMockEditorProps().options,
           jsonData: {
-            cubeApiUrl: 'http://localhost:4000',
             deploymentType: 'cloud',
           },
         },
@@ -423,7 +443,6 @@ describe('ConfigEditor', () => {
         options: {
           ...createMockEditorProps().options,
           jsonData: {
-            cubeApiUrl: 'http://localhost:4000',
             deploymentType: 'self-hosted',
           },
         },
