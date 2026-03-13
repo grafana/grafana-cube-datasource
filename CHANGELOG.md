@@ -1,6 +1,16 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 (2026-03-13)
+
+### Features
+
+- **Standard datasource URL**: Use Grafana's standard `url` field for the Cube API endpoint instead of `jsonData.cubeApiUrl`, with backward-compatible fallback (#177)
+- **Generated data model dashboard**: Added a provisioned demo dashboard for the generated data model (#175)
+- **Refreshed demo dashboards**: Updated provisioned demo dashboards to reflect current plugin capabilities (#184)
+
+### Bug Fixes
+
+- **Stale SQL preview**: SQL preview now refreshes when dashboard variables change (#150)
 
 ### Deprecated
 
@@ -17,6 +27,8 @@
   -       cubeApiUrl: http://localhost:4000
   +     url: http://localhost:4000
   ```
+
+**Full Changelog**: [v0.2.0...v0.3.0](https://github.com/grafana/grafana-cube-datasource/compare/v0.2.0...v0.3.0)
 
 ## 0.2.0 (2026-02-18)
 
