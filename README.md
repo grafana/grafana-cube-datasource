@@ -171,7 +171,7 @@ npm run dev
 **Terminal 2 - Backend Development with Auto-reload:**
 
 ```bash
-DEVELOPMENT=true docker compose up --build
+npm run server
 ```
 
 This setup provides:
@@ -222,9 +222,6 @@ mage -l
 ```bash
 # Production build
 npm run build
-
-# Build frontend + start all services (auto-builds before compose)
-npm run server
 ```
 
 **Testing:**
