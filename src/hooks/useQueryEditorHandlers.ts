@@ -1,6 +1,6 @@
 import type { TQueryOrderArray } from '@cubejs-client/core';
 import { ChangeEvent } from 'react';
-import { CubeQuery, CubeFilter, Order, DEFAULT_ORDER } from '../types';
+import { CubeQuery, CubeFilter, CubeFilterItem, Order, DEFAULT_ORDER, VISUAL_BUILDER_OPERATORS, isCubeFilter } from '../types';
 import { SelectableValue } from '@grafana/data';
 import { normalizeOrder } from '../utils/normalizeOrder';
 
@@ -87,7 +87,11 @@ export function useQueryEditorHandlers(query: CubeQuery, onChange: (query: CubeQ
   };
 
   const onFiltersChange = (filters: CubeFilter[]) => {
-    updateQueryAndRun({ filters: filters.length > 0 ? filters : undefined });
+    const nonVisualFilters = (query.filters ?? []).filter(
+      (f: CubeFilterItem) => !isCubeFilter(f) || !VISUAL_BUILDER_OPERATORS.has(f.operator)
+    );
+    const merged = [...filters, ...nonVisualFilters];
+    updateQueryAndRun({ filters: merged.length > 0 ? merged : undefined });
   };
 
   return {
