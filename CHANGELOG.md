@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+### Deprecated
+
+- **`jsonData.cubeApiUrl` provisioning field**: The URL should now be set using
+  Grafana's standard top-level `url` field. The legacy `jsonData.cubeApiUrl`
+  field continues to work as a fallback but will be removed in a future release.
+
+  Migrate provisioning configs:
+  ```diff
+    datasources:
+      - name: Cube
+        type: grafana-cube-datasource
+  -     jsonData:
+  -       cubeApiUrl: http://localhost:4000
+  +     url: http://localhost:4000
+  ```
+
 ## 0.2.0 (2026-02-18)
 
 ### Features
