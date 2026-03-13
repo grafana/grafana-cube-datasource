@@ -32,7 +32,12 @@ export function ConfigEditor({ onOptionsChange, options }: ConfigEditorProps) {
     [sqlDatasources]
   );
 
-  const updateUrl = (value: string) => onOptionsChange({ ...options, url: value });
+  const updateUrl = (value: string) =>
+    onOptionsChange({
+      ...options,
+      url: value,
+      jsonData: { ...jsonData, cubeApiUrl: value },
+    });
 
   const updateJsonData = (field: keyof CubeDataSourceOptions, value: string | undefined) =>
     onOptionsChange({ ...options, jsonData: { ...jsonData, [field]: value } });

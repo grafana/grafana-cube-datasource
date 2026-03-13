@@ -99,7 +99,7 @@ describe('ConfigEditor', () => {
       expect(urlInput.value).toBe('https://standard-url.com');
     });
 
-    it('should write to standard url field when URL is modified', () => {
+    it('should write to both standard url and jsonData.cubeApiUrl when URL is modified', () => {
       const props = createMockEditorProps();
       setup(<ConfigEditor {...props} />);
 
@@ -109,6 +109,10 @@ describe('ConfigEditor', () => {
       expect(props.onOptionsChange).toHaveBeenCalledWith({
         ...props.options,
         url: 'http://new-url:4000',
+        jsonData: {
+          ...props.options.jsonData,
+          cubeApiUrl: 'http://new-url:4000',
+        },
       });
     });
   });
