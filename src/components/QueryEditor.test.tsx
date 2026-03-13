@@ -786,6 +786,57 @@ describe('QueryEditor', () => {
     });
   });
 
+  describe('SQL preview reactivity to template variable changes', () => {
+    it('should recompute SQL preview when ad-hoc filters change', async () => {
+      mockGetTemplateSrv.mockReturnValue({
+        replace: jest.fn((value: string) => value),
+        getAdhocFilters: jest.fn(() => []),
+      });
+
+      const datasource = createMockDataSource();
+      const query = createMockQuery({
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+      });
+
+      const { rerender } = setup(
+        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+      );
+
+      await waitFor(() => {
+        expect(datasource.getResource).toHaveBeenCalledWith('sql', expect.anything());
+      });
+
+      const initialCall = (datasource.getResource as jest.Mock).mock.calls.find(
+        (c: unknown[]) => c[0] === 'sql'
+      );
+      const initialQuery = JSON.parse(initialCall[1].query);
+      expect(initialQuery.filters).toBeUndefined();
+
+      (datasource.getResource as jest.Mock).mockClear();
+
+      mockGetTemplateSrv.mockReturnValue({
+        replace: jest.fn((value: string) => value),
+        getAdhocFilters: jest.fn(() => [{ key: 'orders.status', operator: '=', value: 'completed' }]),
+      });
+
+      rerender(
+        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+      );
+
+      await waitFor(() => {
+        const newCall = (datasource.getResource as jest.Mock).mock.calls.find(
+          (c: unknown[]) => c[0] === 'sql'
+        );
+        expect(newCall).toBeDefined();
+        const newQuery = JSON.parse(newCall[1].query);
+        expect(newQuery.filters).toEqual([
+          { member: 'orders.status', operator: 'equals', values: ['completed'] },
+        ]);
+      });
+    });
+  });
+
   describe('filter state management integration', () => {
     /**
      * Integration test to verify that adding a filter with multiple values
