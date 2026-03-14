@@ -10,7 +10,7 @@
     "lint": "eslint --cache .",
     "lint:fix": "npm run lint -- --fix && prettier --write --list-different .",
     "e2e": "playwright test",
-    "server": "npm run build && DEVELOPMENT=true docker compose up --build",
+    "server": "./scripts/server.sh",
     "sign": "npx --yes @grafana/sign-plugin@latest"
   },
   "author": "Grafana",
