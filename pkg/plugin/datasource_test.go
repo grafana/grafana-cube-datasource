@@ -499,8 +499,8 @@ func TestCheckHealth(t *testing.T) {
 			mockResponse:   http.StatusOK,
 			mockBody:       `{"cubes": [{"name": "orders", "type": "cube", "dimensions": [], "measures": []}]}`,
 			expectedStatus: backend.HealthStatusOk,
-			expectedMsg:    "Successfully connected to Cube API and verified authentication",
-			notExpectedMsg: "No data model",
+			expectedMsg:    "Visit the Data Model tab to review or update your data model",
+			notExpectedMsg: "No data model found yet",
 		},
 		{
 			name:           "self-hosted successful connection with auth verification",
