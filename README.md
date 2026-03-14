@@ -160,21 +160,20 @@ behavior, timeout/cancellation semantics, status/error mapping, progress fields)
 
 ### Development Workflow (Recommended)
 
-For the best development experience with automatic reloading of both frontend and backend changes:
-
-**Terminal 1 - Frontend Development:**
+One command starts everything with full hot-reload for both frontend and backend:
 
 ```bash
-npm run dev
+npm run server
 ```
 
-**Terminal 2 - Backend Development with Auto-reload:**
+This:
 
-```bash
-DEVELOPMENT=true docker compose up --build
-```
+- Builds the frontend (so the plugin loads immediately)
+- Starts webpack watch (rebuilds frontend on source changes, including branch switches)
+- Starts Docker Compose with `DEVELOPMENT=true` (supervisord auto-rebuilds Go backend)
+- Cleans up all processes on Ctrl+C
 
-This setup provides:
+You get:
 
 - **Frontend hot-reloading**: Changes to TypeScript/React code automatically refresh the browser
 - **Backend auto-rebuilding**: Changes to Go code automatically rebuild and reload the plugin
@@ -222,9 +221,6 @@ mage -l
 ```bash
 # Production build
 npm run build
-
-# Alternative Docker setup (without auto-reload)
-npm run server
 ```
 
 **Testing:**
