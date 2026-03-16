@@ -68,15 +68,20 @@ RUN if [ "${development}" = "true" ]; then \
     go run bootstrap.go; \
     fi
 
-# Install MotherDuck DuckDB datasource plugin (glibc binary; requires Ubuntu-based Grafana image)
+# Install MotherDuck DuckDB datasource plugin.
+# The plugin binary requires glibc so it only loads on Ubuntu-based Grafana images.
+# On Alpine (CI), the files are extracted but Grafana will log a backend error at startup;
+# this is harmless — the datasource simply won't be functional.
 ARG DUCKDB_PLUGIN_VERSION=0.4.1
 RUN if grep -i -q ubuntu /etc/issue; then \
-        DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends unzip && rm -rf /var/lib/apt/lists/*; \
+        DEBIAN_FRONTEND=noninteractive apt-get update \
+        && apt-get install -y --no-install-recommends unzip \
+        && rm -rf /var/lib/apt/lists/*; \
     fi \
     && curl -sL "https://github.com/motherduckdb/grafana-duckdb-datasource/releases/download/v${DUCKDB_PLUGIN_VERSION}/motherduck-duckdb-datasource-${DUCKDB_PLUGIN_VERSION}.zip" \
        -o /tmp/duckdb-plugin.zip \
-    && unzip /tmp/duckdb-plugin.zip -d /var/lib/grafana/plugins/ \
-    && rm /tmp/duckdb-plugin.zip
+    && (unzip /tmp/duckdb-plugin.zip -d /var/lib/grafana/plugins/ || true) \
+    && rm -f /tmp/duckdb-plugin.zip
 
 # Inject livereload script into grafana index.html
 RUN sed -i 's|</body>|<script src="http://localhost:35729/livereload.js"></script></body>|g' /usr/share/grafana/public/views/index.html
