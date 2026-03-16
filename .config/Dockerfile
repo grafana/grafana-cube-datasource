@@ -68,10 +68,13 @@ RUN if [ "${development}" = "true" ]; then \
     go run bootstrap.go; \
     fi
 
-# Install MotherDuck DuckDB datasource plugin
+# Install MotherDuck DuckDB datasource plugin (glibc binary; requires Ubuntu-based Grafana image)
 ARG DUCKDB_PLUGIN_VERSION=0.4.1
-RUN curl -sL "https://github.com/motherduckdb/grafana-duckdb-datasource/releases/download/v${DUCKDB_PLUGIN_VERSION}/motherduck-duckdb-datasource-${DUCKDB_PLUGIN_VERSION}.zip" \
-    -o /tmp/duckdb-plugin.zip \
+RUN if grep -i -q ubuntu /etc/issue; then \
+        DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends unzip && rm -rf /var/lib/apt/lists/*; \
+    fi \
+    && curl -sL "https://github.com/motherduckdb/grafana-duckdb-datasource/releases/download/v${DUCKDB_PLUGIN_VERSION}/motherduck-duckdb-datasource-${DUCKDB_PLUGIN_VERSION}.zip" \
+       -o /tmp/duckdb-plugin.zip \
     && unzip /tmp/duckdb-plugin.zip -d /var/lib/grafana/plugins/ \
     && rm /tmp/duckdb-plugin.zip
 
