@@ -9,7 +9,7 @@ services:
     container_name: 'grafana-itself'
     build:
       args:
-        grafana_version: ${GRAFANA_VERSION:-12.3.3}
+        grafana_version: ${GRAFANA_VERSION:-12.3.3-ubuntu}
         grafana_image: ${GRAFANA_IMAGE:-grafana}
     environment:
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/cubeds-ecom-full-data-model.json
@@ -41,4 +41,9 @@ services:
       - ./dev-environment/data/seeds:/data/seeds:ro
       - ./dev-environment/data/migrations:/data/migrations:ro
       - duckdb-data:/data/db
-    command: ['/data/db/jaffle_shop.duckdb', '-init', '/data/migrations/init.sql', '-c', 'SELECT count(*) FROM customers; SELECT count(*) FROM orders; SELECT count(*) FROM payments;']
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        duckdb /data/db/jaffle_shop.duckdb -init /data/migrations/init.sql \
+          -c 'SELECT count(*) FROM customers; SELECT count(*) FROM orders; SELECT count(*) FROM payments;'
+        cp /data/db/jaffle_shop.duckdb /data/db/grafana_jaffle_shop.duckdb
