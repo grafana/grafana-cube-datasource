@@ -23,9 +23,10 @@
     datasources:
       - name: Cube
         type: grafana-cube-datasource
-  -     jsonData:
-  -       cubeApiUrl: http://localhost:4000
   +     url: http://localhost:4000
+        jsonData:
+  -       cubeApiUrl: http://localhost:4000
+  +       # cubeApiUrl is no longer needed for the URL
   ```
 
 **Full Changelog**: [v0.2.0...v0.3.0](https://github.com/grafana/grafana-cube-datasource/compare/v0.2.0...v0.3.0)
