@@ -1,3 +1,6 @@
+volumes:
+  duckdb-data:
+
 services:
   grafana:
     extends:
@@ -11,8 +14,13 @@ services:
     environment:
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/cubeds-ecom-full-data-model.json
       GF_FEATURE_TOGGLES_ENABLE: 'tableNextGen,queryLibrary,sqlExpressions,dashboardDsAdHocFiltering,adhocFiltersInTooltips'
+    volumes:
+      - duckdb-data:/var/lib/grafana/duckdb
     depends_on:
-      - cube
+      cube:
+        condition: service_started
+      duckdb-init:
+        condition: service_completed_successfully
 
   cube:
     image: cubejs/cube:latest@sha256:6a2e73d4e36ac3ddc05fc90f8ad068f39458227c1c3c4583e14ea97407785a26
@@ -21,30 +29,16 @@ services:
       - 15432:15432
     volumes:
       - ./dev-environment/cube:/cube/conf
+      - duckdb-data:/cube/data
     depends_on:
-      - postgres
+      duckdb-init:
+        condition: service_completed_successfully
 
-  postgres:
-    image: postgres:18@sha256:98f32d2e093deea07127bcc373f89729b77ff3486511cc77224c530e63a41f0e
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: jaffle_shop
-    ports:
-      - '5432:5432'
+  duckdb-init:
+    build:
+      context: dev-environment/data
     volumes:
-      - ./dev-environment/data/seeds/:/data/seeds/
-      - ./dev-environment/data/migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
-    # Enable SQL queries in the logs (minimal output)
-    command:
-      [
-        'postgres',
-        '-c',
-        'log_statement=all',
-        '-c',
-        'log_line_prefix=',
-        '-c',
-        'log_duration=off',
-        '-c',
-        'log_parameter_max_length=0',
-      ]
+      - ./dev-environment/data/seeds:/data/seeds:ro
+      - ./dev-environment/data/migrations:/data/migrations:ro
+      - duckdb-data:/data/db
+    command: ['/data/db/jaffle_shop.duckdb', '-init', '/data/migrations/init.sql', '-c', 'SELECT count(*) FROM customers; SELECT count(*) FROM orders; SELECT count(*) FROM payments;']

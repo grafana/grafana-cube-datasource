@@ -68,6 +68,13 @@ RUN if [ "${development}" = "true" ]; then \
     go run bootstrap.go; \
     fi
 
+# Install MotherDuck DuckDB datasource plugin
+ARG DUCKDB_PLUGIN_VERSION=0.4.1
+RUN curl -sL "https://github.com/motherduckdb/grafana-duckdb-datasource/releases/download/v${DUCKDB_PLUGIN_VERSION}/motherduck-duckdb-datasource-${DUCKDB_PLUGIN_VERSION}.zip" \
+    -o /tmp/duckdb-plugin.zip \
+    && unzip /tmp/duckdb-plugin.zip -d /var/lib/grafana/plugins/ \
+    && rm /tmp/duckdb-plugin.zip
+
 # Inject livereload script into grafana index.html
 RUN sed -i 's|</body>|<script src="http://localhost:35729/livereload.js"></script></body>|g' /usr/share/grafana/public/views/index.html
 

@@ -12,24 +12,16 @@ datasources:
     url: 'http://cube:4000'
     jsonData:
       deploymentType: 'self-hosted'
-      exploreSqlDatasourceUid: 'postgres-datasource'
+      exploreSqlDatasourceUid: 'duckdb-datasource'
     secureJsonData:
       apiSecret: 'dd122a535ad5d703a9d8977179f118bc'
-  - name: 'PostgreSQL'
-    type: 'postgres'
+  - name: 'DuckDB'
+    type: 'motherduck-duckdb-datasource'
     access: proxy
     isDefault: false
     orgId: 1
     version: 1
     editable: true
-    uid: 'postgres-datasource'
-    url: 'postgres:5432'
-    database: 'jaffle_shop'
-    user: 'user'
+    uid: 'duckdb-datasource'
     jsonData:
-      sslmode: 'disable'
-      postgresVersion: 1000
-      timescaledb: false
-      database: 'jaffle_shop'
-    secureJsonData:
-      password: 'password'
+      path: '/var/lib/grafana/duckdb/jaffle_shop.duckdb'
