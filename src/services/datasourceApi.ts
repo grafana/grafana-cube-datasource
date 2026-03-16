@@ -23,6 +23,7 @@ const SQL_DATASOURCE_KEYWORDS = [
   'trino',
   'presto',
   'cockroach',
+  'duckdb',
 ];
 
 // Helper function to check if a datasource type is SQL-compatible using fuzzy matching
