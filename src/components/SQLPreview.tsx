@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { css, cx } from '@emotion/css';
 import { EditorFieldGroup, EditorRow } from '@grafana/plugin-ui';
 import { GrafanaTheme2 } from '@grafana/data';
-import { LinkButton, useTheme2 } from '@grafana/ui';
+import { Icon, LinkButton, Text, useStyles2 } from '@grafana/ui';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-sql';
 import { useDatasourceQuery } from 'queries';
@@ -13,8 +13,8 @@ interface SQLPreviewProps {
 }
 
 export function SQLPreview({ sql, exploreSqlDatasourceUid }: SQLPreviewProps) {
-  const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const { data: targetDatasource, isPending } = useDatasourceQuery(exploreSqlDatasourceUid);
 
@@ -66,23 +66,39 @@ export function SQLPreview({ sql, exploreSqlDatasourceUid }: SQLPreviewProps) {
     <EditorRow>
       <EditorFieldGroup>
         <div className={styles.container}>
-          <div
-            className={cx(styles.sqlDisplay, 'prism-syntax-highlight')}
-            aria-label="Generated SQL query"
-            dangerouslySetInnerHTML={{ __html: highlighted }}
-          />
-          {exploreSqlDatasourceUid && (
-            <div className={styles.buttonContainer}>
-              <LinkButton
-                variant="secondary"
-                size="sm"
-                icon={isPending ? 'spinner' : 'compass'}
-                href={exploreUrl}
-                disabled={isPending}
-              >
-                Edit SQL in Explore
-              </LinkButton>
-            </div>
+          <button
+            type="button"
+            className={styles.headerToggle}
+            onClick={() => setIsExpanded(!isExpanded)}
+            aria-expanded={isExpanded}
+            data-testid="sql-preview-toggle"
+          >
+            <Icon name={isExpanded ? 'angle-down' : 'angle-right'} size="md" />
+            <Text variant="bodySmall" weight="medium" color="secondary">
+              SQL Preview
+            </Text>
+          </button>
+          {isExpanded && (
+            <>
+              <div
+                className={cx(styles.sqlDisplay, 'prism-syntax-highlight')}
+                aria-label="Generated SQL query"
+                dangerouslySetInnerHTML={{ __html: highlighted }}
+              />
+              {exploreSqlDatasourceUid && (
+                <div className={styles.buttonContainer}>
+                  <LinkButton
+                    variant="secondary"
+                    size="sm"
+                    icon={isPending ? 'spinner' : 'compass'}
+                    href={exploreUrl}
+                    disabled={isPending}
+                  >
+                    Edit SQL in Explore
+                  </LinkButton>
+                </div>
+              )}
+            </>
           )}
         </div>
       </EditorFieldGroup>
@@ -98,10 +114,25 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: theme.colors.background.secondary,
       overflow: 'hidden',
     }),
+    headerToggle: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      width: '100%',
+      padding: theme.spacing(1),
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      color: theme.colors.text.secondary,
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
+    }),
     sqlDisplay: css({
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.bodySmall.fontSize,
       padding: theme.spacing(1),
+      paddingTop: 0,
       overflow: 'auto',
       maxHeight: '200px',
       whiteSpace: 'pre-wrap',
