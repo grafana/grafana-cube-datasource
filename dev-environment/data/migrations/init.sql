@@ -11,6 +11,7 @@ ATTACH 'ducklake:postgres:host=postgres port=5432 dbname=ducklake_catalog user=u
 USE jaffle_shop;
 
 -- customers
+DROP TABLE IF EXISTS customers;
 CREATE TABLE IF NOT EXISTS customers (
     id INTEGER,
     first_name VARCHAR(50),
@@ -43,6 +44,7 @@ FROM read_csv('/data/seeds/customers.csv', header = true, columns = {
 });
 
 -- orders
+DROP TABLE IF EXISTS orders;
 CREATE TABLE IF NOT EXISTS orders (
     id INTEGER,
     customer_id INTEGER,
@@ -75,6 +77,7 @@ FROM read_csv('/data/seeds/orders.csv', header = true, columns = {
 });
 
 -- payments
+DROP TABLE IF EXISTS payments;
 CREATE TABLE IF NOT EXISTS payments (
     id INTEGER,
     order_id INTEGER,
