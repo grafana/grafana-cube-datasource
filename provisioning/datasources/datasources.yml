@@ -24,4 +24,4 @@ datasources:
     editable: true
     uid: 'duckdb-datasource'
     jsonData:
-      path: '/var/lib/grafana/duckdb/jaffle_shop.duckdb?access_mode=READ_ONLY'
+      path: '/var/lib/grafana/duckdb/jaffle_shop_grafana.duckdb?access_mode=READ_ONLY'

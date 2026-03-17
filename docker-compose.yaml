@@ -45,5 +45,6 @@ services:
     entrypoint: ['/bin/sh', '-c']
     command:
       - |
-        duckdb /data/db/jaffle_shop.duckdb -init /data/migrations/init.sql \
-          -c 'SELECT count(*) FROM customers; SELECT count(*) FROM orders; SELECT count(*) FROM payments;'
+        duckdb /data/db/jaffle_shop_cube.duckdb -init /data/migrations/init.sql \
+          -c 'SELECT count(*) FROM customers; SELECT count(*) FROM orders; SELECT count(*) FROM payments;' && \
+        cp /data/db/jaffle_shop_cube.duckdb /data/db/jaffle_shop_grafana.duckdb

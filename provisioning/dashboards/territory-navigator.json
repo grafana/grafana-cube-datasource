@@ -75,8 +75,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -175,8 +175,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -266,8 +266,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -357,8 +357,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -447,8 +447,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -535,8 +535,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -671,8 +671,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -797,8 +797,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -950,8 +950,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -1073,8 +1073,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -1188,8 +1188,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -1428,8 +1428,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -1649,8 +1649,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -1825,8 +1825,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -2002,8 +2002,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -2135,8 +2135,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -2292,8 +2292,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -2498,8 +2498,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -2686,8 +2686,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -2892,8 +2892,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -3638,8 +3638,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -3825,8 +3825,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -4015,8 +4015,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -4154,8 +4154,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -4392,8 +4392,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -4628,8 +4628,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -4829,8 +4829,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -5315,8 +5315,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "All Data",
           "editorMode": "code",
@@ -6053,8 +6053,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "postgres",
-            "uid": "postgres-datasource"
+            "type": "motherduck-duckdb-datasource",
+            "uid": "duckdb-datasource"
           },
           "refId": "A",
           "editorMode": "code",
@@ -6267,8 +6267,8 @@
         "hide": 0,
         "query": "select distinct(account_owner_l1_territory)\n\nfrom territory_nav.revops_reporting_territory_navigator_account_details\n\norder by 1",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6293,8 +6293,8 @@
         "hide": 0,
         "query": "select distinct(account_owner_l3_territory)\n\nfrom territory_nav.revops_reporting_territory_navigator_account_details\n\nwhere account_owner_l1_territory in (${filter_account_owner_l1_territory:singlequote})\n\norder by 1",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6319,8 +6319,8 @@
         "hide": 0,
         "query": "select distinct(account_owner_l4_territory)\n\nfrom territory_nav.revops_reporting_territory_navigator_account_details\n\nwhere account_owner_l1_territory in (${filter_account_owner_l1_territory:singlequote})\n  and account_owner_l3_territory in (${filter_account_owner_l3_territory:singlequote})\n\norder by 1",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6345,8 +6345,8 @@
         "hide": 0,
         "query": "select distinct(account_owner_l6_territory)\n\nfrom territory_nav.revops_reporting_territory_navigator_account_details\n\nwhere account_owner_l1_territory in (${filter_account_owner_l1_territory:singlequote})\n  and account_owner_l3_territory in (${filter_account_owner_l3_territory:singlequote})\n  and account_owner_l4_territory in (${filter_account_owner_l4_territory:singlequote})\n\norder by 1",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6371,8 +6371,8 @@
         "hide": 0,
         "query": "select distinct(account_owner_segment)\n\nfrom territory_nav.revops_reporting_territory_navigator_account_details\n\nwhere account_owner_l1_territory in (${filter_account_owner_l1_territory:singlequote})\n  and account_owner_l3_territory in (${filter_account_owner_l3_territory:singlequote})\n  and account_owner_l4_territory in (${filter_account_owner_l4_territory:singlequote})\n  and account_owner_l6_territory in (${filter_account_owner_l6_territory:singlequote})\n\norder by 1",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6397,8 +6397,8 @@
         "hide": 0,
         "query": "select distinct(account_owner_seller_type)\n\nfrom territory_nav.revops_reporting_territory_navigator_account_details\n\nwhere account_owner_l1_territory in (${filter_account_owner_l1_territory:singlequote})\n  and account_owner_l3_territory in (${filter_account_owner_l3_territory:singlequote})\n  and account_owner_l4_territory in (${filter_account_owner_l4_territory:singlequote})\n  and account_owner_l6_territory in (${filter_account_owner_l6_territory:singlequote})\n  and account_owner_segment      in (${filter_account_owner_segment:singlequote})\n\norder by 1",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6423,8 +6423,8 @@
         "hide": 0,
         "query": "select distinct(account_owner_name)\n\nfrom territory_nav.revops_reporting_territory_navigator_account_details\n\nwhere account_owner_l1_territory in (${filter_account_owner_l1_territory:singlequote})\n  and account_owner_l3_territory in (${filter_account_owner_l3_territory:singlequote})\n  and account_owner_l4_territory in (${filter_account_owner_l4_territory:singlequote})\n  and account_owner_l6_territory in (${filter_account_owner_l6_territory:singlequote})\n  and account_owner_segment      in (${filter_account_owner_segment:singlequote})\n  and account_owner_seller_type  in (${filter_account_owner_seller_type:singlequote})\n\norder by 1",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6449,8 +6449,8 @@
         "hide": 2,
         "query": "select distinct(account_owner_id)\n\nfrom territory_nav.revops_reporting_territory_navigator_account_details\n\nwhere account_owner_l1_territory in (${filter_account_owner_l1_territory:singlequote})\n  and account_owner_l3_territory in (${filter_account_owner_l3_territory:singlequote})\n  and account_owner_l4_territory in (${filter_account_owner_l4_territory:singlequote})\n  and account_owner_l6_territory in (${filter_account_owner_l6_territory:singlequote})\n  and account_owner_segment      in (${filter_account_owner_segment:singlequote})\n  and account_owner_seller_type  in (${filter_account_owner_seller_type:singlequote})\n  and account_owner_name         in (${filter_account_owner_name:singlequote})\n\norder by 1\n",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6475,8 +6475,8 @@
         "hide": 0,
         "query": "select distinct(account_mapped_sdr_name)\n\nfrom territory_nav.revops_reporting_territory_navigator_account_details\n\nwhere account_owner_id in (${filter_account_owner_id:singlequote})",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6501,8 +6501,8 @@
         "hide": 2,
         "query": "select distinct(account_mapped_sdr_id)\n\nfrom territory_nav.revops_reporting_territory_navigator_account_details\n\nwhere account_owner_id in (${filter_account_owner_id:singlequote})\n  and account_mapped_sdr_name in (${parameter_sdr_name:singlequote})",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6527,8 +6527,8 @@
         "hide": 0,
         "query": "select distinct(account_solutions_engineer_name)\n\nfrom territory_nav.revops_reporting_territory_navigator_account_details\n\nwhere account_owner_id in (${filter_account_owner_id:singlequote})",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6553,8 +6553,8 @@
         "hide": 2,
         "query": "select distinct(account_solutions_engineer_id)\n\nfrom territory_nav.revops_reporting_territory_navigator_account_details\n\nwhere account_owner_id in (${filter_account_owner_id:singlequote})\n  and account_solutions_engineer_name in (${parameter_se_name:singlequote})",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6579,8 +6579,8 @@
         "hide": 0,
         "query": "select distinct(account_observability_architect_manager_name)\n\nfrom territory_nav.revops_reporting_territory_navigator_account_details\n\nwhere account_owner_id in (${filter_account_owner_id:singlequote})",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6605,8 +6605,8 @@
         "hide": 2,
         "query": "select distinct(account_observability_architect_manager_id)\n\nfrom territory_nav.revops_reporting_territory_navigator_account_details\n\nwhere account_owner_id in (${filter_account_owner_id:singlequote})\n  and account_observability_architect_manager_name in (${parameter_oa_manager_name:singlequote})",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6631,8 +6631,8 @@
         "hide": 0,
         "query": "select distinct(account_observability_architect_name)\n\nfrom territory_nav.revops_reporting_territory_navigator_account_details\n\nwhere account_owner_id in (${filter_account_owner_id:singlequote})\n  and account_observability_architect_manager_id in (${parameter_oa_manager_id:singlequote})",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6657,8 +6657,8 @@
         "hide": 2,
         "query": "select distinct(account_observability_architect_id)\n\nfrom territory_nav.revops_reporting_territory_navigator_account_details\n\nwhere account_owner_id in (${filter_account_owner_id:singlequote})\n  and account_observability_architect_name in (${parameter_oa_name:singlequote})\n  and account_observability_architect_manager_id in (${parameter_oa_manager_id:singlequote})",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6683,8 +6683,8 @@
         "hide": 0,
         "query": "select distinct(is_account_assigned_to_ae_filter)\n\nfrom territory_nav.revops_reporting_territory_navigator_account_details\n\nwhere account_owner_id in (${filter_account_owner_id:singlequote})\n  and account_mapped_sdr_id in (${parameter_sdr_id:singlequote})",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6709,8 +6709,8 @@
         "hide": 0,
         "query": "select distinct(is_territory_parent_filter)\n\nfrom territory_nav.revops_reporting_territory_navigator_account_details\n",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6735,8 +6735,8 @@
         "hide": 0,
         "query": "select distinct(account_billing_country)\n\nfrom territory_nav.revops_reporting_territory_navigator_account_details\n\nwhere account_owner_id in (${filter_account_owner_id:singlequote})",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6761,8 +6761,8 @@
         "hide": 0,
         "query": "select distinct(account_billing_state_province)\n\nfrom territory_nav.revops_reporting_territory_navigator_account_details\n\nwhere account_owner_id in (${filter_account_owner_id:singlequote})\n  and account_billing_country in (${filter_billing_country:singlequote})",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6787,8 +6787,8 @@
         "hide": 0,
         "query": "with base_cte as (\n  select\n    consumption_committed_mrr_attainment_band_name_last_month as label\n    , consumption_committed_mrr_attainment_band_number_last_month as sort\n\n  from territory_nav.revops_reporting_territory_navigator_account_details\n\n  GROUP BY 1, 2\n)\n\nselect label\n\nfrom base_cte\n\norder by sort",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       },
       {
@@ -6813,8 +6813,8 @@
         "hide": 0,
         "query": "with base_cte as (\n  select\n    consumption_committed_mrr_attainment_band_name_projected_current_month as label\n    , consumption_committed_mrr_attainment_band_number_projected_current_month as sort\n\n  from territory_nav.revops_reporting_territory_navigator_account_details\n\n  GROUP BY 1, 2\n)\n\nselect label\n\nfrom base_cte\n\norder by sort",
         "datasource": {
-          "type": "postgres",
-          "uid": "postgres-datasource"
+          "type": "motherduck-duckdb-datasource",
+          "uid": "duckdb-datasource"
         }
       }
     ]

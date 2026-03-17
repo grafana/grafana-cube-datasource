@@ -13,7 +13,8 @@ FROM read_csv('/data/seeds/customers.csv', header = true, columns = {
     'id': 'INTEGER',
     'first_name': 'VARCHAR',
     'last_name': 'VARCHAR'
-});
+})
+ON CONFLICT DO NOTHING;
 
 UPDATE customers SET
     email = LOWER(CONCAT(first_name, '.', last_name, '@example.com')),
@@ -43,7 +44,8 @@ FROM read_csv('/data/seeds/orders.csv', header = true, columns = {
     'customer_id': 'INTEGER',
     'order_date': 'DATE',
     'status': 'VARCHAR'
-});
+})
+ON CONFLICT DO NOTHING;
 
 UPDATE orders SET
     created_at = CAST(order_date AS TIMESTAMP) + INTERVAL (CAST(FLOOR(RANDOM() * 24) AS INTEGER)) HOUR,
@@ -78,7 +80,8 @@ FROM read_csv('/data/seeds/payments.csv', header = true, columns = {
     'tax': 'DECIMAL(10,2)',
     'discount': 'DECIMAL(10,2)',
     'processing_fee': 'DECIMAL(10,2)'
-});
+})
+ON CONFLICT DO NOTHING;
 
 UPDATE payments SET
     refund_amount = CASE
