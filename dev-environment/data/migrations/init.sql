@@ -1,4 +1,8 @@
-CREATE TABLE IF NOT EXISTS customers (
+DROP TABLE IF EXISTS payments;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS customers;
+
+CREATE TABLE customers (
     id INTEGER PRIMARY KEY,
     first_name VARCHAR(50),
     last_name VARCHAR(50),
@@ -27,7 +31,7 @@ UPDATE customers SET
         ELSE 'startup'
     END;
 
-CREATE TABLE IF NOT EXISTS orders (
+CREATE TABLE orders (
     id INTEGER PRIMARY KEY,
     customer_id INTEGER REFERENCES customers(id),
     order_date DATE,
@@ -55,7 +59,7 @@ UPDATE orders SET
         ELSE 4
     END;
 
-CREATE TABLE IF NOT EXISTS payments (
+CREATE TABLE payments (
     id INTEGER PRIMARY KEY,
     order_id INTEGER REFERENCES orders(id),
     payment_method VARCHAR(20),
