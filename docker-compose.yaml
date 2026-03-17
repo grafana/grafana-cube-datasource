@@ -9,8 +9,9 @@ services:
     container_name: 'grafana-itself'
     build:
       args:
-        grafana_version: ${GRAFANA_VERSION:-12.3.3-ubuntu}
+        grafana_version: ${GRAFANA_VERSION:-12.3.3}
         grafana_image: ${GRAFANA_IMAGE:-grafana}
+        grafana_suffix: ${GRAFANA_SUFFIX:--ubuntu}
     environment:
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/cubeds-ecom-full-data-model.json
       GF_FEATURE_TOGGLES_ENABLE: 'tableNextGen,queryLibrary,sqlExpressions,dashboardDsAdHocFiltering,adhocFiltersInTooltips'
