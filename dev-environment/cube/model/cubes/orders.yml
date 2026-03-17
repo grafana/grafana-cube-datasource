@@ -24,9 +24,9 @@ cubes:
         type: string
 
       - name: order_date
-        sql: order_date
+        sql: "CAST({CUBE}.order_date AS TIMESTAMP)"
         type: time
-        description: 'Date field (tests date-only)'
+        description: 'Date field cast to timestamp for time-range filtering'
 
       - name: created_at
         sql: created_at
