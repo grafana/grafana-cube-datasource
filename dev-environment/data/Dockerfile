@@ -1,6 +1,6 @@
 FROM debian:bookworm-slim
 
-ARG DUCKDB_VERSION=v1.2.1
+ARG DUCKDB_VERSION=v1.4.1
 ARG TARGETARCH
 
 RUN apt-get update \

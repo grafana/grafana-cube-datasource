@@ -1,5 +1,5 @@
 volumes:
-  duckdb-data:
+  ducklake-data:
 
 services:
   grafana:
@@ -16,11 +16,11 @@ services:
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/cubeds-ecom-full-data-model.json
       GF_FEATURE_TOGGLES_ENABLE: 'tableNextGen,queryLibrary,sqlExpressions,dashboardDsAdHocFiltering,adhocFiltersInTooltips'
     volumes:
-      - duckdb-data:/var/lib/grafana/duckdb
+      - ducklake-data:/var/lib/grafana/ducklake
     depends_on:
       cube:
         condition: service_started
-      duckdb-init:
+      ducklake-init:
         condition: service_completed_successfully
 
   cube:
@@ -30,20 +30,45 @@ services:
       - 15432:15432
     volumes:
       - ./dev-environment/cube:/cube/conf
-      - duckdb-data:/cube/data
+      - ducklake-data:/cube/ducklake
     depends_on:
-      duckdb-init:
+      ducklake-init:
         condition: service_completed_successfully
 
-  duckdb-init:
+  postgres:
+    image: postgres:18@sha256:98f32d2e093deea07127bcc373f89729b77ff3486511cc77224c530e63a41f0e
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ducklake_catalog
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U user -d ducklake_catalog']
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  ducklake-init:
     build:
       context: dev-environment/data
     volumes:
       - ./dev-environment/data/seeds:/data/seeds:ro
       - ./dev-environment/data/migrations:/data/migrations:ro
-      - duckdb-data:/data/db
+      - ducklake-data:/data/ducklake
+    environment:
+      PGHOST: postgres
+      PGPORT: '5432'
+      PGUSER: user
+      PGPASSWORD: password
+      PGDATABASE: ducklake_catalog
+    depends_on:
+      postgres:
+        condition: service_healthy
     entrypoint: ['/bin/sh', '-c']
     command:
       - |
-        duckdb /data/db/jaffle_shop.duckdb -init /data/migrations/init.sql \
-          -c 'SELECT count(*) FROM customers; SELECT count(*) FROM orders; SELECT count(*) FROM payments;'
+        duckdb -init /data/migrations/init.sql \
+          -c "SELECT 'customers: ' || count(*) FROM jaffle_shop.customers;
+              SELECT 'orders: ' || count(*) FROM jaffle_shop.orders;
+              SELECT 'payments: ' || count(*) FROM jaffle_shop.payments;"
