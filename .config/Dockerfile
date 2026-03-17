@@ -1,7 +1,8 @@
-ARG grafana_version=latest@sha256:8e8fc4c728843dfc460e7c4c52317eebe71b647b52b4af5fb2f62af7d8831e7d
+ARG grafana_version=latest
 ARG grafana_image=grafana-enterprise
+ARG grafana_suffix=-ubuntu
 
-FROM grafana/${grafana_image}:${grafana_version}
+FROM grafana/${grafana_image}:${grafana_version}${grafana_suffix}
 
 ARG anonymous_auth_enabled=true
 ARG development=false
@@ -67,6 +68,20 @@ RUN if [ "${development}" = "true" ]; then \
     export PATH=$PATH:/usr/local/go/bin; \
     go run bootstrap.go; \
     fi
+
+# Install MotherDuck DuckDB datasource plugin.
+# The plugin binary requires glibc, so the grafana_suffix build arg defaults to
+# -ubuntu to ensure all environments (local dev + CI) use an Ubuntu-based image.
+# Pinned to v0.2.1 (DuckDB 1.2.2) — later versions require glibc >= 2.38 which
+# exceeds the glibc 2.35 shipped in Grafana's Ubuntu 22.04 base image.
+ARG DUCKDB_PLUGIN_VERSION=0.2.1
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
+    && apt-get install -y --no-install-recommends unzip \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -sL "https://github.com/motherduckdb/grafana-duckdb-datasource/releases/download/v${DUCKDB_PLUGIN_VERSION}/motherduck-duckdb-datasource-${DUCKDB_PLUGIN_VERSION}.zip" \
+       -o /tmp/duckdb-plugin.zip \
+    && unzip /tmp/duckdb-plugin.zip -d /var/lib/grafana/plugins/ \
+    && rm /tmp/duckdb-plugin.zip
 
 # Inject livereload script into grafana index.html
 RUN sed -i 's|</body>|<script src="http://localhost:35729/livereload.js"></script></body>|g' /usr/share/grafana/public/views/index.html

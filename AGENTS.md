@@ -14,7 +14,9 @@ Three services run via `docker compose up --build -d` from the repo root:
 |---------|------|---------|
 | Grafana | 3000 | Hosts the plugin (anonymous Admin auth, no login needed) |
 | Cube | 4000 | Semantic layer REST API |
-| PostgreSQL | 5432 | Cube's backing database (JaffleShop sample data) |
+| duckdb-init | — | Init container that seeds a DuckDB database from CSV data, then exits |
+
+Cube uses DuckDB as its backing database (JaffleShop sample data). Grafana includes the MotherDuck DuckDB datasource plugin for direct SQL querying.
 
 ### Starting services
 
@@ -26,3 +28,5 @@ Both frontend (`npm run build`) and backend (`mage -v`) must be built **before**
 
 - Playwright E2E tests (`npm run e2e`) require services to be up first. Use `--reporter=list` to avoid the interactive HTML report blocking the terminal.
 - `mage -v` builds all 6 platform binaries by default. Use `mage -v build:linux` to build only the Linux binary (faster for local dev).
+- Grafana uses Ubuntu-based images (via the `grafana_suffix` build arg, defaulting to `-ubuntu`) because the DuckDB datasource plugin binary requires glibc. This applies to both local dev and CI.
+- Cube and Grafana share a single DuckDB database file. Grafana connects in read-only mode (`access_mode=READ_ONLY`).

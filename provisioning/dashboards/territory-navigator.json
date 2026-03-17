@@ -25,8 +25,8 @@
   "panels": [
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -122,8 +122,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -210,8 +210,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -301,8 +301,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -392,8 +392,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -482,8 +482,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -570,8 +570,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -721,8 +721,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -849,8 +849,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1019,8 +1019,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1124,8 +1124,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1304,8 +1304,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1480,8 +1480,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1701,8 +1701,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -1893,8 +1893,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -2080,8 +2080,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -2170,8 +2170,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -2376,8 +2376,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -2564,8 +2564,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -2770,8 +2770,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -2977,8 +2977,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -3703,8 +3703,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -3893,8 +3893,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -4100,8 +4100,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -4208,8 +4208,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -4444,8 +4444,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -4761,8 +4761,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -4890,8 +4890,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {
@@ -5500,8 +5500,8 @@
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "postgres-datasource"
+        "type": "motherduck-duckdb-datasource",
+        "uid": "duckdb-datasource"
       },
       "fieldConfig": {
         "defaults": {

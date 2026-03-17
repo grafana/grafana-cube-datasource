@@ -32,7 +32,7 @@ test.describe('SQLPreview Explore Integration', () => {
     await expect(exploreButton).toHaveAttribute('href');
     const href = await exploreButton.getAttribute('href');
     expect(href).toContain('/explore?left=');
-    expect(href).toContain('postgres-datasource');
+    expect(href).toContain('duckdb-datasource');
 
     // Get the SQL text that should be passed to Explore
     const sqlText = await sqlPreview.textContent();
@@ -62,18 +62,18 @@ test.describe('SQLPreview Explore Integration', () => {
     }
 
     // Since we're on Explore page (URL check passed), verify the key functionality:
-    // 1. PostgreSQL datasource should be selected (or at least visible)
+    // 1. DuckDB datasource should be selected (or at least visible)
     // 2. SQL query should be present somewhere on the page
     // 3. No critical errors should be displayed
 
-    // Look for datasource picker and PostgreSQL
+    // Look for datasource picker and DuckDB
     try {
       await expect(
-        page.locator('input[value*="PostgreSQL"], [data-testid*="datasource"] *:has-text("PostgreSQL")')
+        page.locator('input[value*="DuckDB"], [data-testid*="datasource"] *:has-text("DuckDB")')
       ).toBeVisible({ timeout: 5000 });
     } catch {
       // Datasource picker might have different structure, that's ok for now
-      console.log('PostgreSQL datasource picker not found with expected selectors');
+      console.log('DuckDB datasource picker not found with expected selectors');
     }
 
     // Verify SQL query is present on the page (should contain our SELECT statement)
@@ -154,9 +154,8 @@ test.describe('SQLPreview Explore Integration', () => {
     expect(leftParam).toBeTruthy();
 
     const exploreState = JSON.parse(decodeURIComponent(leftParam!));
-    expect(exploreState.datasource.uid).toBe('postgres-datasource');
-    // Type can be 'postgres' (older Grafana) or 'grafana-postgresql-datasource' (newer Grafana)
-    expect(exploreState.datasource.type).toContain('postgres');
+    expect(exploreState.datasource.uid).toBe('duckdb-datasource');
+    expect(exploreState.datasource.type).toContain('duckdb');
     expect(exploreState.queries).toHaveLength(1);
     expect(exploreState.queries[0].rawSql).toContain('SELECT');
     // format field is omitted to let each datasource use its default

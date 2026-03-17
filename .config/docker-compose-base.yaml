@@ -8,6 +8,7 @@ services:
       args:
         grafana_image: ${GRAFANA_IMAGE:-grafana-enterprise}
         grafana_version: ${GRAFANA_VERSION:-12.3.3}
+        grafana_suffix: ${GRAFANA_SUFFIX:--ubuntu}
         development: ${DEVELOPMENT:-false}
         anonymous_auth_enabled: ${ANONYMOUS_AUTH_ENABLED:-true}
     ports:
@@ -28,4 +29,4 @@ services:
       GF_LOG_FILTERS: plugin.grafana-cube-datasource:debug
       GF_LOG_LEVEL: debug
       GF_DATAPROXY_LOGGING: 1
-      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: grafana-cube-datasource
+      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: grafana-cube-datasource,motherduck-duckdb-datasource
