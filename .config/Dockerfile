@@ -70,11 +70,10 @@ RUN if [ "${development}" = "true" ]; then \
     fi
 
 # Install MotherDuck DuckDB datasource plugin.
-# The plugin binary requires glibc, so the grafana_suffix build arg defaults to
-# -ubuntu to ensure all environments (local dev + CI) use an Ubuntu-based image.
-# Pinned to v0.2.1 (DuckDB 1.2.2) — later versions require glibc >= 2.38 which
-# exceeds the glibc 2.35 shipped in Grafana's Ubuntu 22.04 base image.
-ARG DUCKDB_PLUGIN_VERSION=0.2.1
+# v0.4.1 bundles DuckDB 1.4.4 which supports the DuckLake extension.
+# KNOWN LIMITATION: requires glibc >= 2.38. Grafana's Ubuntu 22.04 base has glibc
+# 2.35, so the plugin binary won't load there. Needs Ubuntu 24.04+ base image.
+ARG DUCKDB_PLUGIN_VERSION=0.4.1
 RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && apt-get install -y --no-install-recommends unzip \
     && rm -rf /var/lib/apt/lists/* \

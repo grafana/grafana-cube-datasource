@@ -1,9 +1,18 @@
-DROP TABLE IF EXISTS payments;
-DROP TABLE IF EXISTS orders;
-DROP TABLE IF EXISTS customers;
+-- DuckLake init: seeds the JaffleShop data into a DuckLake catalog backed by PostgreSQL.
+-- Data is stored as Parquet files under /data/ducklake/; metadata lives in PostgreSQL.
 
-CREATE TABLE customers (
-    id INTEGER PRIMARY KEY,
+INSTALL ducklake;
+LOAD ducklake;
+INSTALL postgres;
+LOAD postgres;
+
+ATTACH 'ducklake:postgres:host=postgres port=5432 dbname=ducklake_catalog user=user password=password'
+    AS jaffle_shop (DATA_PATH '/data/ducklake/');
+USE jaffle_shop;
+
+-- customers
+CREATE TABLE IF NOT EXISTS customers (
+    id INTEGER,
     first_name VARCHAR(50),
     last_name VARCHAR(50),
     email VARCHAR(100),
@@ -11,37 +20,53 @@ CREATE TABLE customers (
     created_at TIMESTAMP,
     customer_segment VARCHAR(20)
 );
-INSERT INTO customers (id, first_name, last_name)
-SELECT id, first_name, last_name
+
+INSERT INTO customers
+SELECT
+    id,
+    first_name,
+    last_name,
+    LOWER(CONCAT(first_name, '.', last_name, '@example.com')) AS email,
+    (id % 3 != 0) AS is_active,
+    CAST('2017-01-01' AS TIMESTAMP) + INTERVAL (id) DAY AS created_at,
+    CASE
+        WHEN id % 5 = 0 THEN 'enterprise'
+        WHEN id % 5 = 1 THEN 'small_business'
+        WHEN id % 5 = 2 THEN 'individual'
+        WHEN id % 5 = 3 THEN 'non_profit'
+        ELSE 'startup'
+    END AS customer_segment
 FROM read_csv('/data/seeds/customers.csv', header = true, columns = {
     'id': 'INTEGER',
     'first_name': 'VARCHAR',
     'last_name': 'VARCHAR'
 });
 
-UPDATE customers SET
-    email = LOWER(CONCAT(first_name, '.', last_name, '@example.com')),
-    is_active = (id % 3 != 0),
-    created_at = CAST('2017-01-01' AS TIMESTAMP) + INTERVAL (id) DAY,
-    customer_segment = CASE
-        WHEN id % 5 = 0 THEN 'enterprise'
-        WHEN id % 5 = 1 THEN 'small_business'
-        WHEN id % 5 = 2 THEN 'individual'
-        WHEN id % 5 = 3 THEN 'non_profit'
-        ELSE 'startup'
-    END;
-
-CREATE TABLE orders (
-    id INTEGER PRIMARY KEY,
-    customer_id INTEGER REFERENCES customers(id),
+-- orders
+CREATE TABLE IF NOT EXISTS orders (
+    id INTEGER,
+    customer_id INTEGER,
     order_date DATE,
     status VARCHAR(20),
     created_at TIMESTAMP,
     is_gift BOOLEAN,
     priority INTEGER
 );
-INSERT INTO orders (id, customer_id, order_date, status)
-SELECT id, customer_id, order_date, status
+
+INSERT INTO orders
+SELECT
+    id,
+    customer_id,
+    order_date,
+    status,
+    CAST(order_date AS TIMESTAMP) + INTERVAL (CAST(FLOOR(RANDOM() * 24) AS INTEGER)) HOUR AS created_at,
+    (id % 7 = 0) AS is_gift,
+    CASE
+        WHEN status = 'placed' THEN 1
+        WHEN status = 'shipped' THEN 2
+        WHEN status IN ('completed', 'returned') THEN 3
+        ELSE 4
+    END AS priority
 FROM read_csv('/data/seeds/orders.csv', header = true, columns = {
     'id': 'INTEGER',
     'customer_id': 'INTEGER',
@@ -49,19 +74,10 @@ FROM read_csv('/data/seeds/orders.csv', header = true, columns = {
     'status': 'VARCHAR'
 });
 
-UPDATE orders SET
-    created_at = CAST(order_date AS TIMESTAMP) + INTERVAL (CAST(FLOOR(RANDOM() * 24) AS INTEGER)) HOUR,
-    is_gift = (id % 7 = 0),
-    priority = CASE
-        WHEN status = 'placed' THEN 1
-        WHEN status = 'shipped' THEN 2
-        WHEN status IN ('completed', 'returned') THEN 3
-        ELSE 4
-    END;
-
-CREATE TABLE payments (
-    id INTEGER PRIMARY KEY,
-    order_id INTEGER REFERENCES orders(id),
+-- payments
+CREATE TABLE IF NOT EXISTS payments (
+    id INTEGER,
+    order_id INTEGER,
     payment_method VARCHAR(20),
     amount DECIMAL(10,2),
     tax DECIMAL(10,2),
@@ -72,8 +88,29 @@ CREATE TABLE payments (
     is_successful BOOLEAN,
     currency VARCHAR(3)
 );
-INSERT INTO payments (id, order_id, payment_method, amount, tax, discount, processing_fee)
-SELECT id, order_id, payment_method, amount, tax, discount, processing_fee
+
+INSERT INTO payments
+SELECT
+    id,
+    order_id,
+    payment_method,
+    amount,
+    tax,
+    discount,
+    processing_fee,
+    CASE
+        WHEN id % 10 = 0 THEN -amount
+        WHEN id % 15 = 0 AND id % 10 != 0 THEN -(amount * 0.5)
+        ELSE 0.00
+    END AS refund_amount,
+    CAST('2018-01-01' AS TIMESTAMP) + INTERVAL (id) HOUR AS created_at,
+    (id % 20 != 0) AS is_successful,
+    CASE
+        WHEN id % 10 = 0 THEN 'EUR'
+        WHEN id % 10 = 1 THEN 'GBP'
+        WHEN id % 10 = 2 THEN 'JPY'
+        ELSE 'USD'
+    END AS currency
 FROM read_csv('/data/seeds/payments.csv', header = true, columns = {
     'id': 'INTEGER',
     'order_id': 'INTEGER',
@@ -84,25 +121,5 @@ FROM read_csv('/data/seeds/payments.csv', header = true, columns = {
     'processing_fee': 'DECIMAL(10,2)'
 });
 
-UPDATE payments SET
-    refund_amount = CASE
-        WHEN id % 10 = 0 THEN -amount
-        WHEN id % 15 = 0 AND id % 10 != 0 THEN -(amount * 0.5)
-        ELSE 0.00
-    END,
-    created_at = CAST('2018-01-01' AS TIMESTAMP) + INTERVAL (id) HOUR,
-    is_successful = (id % 20 != 0),
-    currency = CASE
-        WHEN id % 10 = 0 THEN 'EUR'
-        WHEN id % 10 = 1 THEN 'GBP'
-        WHEN id % 10 = 2 THEN 'JPY'
-        ELSE 'USD'
-    END;
-
-UPDATE payments SET
-    discount = NULL
-WHERE id % 25 = 0;
-
-UPDATE payments SET
-    processing_fee = NULL
-WHERE id % 30 = 0;
+UPDATE payments SET discount = NULL WHERE id % 25 = 0;
+UPDATE payments SET processing_fee = NULL WHERE id % 30 = 0;

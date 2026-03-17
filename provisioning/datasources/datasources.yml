@@ -15,7 +15,7 @@ datasources:
       exploreSqlDatasourceUid: 'duckdb-datasource'
     secureJsonData:
       apiSecret: 'dd122a535ad5d703a9d8977179f118bc'
-  - name: 'DuckDB'
+  - name: 'DuckDB (DuckLake)'
     type: 'motherduck-duckdb-datasource'
     access: proxy
     isDefault: false
@@ -24,4 +24,12 @@ datasources:
     editable: true
     uid: 'duckdb-datasource'
     jsonData:
-      path: '/var/lib/grafana/duckdb/jaffle_shop.duckdb?access_mode=READ_ONLY'
+      path: ''
+      initSQL: |
+        INSTALL ducklake;
+        LOAD ducklake;
+        INSTALL postgres;
+        LOAD postgres;
+        ATTACH 'ducklake:postgres:host=postgres port=5432 dbname=ducklake_catalog user=user password=password'
+            AS jaffle_shop (DATA_PATH '/var/lib/grafana/ducklake/', OVERRIDE_DATA_PATH TRUE);
+        USE jaffle_shop;
