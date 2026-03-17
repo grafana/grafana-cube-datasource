@@ -25,7 +25,7 @@ services:
       - postgres
 
   postgres:
-    image: postgres:18@sha256:69e8582b781cb44fa4557b98ed586fe68361e320d9b12f9707494335634f4f3d
+    image: postgres:18@sha256:d97e12178dfeddd3ed303eae53de1f556b20e7e42c68db809aa33f6527b3ab2b
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
