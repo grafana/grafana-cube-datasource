@@ -29,4 +29,4 @@ Both frontend (`npm run build`) and backend (`mage -v`) must be built **before**
 - Playwright E2E tests (`npm run e2e`) require services to be up first. Use `--reporter=list` to avoid the interactive HTML report blocking the terminal.
 - `mage -v` builds all 6 platform binaries by default. Use `mage -v build:linux` to build only the Linux binary (faster for local dev).
 - Grafana uses Ubuntu-based images (via the `grafana_suffix` build arg, defaulting to `-ubuntu`) because the DuckDB datasource plugin binary requires glibc. This applies to both local dev and CI.
-- The duckdb-init container creates two copies of the database file (one for Cube, one for Grafana) to avoid DuckDB write-lock contention.
+- Cube and Grafana share a single DuckDB database file. Grafana connects in read-only mode (`access_mode=READ_ONLY`).

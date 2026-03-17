@@ -47,4 +47,3 @@ services:
       - |
         duckdb /data/db/jaffle_shop.duckdb -init /data/migrations/init.sql \
           -c 'SELECT count(*) FROM customers; SELECT count(*) FROM orders; SELECT count(*) FROM payments;'
-        cp /data/db/jaffle_shop.duckdb /data/db/grafana_jaffle_shop.duckdb
