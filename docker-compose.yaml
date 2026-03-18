@@ -10,7 +10,7 @@ services:
         grafana_image: ${GRAFANA_IMAGE:-grafana}
     environment:
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/cubeds-ecom-full-data-model.json
-      GF_FEATURE_TOGGLES_ENABLE: 'tableNextGen,queryLibrary,sqlExpressions,dashboardDsAdHocFiltering,adhocFiltersInTooltips,enableDashboardMigration'
+      GF_FEATURE_TOGGLES_ENABLE: 'tableNextGen,queryLibrary,sqlExpressions,dashboardDsAdHocFiltering,adhocFiltersInTooltips,enableDashboardMigration,dashboardNewLayouts'
     depends_on:
       - cube
 
