@@ -20,6 +20,10 @@
     },
     "links": [
       {
+        "name": "Live Demo",
+        "url": "https://play.grafana.org/d/territory-navigator"
+      },
+      {
         "name": "GitHub",
         "url": "https://github.com/grafana/grafana-cube-datasource"
       },
@@ -29,6 +33,10 @@
       }
     ],
     "screenshots": [
+      {
+        "name": "BI Dashboard with Cross-Panel Filtering",
+        "path": "img/screenshot-bi-dashboard.png"
+      },
       {
         "name": "Query Editor",
         "path": "img/screenshot-query-editor.png"

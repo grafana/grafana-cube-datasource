@@ -11,7 +11,9 @@
 
 Connect Grafana to [Cube](https://cube.dev/) for semantic layer analytics. Query measures and dimensions, apply filters, and visualize your data—without writing SQL.
 
-![Query Editor](https://raw.githubusercontent.com/grafana/grafana-cube-datasource/main/src/img/screenshot-query-editor.png)
+![BI Dashboard with Cross-Panel Filtering](https://raw.githubusercontent.com/grafana/grafana-cube-datasource/main/src/img/screenshot-bi-dashboard.png)
+
+**[Try it live on play.grafana.org →](https://play.grafana.org/d/territory-navigator)**
 
 ## Why Use This Plugin?
 
@@ -38,6 +40,8 @@ The visual query builder supports:
 | **Limit** | Control the number of rows returned (defaults to 10,000; maximum 50,000). See [Cube's row limit documentation](https://cube.dev/docs/product/apis-integrations/core-data-apis/queries#row-limit) for details. |
 | **Filters** | Filter your query before aggregation |
 | **Order** | Sort results by any selected dimension or measure |
+
+![Query Editor](https://raw.githubusercontent.com/grafana/grafana-cube-datasource/main/src/img/screenshot-query-editor.png)
 
 ### Filtering
 
