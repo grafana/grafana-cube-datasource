@@ -30,6 +30,10 @@
     ],
     "screenshots": [
       {
+        "name": "BI Dashboard with Cross-Panel Filtering",
+        "path": "img/screenshot-bi-dashboard.png"
+      },
+      {
         "name": "Query Editor",
         "path": "img/screenshot-query-editor.png"
       }
