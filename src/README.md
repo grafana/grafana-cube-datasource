@@ -13,6 +13,8 @@ Connect Grafana to [Cube](https://cube.dev/) for semantic layer analytics. Query
 
 ![BI Dashboard with Cross-Panel Filtering](https://raw.githubusercontent.com/grafana/grafana-cube-datasource/main/src/img/screenshot-bi-dashboard.png)
 
+**[Try it live on play.grafana.org →](https://play.grafana.org/d/territory-navigator)**
+
 ## Why Use This Plugin?
 
 This plugin brings a **true semantic layer** to Grafana for the first time. By connecting to Cube, you get:
