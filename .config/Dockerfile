@@ -75,9 +75,13 @@ RUN if [ "${development}" = "true" ]; then \
 # Pinned to v0.2.1 (DuckDB 1.2.2) — later versions require glibc >= 2.38 which
 # exceeds the glibc 2.35 shipped in Grafana's Ubuntu 22.04 base image.
 ARG DUCKDB_PLUGIN_VERSION=0.2.1
-RUN DEBIAN_FRONTEND=noninteractive apt-get update \
+RUN if grep -i -q alpine /etc/issue; then \
+    apk add --no-cache unzip; \
+    else \
+    DEBIAN_FRONTEND=noninteractive apt-get update \
     && apt-get install -y --no-install-recommends unzip \
-    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /var/lib/apt/lists/*; \
+    fi \
     && curl -sL "https://github.com/motherduckdb/grafana-duckdb-datasource/releases/download/v${DUCKDB_PLUGIN_VERSION}/motherduck-duckdb-datasource-${DUCKDB_PLUGIN_VERSION}.zip" \
        -o /tmp/duckdb-plugin.zip \
     && unzip /tmp/duckdb-plugin.zip -d /var/lib/grafana/plugins/ \
