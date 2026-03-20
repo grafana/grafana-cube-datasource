@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.3 (2026-03-20)
+
+### Bug Fixes
+
+- **Fix release build**: Remove Go source files shipped inside the `flatted` npm package (`golang/pkg/flatted/flatted.go`) via a `postinstall` script, preventing the Grafana plugin validator from rejecting the archive with "Invalid Go manifest file" (#2700)
+
+**Full Changelog**: [v0.3.2...v0.3.3](https://github.com/grafana/grafana-cube-datasource/compare/v0.3.2...v0.3.3)
+
 ## 0.3.2 (2026-03-20)
 
 ### Security
