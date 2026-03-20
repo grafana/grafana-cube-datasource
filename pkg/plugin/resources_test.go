@@ -1705,7 +1705,7 @@ func TestCallResourceGenerateSchemaRouting(t *testing.T) {
 	}
 
 	req := &backend.CallResourceRequest{
-		PluginContext: newTestPluginContext(server.URL),
+		PluginContext: newTestPluginContextWithUser(server.URL, "Admin"),
 		Path:   "generate-schema",
 		Method: "POST",
 		Body:   requestBodyBytes,
@@ -1727,5 +1727,101 @@ func TestCallResourceGenerateSchemaRouting(t *testing.T) {
 
 	if len(generateSchemaResponse.Files) == 0 {
 		t.Errorf("Expected files to be present")
+	}
+}
+
+func TestCallResourceAuthorizationGenerateSchema(t *testing.T) {
+	upstreamCalled := false
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		upstreamCalled = true
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"files":[]}`))
+	}))
+	defer server.Close()
+
+	body, _ := json.Marshal(GenerateSchemaRequest{
+		Format: "yaml",
+		Tables: [][]string{{"public", "t"}},
+	})
+
+	tests := []struct {
+		name           string
+		user           *backend.User
+		expectedStatus int
+	}{
+		{name: "nil user", user: nil, expectedStatus: 403},
+		{name: "Viewer", user: &backend.User{Role: "Viewer"}, expectedStatus: 403},
+		{name: "Editor", user: &backend.User{Role: "Editor"}, expectedStatus: 403},
+		{name: "Admin", user: &backend.User{Role: "Admin"}, expectedStatus: 200},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			upstreamCalled = false
+			ds := &Datasource{BaseURL: server.URL}
+
+			pCtx := newTestPluginContext(server.URL)
+			pCtx.User = tc.user
+
+			req := &backend.CallResourceRequest{
+				PluginContext: pCtx,
+				Path:          "generate-schema",
+				Method:        "POST",
+				Body:          body,
+			}
+
+			resp := callHandler(t, ds.CallResource, req)
+
+			if resp.Status != tc.expectedStatus {
+				t.Fatalf("Expected status %d, got %d (body: %s)", tc.expectedStatus, resp.Status, string(resp.Body))
+			}
+
+			if tc.expectedStatus == 403 && upstreamCalled {
+				t.Error("Denied request should not hit upstream Cube")
+			}
+		})
+	}
+}
+
+func TestCallResourceAuthorizationReadRoutes(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case strings.HasSuffix(r.URL.Path, "/playground/files"):
+			_, _ = w.Write([]byte(`{"files":[]}`))
+		case strings.HasSuffix(r.URL.Path, "/playground/db-schema"):
+			_, _ = w.Write([]byte(`{"tablesSchema":{}}`))
+		}
+	}))
+	defer server.Close()
+
+	routes := []string{"model-files", "db-schema"}
+
+	for _, route := range routes {
+		t.Run(route+" allows Viewer", func(t *testing.T) {
+			ds := &Datasource{BaseURL: server.URL}
+			req := &backend.CallResourceRequest{
+				PluginContext: newTestPluginContextWithUser(server.URL, "Viewer"),
+				Path:          route,
+				Method:        "GET",
+			}
+			resp := callHandler(t, ds.CallResource, req)
+			if resp.Status != 200 {
+				t.Fatalf("Expected 200 for %s with Viewer, got %d", route, resp.Status)
+			}
+		})
+
+		t.Run(route+" allows nil user", func(t *testing.T) {
+			ds := &Datasource{BaseURL: server.URL}
+			req := &backend.CallResourceRequest{
+				PluginContext: newTestPluginContext(server.URL),
+				Path:          route,
+				Method:        "GET",
+			}
+			resp := callHandler(t, ds.CallResource, req)
+			if resp.Status != 200 {
+				t.Fatalf("Expected 200 for %s with nil user, got %d", route, resp.Status)
+			}
+		})
 	}
 }

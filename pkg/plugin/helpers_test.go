@@ -16,6 +16,12 @@ func newTestPluginContext(url string) backend.PluginContext {
 	}
 }
 
+func newTestPluginContextWithUser(url string, role string) backend.PluginContext {
+	ctx := newTestPluginContext(url)
+	ctx.User = &backend.User{Role: role}
+	return ctx
+}
+
 func callHandler(t *testing.T, fn func(context.Context, *backend.CallResourceRequest, backend.CallResourceResponseSender) error, req *backend.CallResourceRequest) *backend.CallResourceResponse {
 	return callHandlerWithContext(context.Background(), t, fn, req)
 }
