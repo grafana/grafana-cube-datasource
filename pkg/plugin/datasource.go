@@ -311,13 +311,14 @@ func (d *Datasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRe
 		message += " and verified authentication"
 	}
 
-	// Parse meta response to check whether a data model exists.
-	// When no cubes are defined, nudge the user toward the Data Model tab
-	// instead of letting Grafana's default "build a dashboard" message appear.
+	// Parse meta response and always nudge the user toward the Data Model tab.
+	// Tailor the hint based on whether cubes already exist.
 	body, _ := io.ReadAll(metaResp.Body)
 	var metaResponse CubeMetaResponse
 	if err := json.Unmarshal(body, &metaResponse); err == nil && len(metaResponse.Cubes) == 0 {
 		message += ". ℹ️ No data model found yet — visit the Data Model tab to get started"
+	} else {
+		message += ". ℹ️ Visit the Data Model tab to review or update your data model"
 	}
 
 	return &backend.CheckHealthResult{
