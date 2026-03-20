@@ -92,12 +92,29 @@ func (d *Datasource) CallResource(ctx context.Context, req *backend.CallResource
 	case "db-schema":
 		return d.handleDbSchema(ctx, req, sender)
 	case "generate-schema":
+		if !isAdmin(req) {
+			return sender.Send(accessDeniedResponse())
+		}
 		return d.handleGenerateSchema(ctx, req, sender)
 	default:
 		return sender.Send(&backend.CallResourceResponse{
 			Status: 404,
 			Body:   []byte(`{"error": "not found"}`),
 		})
+	}
+}
+
+func isAdmin(req *backend.CallResourceRequest) bool {
+	return req.PluginContext.User != nil && req.PluginContext.User.Role == "Admin"
+}
+
+func accessDeniedResponse() *backend.CallResourceResponse {
+	return &backend.CallResourceResponse{
+		Status: 403,
+		Body:   []byte(`{"error":"access denied"}`),
+		Headers: map[string][]string{
+			"Content-Type": {"application/json"},
+		},
 	}
 }
 
