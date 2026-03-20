@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.1 (2026-03-20)
+
+### Security
+
+- **Backend authorization for generate-schema**: The mutating `generate-schema` CallResource route now requires Admin org role, preventing non-admin users from triggering model file generation on the upstream Cube instance (#216)
+
+### Improved
+
+- **Standard SQL casts**: Replace PostgreSQL-specific `::date` and `::numeric` cast syntax with standard `CAST()` in demo dashboard queries and Cube model, improving compatibility with DuckDB and BigQuery (#204)
+
+**Full Changelog**: [v0.3.0...v0.3.1](https://github.com/grafana/grafana-cube-datasource/compare/v0.3.0...v0.3.1)
+
 ## 0.3.0 (2026-03-13)
 
 ### Features
