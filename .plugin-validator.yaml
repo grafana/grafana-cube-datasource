@@ -1,0 +1,18 @@
+global:
+  enabled: true
+
+analyzers:
+  # Disabled: version check compares against the published version on grafana.com,
+  # which will always fail in CI since the version is only bumped in release PRs.
+  # The release workflow validates this separately.
+  version:
+    enabled: false
+  # Disabled by default in plugin-ci-workflows v7 config:
+  discoverability:
+    enabled: false
+  license:
+    enabled: false
+  org:
+    enabled: false
+  sponsorshiplink:
+    enabled: false
