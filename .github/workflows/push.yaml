@@ -36,12 +36,14 @@ jobs:
 
   ci:
     name: CI
-    uses: grafana/plugin-ci-workflows/.github/workflows/ci.yml@ci-cd-workflows/v6.1.1
+    uses: grafana/plugin-ci-workflows/.github/workflows/ci.yml@ci-cd-workflows/v7.0.0
     permissions:
       contents: read
       id-token: write
     with:
       plugin-version-suffix: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
+      # Run plugin-validator in CI to catch issues before release
+      run-plugin-validator: true
       # Skip the grafana-dev image in Playwright tests (image may be temporarily unavailable)
       run-playwright-with-skip-grafana-dev-image: true
 
