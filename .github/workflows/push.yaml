@@ -44,6 +44,7 @@ jobs:
       plugin-version-suffix: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
       # Run plugin-validator in CI to catch issues before release
       run-plugin-validator: true
+      plugin-validator-config-path: .plugin-validator.yaml
       # Skip the grafana-dev image in Playwright tests (image may be temporarily unavailable)
       run-playwright-with-skip-grafana-dev-image: true
 
