@@ -1,971 +1,1272 @@
 {
-  "annotations": {
-    "list": [
-      {
-        "builtIn": 1,
-        "datasource": {
-          "type": "grafana",
-          "uid": "-- Grafana --"
-        },
-        "enable": true,
-        "hide": true,
-        "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
-        "type": "dashboard"
-      }
-    ]
+  "apiVersion": "dashboard.grafana.app/v2beta1",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "cubeds-ecom-full-data-model"
   },
-  "editable": true,
-  "fiscalYearStartMonth": 0,
-  "graphTooltip": 1,
-  "id": 3,
-  "links": [],
-  "panels": [
-    {
-      "datasource": {
-        "type": "grafana-cube-datasource",
-        "uid": "grafana-cube-datasource"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "fillOpacity": 80,
-            "gradientMode": "opacity",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
             },
-            "lineWidth": 1,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
+            "spec": {}
           },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "currencyUSD"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 11,
-        "w": 12,
-        "x": 0,
-        "y": 0
-      },
-      "id": 4,
-      "options": {
-        "barRadius": 0.05,
-        "barWidth": 0.83,
-        "colorByField": "order_details.customers_first_name",
-        "fullHighlight": false,
-        "groupWidth": 0.7,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "right",
-          "showLegend": false
-        },
-        "orientation": "auto",
-        "showValue": "never",
-        "stacking": "none",
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        },
-        "xTickLabelRotation": 90,
-        "xTickLabelSpacing": 0
-      },
-      "pluginVersion": "12.2.0-17253726931",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-cube-datasource",
-            "uid": "grafana-cube-datasource"
-          },
-          "dimensions": [
-            "order_details.customers_first_name"
-          ],
-          "measures": [
-            "order_details.payments_total_amount"
-          ],
-          "refId": "A"
-        }
-      ],
-      "title": "Orders: Amount, by First Name",
-      "type": "barchart"
-    },
-    {
-      "datasource": {
-        "type": "grafana-cube-datasource",
-        "uid": "grafana-cube-datasource"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineWidth": 1,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "currencyUSD"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 11,
-        "w": 12,
-        "x": 12,
-        "y": 0
-      },
-      "id": 2,
-      "options": {
-        "barRadius": 0.05,
-        "barWidth": 0.83,
-        "fullHighlight": false,
-        "groupWidth": 0.7,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "right",
-          "showLegend": false
-        },
-        "orientation": "auto",
-        "showValue": "never",
-        "stacking": "none",
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        },
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0
-      },
-      "pluginVersion": "12.2.0-17253726931",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-cube-datasource",
-            "uid": "grafana-cube-datasource"
-          },
-          "dimensions": [
-            "order_details.payments_payment_method"
-          ],
-          "measures": [
-            "order_details.payments_total_amount"
-          ],
-          "refId": "A"
-        }
-      ],
-      "title": "Order Amount by Payment Method",
-      "type": "barchart"
-    },
-    {
-      "datasource": {
-        "type": "grafana-cube-datasource",
-        "uid": "grafana-cube-datasource"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "order_details.payments_total_amount"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "currencyUSD"
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 11,
-        "w": 12,
-        "x": 0,
-        "y": 11
-      },
-      "id": 1,
-      "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "showHeader": true
-      },
-      "pluginVersion": "12.2.0-17253726931",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-cube-datasource",
-            "uid": "grafana-cube-datasource"
-          },
-          "dimensions": [
-            "order_details.customers_first_name",
-            "order_details.customers_last_name"
-          ],
-          "measures": [
-            "order_details.payments_total_amount",
-            "order_details.payments_count"
-          ],
-          "refId": "A"
-        }
-      ],
-      "title": "Orders: Amount and Count, by First Name",
-      "type": "table"
-    },
-    {
-      "datasource": {
-        "type": "grafana-cube-datasource",
-        "uid": "grafana-cube-datasource"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 25,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 11,
-        "w": 12,
-        "x": 12,
-        "y": 11
-      },
-      "id": 6,
-      "options": {
-        "legend": {
-          "calcs": [
-            "min",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.2.0-17253726931",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-cube-datasource",
-            "uid": "grafana-cube-datasource"
-          },
-          "dimensions": [
-            "order_details.order_date"
-          ],
-          "measures": [
-            "order_details.payments_count_with_discount",
-            "order_details.payments_count"
-          ],
-          "refId": "A"
-        }
-      ],
-      "title": "Order Amount by Payment Method",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "grafana-cube-datasource",
-        "uid": "grafana-cube-datasource"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "order_details.payments_total_amount"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "currencyUSD"
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 22
-      },
-      "id": 5,
-      "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "showHeader": true
-      },
-      "pluginVersion": "12.2.0-17253726931",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-cube-datasource",
-            "uid": "grafana-cube-datasource"
-          },
-          "dimensions": [
-            "order_details.customers_first_name",
-            "order_details.customers_last_name"
-          ],
+          "enable": true,
           "hide": true,
-          "measures": [
-            "order_details.payments_total_amount",
-            "order_details.payments_count"
-          ],
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "name": "Expression",
-            "type": "__expr__",
-            "uid": "__expr__"
-          },
-          "expression": "SELECT\n  CONCAT(`order_details.customers_first_name`, ' ', `order_details.customers_last_name`) AS full_name,\n  `order_details.payments_total_amount`,\n  `order_details.payments_count`\nFROM A LIMIT 5",
-          "hide": false,
-          "refId": "B",
-          "type": "sql"
-        }
-      ],
-      "title": "Supports SQL Expressions! Top 5, name fields merged",
-      "type": "table"
-    },
-    {
-      "datasource": {
-        "type": "grafana-cube-datasource",
-        "uid": "grafana-cube-datasource"
-      },
-      "description": "This panel uses timeDimensions with an explicit dateRange and an 'lt' filter, which the visual editor cannot represent. Open the query editor to see the read-only JSON viewer with syntax-highlighted query JSON.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 25,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "builtIn": true,
+          "legacyOptions": {
+            "type": "dashboard"
           }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 11,
-        "w": 12,
-        "x": 12,
-        "y": 22
-      },
-      "id": 7,
-      "options": {
-        "legend": {
-          "calcs": [
-            "min",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
         }
-      },
-      "pluginVersion": "12.3.3",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-cube-datasource",
-            "uid": "grafana-cube-datasource"
-          },
-          "dimensions": [
-            "order_details.order_date"
-          ],
-          "measures": [
-            "order_details.payments_count_with_discount",
-            "order_details.payments_count"
-          ],
-          "timeDimensions": [
-            {
-              "dimension": "order_details.order_date",
-              "dateRange": [
-                "2018-02-28",
-                "2018-03-28"
-              ]
-            }
-          ],
-          "filters": [
-            {
-              "member": "order_details.payments_count_with_discount",
-              "operator": "lt",
-              "values": [
-                "1"
-              ]
-            }
-          ],
-          "refId": "A"
-        }
-      ],
-      "title": "Advanced (JSON viewer demo): Date-Filtered Orders, No Discounts",
-      "type": "timeseries"
-    },
-    {
-      "id": 8,
-      "type": "barchart",
-      "title": "Advanced (JSON viewer demo): OR Filter — Credit Card or Active Customer",
-      "description": "This panel uses an OR filter group across different field keys (payment_method OR is_active), which the visual editor cannot represent. OR is needed when combining conditions across different fields — equals with an array only works for multiple values on a single field.",
-      "gridPos": {
-        "x": 0,
-        "y": 33,
-        "h": 10,
-        "w": 24
-      },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "lineWidth": 1,
-            "fillOpacity": 80,
-            "gradientMode": "opacity",
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "axisBorderShow": false,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "axisCenteredZero": false,
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "color": {
-            "mode": "palette-classic"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "currencyUSD"
-        },
-        "overrides": []
-      },
-      "pluginVersion": "12.3.3",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-cube-datasource",
-            "uid": "grafana-cube-datasource"
-          },
-          "dimensions": [
-            "order_details.customers_first_name"
-          ],
-          "filters": [
-            {
-              "or": [
+      }
+    ],
+    "cursorSync": "Crosshair",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Orders: Amount and Count, by First Name",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
                 {
-                  "member": "order_details.payments_payment_method",
-                  "operator": "equals",
-                  "values": [
-                    "credit_card"
-                  ]
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-cube-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "grafana-cube-datasource"
+                      },
+                      "spec": {
+                        "dimensions": [
+                          "order_details.customers_first_name",
+                          "order_details.customers_last_name"
+                        ],
+                        "measures": [
+                          "order_details.payments_total_amount",
+                          "order_details.payments_count"
+                        ]
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "12.2.0-17253726931",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "footer": {
+                  "countRows": false,
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "order_details.payments_total_amount"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "currencyUSD"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Order Amount by Payment Method",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-cube-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "grafana-cube-datasource"
+                      },
+                      "spec": {
+                        "dimensions": [
+                          "order_details.payments_payment_method"
+                        ],
+                        "measures": [
+                          "order_details.payments_total_amount"
+                        ]
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "barchart",
+            "version": "12.2.0-17253726931",
+            "spec": {
+              "options": {
+                "barRadius": 0.05,
+                "barWidth": 0.83,
+                "fullHighlight": false,
+                "groupWidth": 0.7,
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "right",
+                  "showLegend": false
+                },
+                "orientation": "auto",
+                "showValue": "never",
+                "stacking": "none",
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                },
+                "xTickLabelRotation": 0,
+                "xTickLabelSpacing": 0
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "currencyUSD",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "fillOpacity": 80,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Orders: Amount, by First Name",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-cube-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "grafana-cube-datasource"
+                      },
+                      "spec": {
+                        "dimensions": [
+                          "order_details.customers_first_name"
+                        ],
+                        "measures": [
+                          "order_details.payments_total_amount"
+                        ]
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "barchart",
+            "version": "12.2.0-17253726931",
+            "spec": {
+              "options": {
+                "barRadius": 0.05,
+                "barWidth": 0.83,
+                "colorByField": "order_details.customers_first_name",
+                "fullHighlight": false,
+                "groupWidth": 0.7,
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "right",
+                  "showLegend": false
+                },
+                "orientation": "auto",
+                "showValue": "never",
+                "stacking": "none",
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                },
+                "xTickLabelRotation": 90,
+                "xTickLabelSpacing": 0
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "currencyUSD",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "fillOpacity": 80,
+                    "gradientMode": "opacity",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-5": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "Supports SQL Expressions! Top 5, name fields merged",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-cube-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "grafana-cube-datasource"
+                      },
+                      "spec": {
+                        "dimensions": [
+                          "order_details.customers_first_name",
+                          "order_details.customers_last_name"
+                        ],
+                        "measures": [
+                          "order_details.payments_total_amount",
+                          "order_details.payments_count"
+                        ]
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": true
+                  }
                 },
                 {
-                  "member": "order_details.customers_is_active",
-                  "operator": "equals",
-                  "values": [
-                    "true"
-                  ]
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "__expr__",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "__expr__"
+                      },
+                      "spec": {
+                        "expression": "SELECT\n  CONCAT(`order_details.customers_first_name`, ' ', `order_details.customers_last_name`) AS full_name,\n  `order_details.payments_total_amount`,\n  `order_details.payments_count`\nFROM A LIMIT 5",
+                        "type": "sql"
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
                 }
-              ]
+              ],
+              "transformations": [],
+              "queryOptions": {}
             }
-          ],
-          "measures": [
-            "order_details.payments_total_amount"
-          ],
-          "refId": "Credit Card or Active Customer",
-          "hide": true
-        },
-        {
-          "datasource": {
-            "uid": "grafana-cube-datasource",
-            "type": "grafana-cube-datasource"
           },
-          "refId": "Credit Card",
-          "hide": true,
-          "dimensions": [
-            "order_details.customers_first_name"
-          ],
-          "measures": [
-            "order_details.payments_total_amount"
-          ],
-          "filters": [
-            {
-              "member": "order_details.payments_payment_method",
-              "operator": "equals",
-              "values": [
-                "credit_card"
-              ]
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "12.2.0-17253726931",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "footer": {
+                  "countRows": false,
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "order_details.payments_total_amount"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "currencyUSD"
+                      }
+                    ]
+                  }
+                ]
+              }
             }
-          ]
-        },
-        {
-          "datasource": {
-            "uid": "grafana-cube-datasource",
-            "type": "grafana-cube-datasource"
-          },
-          "refId": "Active Customer",
-          "hide": true,
-          "dimensions": [
-            "order_details.customers_first_name"
-          ],
-          "measures": [
-            "order_details.payments_total_amount"
-          ],
-          "filters": [
-            {
-              "member": "order_details.customers_is_active",
-              "operator": "equals",
-              "values": [
-                "true"
-              ]
-            }
-          ]
-        },
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "__expr__",
-            "uid": "__expr__",
-            "name": "Expression"
-          },
-          "type": "sql",
-          "hide": false,
-          "expression": "SELECT\n  ccac.`order_details.customers_first_name` AS first_name,\n  ccac.`order_details.payments_total_amount` AS total_amount_across_credit_card_OR_active_customer,\n  cc.`order_details.payments_total_amount` AS total_amount_across_credit_card,\n  ac.`order_details.payments_total_amount` AS total_amount_active_customer\nFROM\n  `Credit Card or Active Customer` AS ccac\nLEFT JOIN\n  `Credit Card` AS cc \n  ON ccac.`order_details.customers_first_name` = cc.`order_details.customers_first_name`\nLEFT JOIN\n  `Active Customer` AS ac \n  ON ccac.`order_details.customers_first_name` = ac.`order_details.customers_first_name`"
+          }
         }
-      ],
-      "datasource": {
-        "type": "grafana-cube-datasource",
-        "uid": "grafana-cube-datasource"
       },
-      "options": {
-        "orientation": "auto",
-        "xTickLabelRotation": 90,
-        "xTickLabelSpacing": 0,
-        "showValue": "never",
-        "stacking": "none",
-        "groupWidth": 0.7,
-        "barWidth": 0.83,
-        "barRadius": 0.05,
-        "fullHighlight": false,
-        "tooltip": {
-          "mode": "single",
-          "sort": "none",
-          "hideZeros": false
-        },
-        "legend": {
-          "showLegend": true,
-          "displayMode": "list",
-          "placement": "right",
-          "calcs": []
-        },
-        "colorByField": "order_details.customers_first_name"
+      "panel-6": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "Order Amount by Payment Method",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-cube-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "grafana-cube-datasource"
+                      },
+                      "spec": {
+                        "dimensions": [
+                          "order_details.order_date"
+                        ],
+                        "measures": [
+                          "order_details.payments_count_with_discount",
+                          "order_details.payments_count"
+                        ]
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "12.2.0-17253726931",
+            "spec": {
+              "options": {
+                "legend": {
+                  "calcs": [
+                    "min",
+                    "max"
+                  ],
+                  "displayMode": "table",
+                  "placement": "right",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 25,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "normal"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-7": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "Advanced (JSON viewer demo): Date-Filtered Orders, No Discounts",
+          "description": "This panel uses timeDimensions with an explicit dateRange and an 'lt' filter, which the visual editor cannot represent. Open the query editor to see the read-only JSON viewer with syntax-highlighted query JSON.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-cube-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "grafana-cube-datasource"
+                      },
+                      "spec": {
+                        "dimensions": [
+                          "order_details.order_date"
+                        ],
+                        "filters": [
+                          {
+                            "member": "order_details.payments_count_with_discount",
+                            "operator": "lt",
+                            "values": [
+                              "1"
+                            ]
+                          }
+                        ],
+                        "measures": [
+                          "order_details.payments_count_with_discount",
+                          "order_details.payments_count"
+                        ],
+                        "timeDimensions": [
+                          {
+                            "dateRange": [
+                              "2018-02-28",
+                              "2018-03-28"
+                            ],
+                            "dimension": "order_details.order_date"
+                          }
+                        ]
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "12.3.3",
+            "spec": {
+              "options": {
+                "legend": {
+                  "calcs": [
+                    "min",
+                    "max"
+                  ],
+                  "displayMode": "table",
+                  "placement": "right",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 25,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "normal"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-8": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "Advanced (JSON viewer demo): OR Filter \u2014 Credit Card or Active Customer",
+          "description": "This panel uses an OR filter group across different field keys (payment_method OR is_active), which the visual editor cannot represent. OR is needed when combining conditions across different fields \u2014 equals with an array only works for multiple values on a single field.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-cube-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "grafana-cube-datasource"
+                      },
+                      "spec": {
+                        "dimensions": [
+                          "order_details.customers_first_name"
+                        ],
+                        "filters": [
+                          {
+                            "or": [
+                              {
+                                "member": "order_details.payments_payment_method",
+                                "operator": "equals",
+                                "values": [
+                                  "credit_card"
+                                ]
+                              },
+                              {
+                                "member": "order_details.customers_is_active",
+                                "operator": "equals",
+                                "values": [
+                                  "true"
+                                ]
+                              }
+                            ]
+                          }
+                        ],
+                        "measures": [
+                          "order_details.payments_total_amount"
+                        ]
+                      }
+                    },
+                    "refId": "Credit Card or Active Customer",
+                    "hidden": true
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-cube-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "grafana-cube-datasource"
+                      },
+                      "spec": {
+                        "dimensions": [
+                          "order_details.customers_first_name"
+                        ],
+                        "filters": [
+                          {
+                            "member": "order_details.payments_payment_method",
+                            "operator": "equals",
+                            "values": [
+                              "credit_card"
+                            ]
+                          }
+                        ],
+                        "measures": [
+                          "order_details.payments_total_amount"
+                        ]
+                      }
+                    },
+                    "refId": "Credit Card",
+                    "hidden": true
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-cube-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "grafana-cube-datasource"
+                      },
+                      "spec": {
+                        "dimensions": [
+                          "order_details.customers_first_name"
+                        ],
+                        "filters": [
+                          {
+                            "member": "order_details.customers_is_active",
+                            "operator": "equals",
+                            "values": [
+                              "true"
+                            ]
+                          }
+                        ],
+                        "measures": [
+                          "order_details.payments_total_amount"
+                        ]
+                      }
+                    },
+                    "refId": "Active Customer",
+                    "hidden": true
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "__expr__",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "__expr__"
+                      },
+                      "spec": {
+                        "expression": "SELECT\n  ccac.`order_details.customers_first_name` AS first_name,\n  ccac.`order_details.payments_total_amount` AS total_amount_across_credit_card_OR_active_customer,\n  cc.`order_details.payments_total_amount` AS total_amount_across_credit_card,\n  ac.`order_details.payments_total_amount` AS total_amount_active_customer\nFROM\n  `Credit Card or Active Customer` AS ccac\nLEFT JOIN\n  `Credit Card` AS cc \n  ON ccac.`order_details.customers_first_name` = cc.`order_details.customers_first_name`\nLEFT JOIN\n  `Active Customer` AS ac \n  ON ccac.`order_details.customers_first_name` = ac.`order_details.customers_first_name`",
+                        "type": "sql"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "barchart",
+            "version": "12.3.3",
+            "spec": {
+              "options": {
+                "barRadius": 0.05,
+                "barWidth": 0.83,
+                "colorByField": "order_details.customers_first_name",
+                "fullHighlight": false,
+                "groupWidth": 0.7,
+                "legend": {
+                  "calcs": [],
+                  "displayMode": "list",
+                  "placement": "right",
+                  "showLegend": true
+                },
+                "orientation": "auto",
+                "showValue": "never",
+                "stacking": "none",
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                },
+                "xTickLabelRotation": 90,
+                "xTickLabelSpacing": 0
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "currencyUSD",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "fillOpacity": 80,
+                    "gradientMode": "opacity",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "lineWidth": 1,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-9": {
+        "kind": "Panel",
+        "spec": {
+          "id": 9,
+          "title": "Advanced (JSON viewer demo): Orders for $customerName",
+          "description": "This panel filters by a dashboard variable ($customerName) in a filter value. Change the Customer Name variable to see orders for a different customer. The query editor shows the JSON viewer because template variables in filter values are not supported by the visual builder.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-cube-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "grafana-cube-datasource"
+                      },
+                      "spec": {
+                        "dimensions": [
+                          "order_details.payments_payment_method",
+                          "order_details.is_gift",
+                          "order_details.payments_discount"
+                        ],
+                        "filters": [
+                          {
+                            "member": "order_details.customers_first_name",
+                            "operator": "equals",
+                            "values": [
+                              "$customerName"
+                            ]
+                          }
+                        ],
+                        "measures": [
+                          "order_details.payments_total_amount",
+                          "order_details.payments_count"
+                        ]
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "12.3.3",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "footer": {
+                  "countRows": false,
+                  "fields": "",
+                  "reducer": [
+                    "sum"
+                  ],
+                  "show": false
+                },
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "order_details.payments_total_amount"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "currencyUSD"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "order_details.payments_discount"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "currencyUSD"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
       }
     },
-    {
-      "datasource": {
-        "type": "grafana-cube-datasource",
-        "uid": "grafana-cube-datasource"
-      },
-      "description": "This panel filters by a dashboard variable ($customerName) in a filter value. Change the Customer Name variable to see orders for a different customer. The query editor shows the JSON viewer because template variables in filter values are not supported by the visual builder.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          }
-        },
-        "overrides": [
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
           {
-            "matcher": {
-              "id": "byName",
-              "options": "order_details.payments_total_amount"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "currencyUSD"
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
               }
-            ]
+            }
           },
           {
-            "matcher": {
-              "id": "byName",
-              "options": "order_details.payments_discount"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "currencyUSD"
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
               }
-            ]
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 11,
+              "width": 12,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 11,
+              "width": 12,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-6"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 22,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-5"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 22,
+              "width": 12,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-7"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 33,
+              "width": 24,
+              "height": 10,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-8"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 43,
+              "width": 24,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-9"
+              }
+            }
           }
         ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 43
-      },
-      "id": 9,
-      "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "showHeader": true
-      },
-      "pluginVersion": "12.3.3",
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-cube-datasource",
-            "uid": "grafana-cube-datasource"
-          },
-          "dimensions": [
-            "order_details.payments_payment_method",
-            "order_details.is_gift",
-            "order_details.payments_discount"
-          ],
-          "measures": [
-            "order_details.payments_total_amount",
-            "order_details.payments_count"
-          ],
-          "filters": [
-            {
-              "member": "order_details.customers_first_name",
-              "operator": "equals",
-              "values": [
-                "$customerName"
-              ]
-            }
-          ],
-          "refId": "A"
-        }
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "2018-02-20T13:19:26.734Z",
+      "to": "2018-04-14T08:31:36.641Z",
+      "autoRefresh": "",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
       ],
-      "title": "Advanced (JSON viewer demo): Orders for $customerName",
-      "type": "table"
-    }
-  ],
-  "preload": false,
-  "refresh": "",
-  "schemaVersion": 41,
-  "tags": [],
-  "templating": {
-    "list": [
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "CubeDS e-commerce: Full Data Model",
+    "variables": [
       {
-        "allowCustomValue": false,
-        "current": {
-          "text": "order_details.order_date",
-          "value": "order_details.order_date"
-        },
-        "description": "This field will have the Dashboard Time-range applied to it as a filter",
-        "label": "Time-range filtering field",
-        "name": "cubeTimeDimension",
-        "options": [
-          {
-            "selected": true,
+        "kind": "CustomVariable",
+        "spec": {
+          "name": "cubeTimeDimension",
+          "query": "order_details.order_date,not_a_real_date_field",
+          "current": {
             "text": "order_details.order_date",
             "value": "order_details.order_date"
           },
-          {
-            "selected": false,
-            "text": "not_a_real_date_field",
-            "value": "not_a_real_date_field"
-          }
-        ],
-        "query": "order_details.order_date,not_a_real_date_field",
-        "type": "custom"
+          "options": [
+            {
+              "selected": true,
+              "text": "order_details.order_date",
+              "value": "order_details.order_date"
+            },
+            {
+              "selected": false,
+              "text": "not_a_real_date_field",
+              "value": "not_a_real_date_field"
+            }
+          ],
+          "multi": false,
+          "includeAll": false,
+          "label": "Time-range filtering field",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "This field will have the Dashboard Time-range applied to it as a filter",
+          "allowCustomValue": false
+        }
       },
       {
-        "allowCustomValue": false,
-        "current": {
-          "text": "Christina",
-          "value": "Christina"
-        },
-        "description": "Customer first name used in the variable filter demo panel",
-        "label": "Customer Name",
-        "name": "customerName",
-        "options": [
-          {
-            "selected": true,
+        "kind": "CustomVariable",
+        "spec": {
+          "name": "customerName",
+          "query": "Christina,Rose,Sara",
+          "current": {
             "text": "Christina",
             "value": "Christina"
           },
-          {
-            "selected": false,
-            "text": "Rose",
-            "value": "Rose"
-          },
-          {
-            "selected": false,
-            "text": "Sara",
-            "value": "Sara"
-          }
-        ],
-        "query": "Christina,Rose,Sara",
-        "type": "custom"
+          "options": [
+            {
+              "selected": true,
+              "text": "Christina",
+              "value": "Christina"
+            },
+            {
+              "selected": false,
+              "text": "Rose",
+              "value": "Rose"
+            },
+            {
+              "selected": false,
+              "text": "Sara",
+              "value": "Sara"
+            }
+          ],
+          "multi": false,
+          "includeAll": false,
+          "label": "Customer Name",
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "description": "Customer first name used in the variable filter demo panel",
+          "allowCustomValue": false
+        }
       }
     ]
-  },
-  "time": {
-    "from": "2018-02-20T13:19:26.734Z",
-    "to": "2018-04-14T08:31:36.641Z"
-  },
-  "timepicker": {},
-  "timezone": "browser",
-  "title": "CubeDS e-commerce: Full Data Model",
-  "uid": "cubeds-ecom-full-data-model",
-  "version": 4,
-  "weekStart": ""
+  }
 }
