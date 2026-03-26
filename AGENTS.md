@@ -25,4 +25,7 @@ Both frontend (`npm run build`) and backend (`mage -v`) must be built **before**
 ### Non-obvious notes
 
 - Playwright E2E tests (`npm run e2e`) require services to be up first. Use `--reporter=list` to avoid the interactive HTML report blocking the terminal.
-- `mage -v` builds all 6 platform binaries by default. Use `mage -v build:linux` to build only the Linux binary (faster for local dev).
+- `mage -v` builds all 6 platform binaries by default. For faster local dev, build only the Linux binary matching your Docker host architecture:
+  - **Apple Silicon (M1/M2/M3/M4):** `mage -v build:linuxARM64` — Docker runs ARM64 containers natively, so Grafana loads `gpx_cube_linux_arm64`.
+  - **Intel Mac / Linux x86_64:** `mage -v build:linux` — builds `gpx_cube_linux_amd64`.
+  - Using the wrong architecture target means Grafana loads a stale binary and your changes won't take effect.

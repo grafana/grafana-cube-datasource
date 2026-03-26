@@ -1,5 +1,6 @@
 import React, { act } from 'react';
 import { screen, waitFor, fireEvent } from '@testing-library/react';
+import * as GrafanaUI from '@grafana/ui';
 import { QueryEditor } from './QueryEditor';
 import { CubeQuery, Operator } from '../types';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -100,6 +101,52 @@ describe('QueryEditor', () => {
     });
 
     expect(datasource.getMetadata).toHaveBeenCalledTimes(1);
+  });
+
+  it('should pass metadata descriptions through to MultiSelect options', async () => {
+    const mockMetadata = {
+      dimensions: [
+        {
+          label: 'orders.created_at',
+          value: 'orders.created_at',
+          description: 'Timestamp field with time',
+        },
+      ],
+      measures: [
+        {
+          label: 'orders.count',
+          value: 'orders.count',
+          description: 'Total number of orders',
+        },
+      ],
+    };
+
+    const multiSelectSpy = jest.spyOn(GrafanaUI, 'MultiSelect').mockImplementation((props: any) => (
+      <div data-testid={`multiselect-${props['aria-label']}`}>{props.placeholder}</div>
+    ));
+
+    try {
+      const datasource = createMockDataSource(mockMetadata);
+      const query = createMockQuery();
+
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
+        expect(screen.getByText('Select measures...')).toBeInTheDocument();
+      });
+
+      const getLastMultiSelectProps = (ariaLabel: string) =>
+        [...multiSelectSpy.mock.calls]
+          .reverse()
+          .map(([props]) => props)
+          .find((props) => props['aria-label'] === ariaLabel);
+
+      expect(getLastMultiSelectProps('Dimensions')?.options).toEqual(mockMetadata.dimensions);
+      expect(getLastMultiSelectProps('Measures')?.options).toEqual(mockMetadata.measures);
+    } finally {
+      multiSelectSpy.mockRestore();
+    }
   });
 
   it('should handle metadata fetch errors gracefully', async () => {
