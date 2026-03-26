@@ -149,6 +149,63 @@ describe('QueryEditor', () => {
     }
   });
 
+  it('should support top-level SelectableValue.description in filterOption', async () => {
+    const mockMetadata = {
+      dimensions: [
+        {
+          label: 'orders.created_at',
+          value: 'orders.created_at',
+          description: 'Timestamp field with time',
+        },
+      ],
+      measures: [],
+    };
+
+    const multiSelectSpy = jest.spyOn(GrafanaUI, 'MultiSelect').mockImplementation((props: any) => (
+      <div data-testid={`multiselect-${props['aria-label']}`}>{props.placeholder}</div>
+    ));
+
+    try {
+      const datasource = createMockDataSource(mockMetadata);
+      const query = createMockQuery();
+
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
+      });
+
+      const dimensionsProps = [...multiSelectSpy.mock.calls]
+        .reverse()
+        .map(([props]) => props)
+        .find((props) => props['aria-label'] === 'Dimensions');
+
+      expect(dimensionsProps).toBeDefined();
+      expect(
+        dimensionsProps.filterOption(
+          {
+            label: 'orders.created_at',
+            value: 'orders.created_at',
+            description: 'Timestamp field with time',
+          },
+          'timestamp'
+        )
+      ).toBe(true);
+      expect(
+        dimensionsProps.filterOption(
+          {
+            label: 'orders.status',
+            value: 'orders.status',
+            description: 'Current order status',
+          },
+          'timestamp'
+        )
+      ).toBe(false);
+    } finally {
+      multiSelectSpy.mockRestore();
+    }
+  });
+
   it('should handle metadata fetch errors gracefully', async () => {
     const datasource = createMockDataSource();
     datasource.getMetadata = jest.fn().mockRejectedValue(new Error('API Error'));
@@ -960,7 +1017,7 @@ describe('QueryEditor', () => {
   });
 
   describe('description-based search in dropdowns', () => {
-    it('should match options by description text, not just label', async () => {
+    it('should match rendered dropdown options by description text', async () => {
       const mockMetadata = {
         dimensions: [
           { label: 'orders.status', value: 'orders.status', description: '' },

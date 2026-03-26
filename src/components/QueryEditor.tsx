@@ -129,7 +129,7 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
   const filterOption = useCallback((option: SelectableValue<string>, searchQuery: string) => {
     const q = searchQuery.toLowerCase();
     const label = option.label?.toLowerCase() ?? '';
-    const desc = (option.data as SelectableValue<string>)?.description?.toLowerCase() ?? '';
+    const desc = (option.description ?? option.data?.description ?? '').toLowerCase();
     return label.includes(q) || desc.includes(q);
   }, []);
 
