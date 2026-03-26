@@ -959,6 +959,71 @@ describe('QueryEditor', () => {
     });
   });
 
+  describe('description-based search in dropdowns', () => {
+    it('should match options by description text, not just label', async () => {
+      const mockMetadata = {
+        dimensions: [
+          { label: 'orders.status', value: 'orders.status', description: '' },
+          { label: 'orders.created_at', value: 'orders.created_at', description: 'Timestamp field with time' },
+          { label: 'orders.priority', value: 'orders.priority', description: 'Priority level for sorting' },
+        ],
+        measures: [],
+      };
+
+      const datasource = createMockDataSource(mockMetadata);
+      const query = createMockQuery();
+
+      const { user } = setup(
+        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
+      });
+
+      const dimensionsInput = screen.getByRole('combobox', { name: 'Dimensions' });
+      await user.click(dimensionsInput);
+
+      // Type a term that only appears in a description, not any label
+      await user.type(dimensionsInput, 'Timestamp');
+
+      // The option whose description matches should be visible
+      expect(screen.getByText('orders.created_at')).toBeInTheDocument();
+
+      // Options that don't match on label or description should be filtered out
+      expect(screen.queryByText('orders.status')).not.toBeInTheDocument();
+      expect(screen.queryByText('orders.priority')).not.toBeInTheDocument();
+    });
+
+    it('should still match options by label as before', async () => {
+      const mockMetadata = {
+        dimensions: [
+          { label: 'orders.status', value: 'orders.status', description: 'Order status' },
+          { label: 'orders.created_at', value: 'orders.created_at', description: 'Timestamp' },
+        ],
+        measures: [],
+      };
+
+      const datasource = createMockDataSource(mockMetadata);
+      const query = createMockQuery();
+
+      const { user } = setup(
+        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
+      });
+
+      const dimensionsInput = screen.getByRole('combobox', { name: 'Dimensions' });
+      await user.click(dimensionsInput);
+      await user.type(dimensionsInput, 'status');
+
+      expect(screen.getByText('orders.status')).toBeInTheDocument();
+      expect(screen.queryByText('orders.created_at')).not.toBeInTheDocument();
+    });
+  });
+
   describe('filter state management integration', () => {
     /**
      * Integration test to verify that adding a filter with multiple values
