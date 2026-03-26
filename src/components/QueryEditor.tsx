@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { InlineField, Input, Alert, MultiSelect, Text, Field, TextLink, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { GrafanaTheme2, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataSource } from '../datasource';
 import { CubeDataSourceOptions, CubeQuery, CubeFilter, isCubeFilter } from '../types';
@@ -126,6 +126,13 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
     .filter((option): option is MetadataOption => option !== undefined);
   const currentLimit = query.limit ?? '';
 
+  const filterOption = useCallback((option: SelectableValue<string>, searchQuery: string) => {
+    const q = searchQuery.toLowerCase();
+    const label = option.label?.toLowerCase() ?? '';
+    const desc = (option.description ?? option.data?.description ?? '').toLowerCase();
+    return label.includes(q) || desc.includes(q);
+  }, []);
+
   // All selected dimensions and measures with their labels (for OrderBy component)
   const availableOrderOptions = useMemo(() => {
     const selectedFields = [...(query.dimensions || []), ...(query.measures || [])];
@@ -143,6 +150,7 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
               options={metadata.dimensions}
               value={selectedDimensions}
               onChange={(v) => onDimensionOrMeasureChange(v, 'dimensions')}
+              filterOption={filterOption}
               placeholder={metadataIsLoading ? 'Loading dimensions...' : 'Select dimensions...'}
               isLoading={metadataIsLoading}
             />
@@ -158,6 +166,7 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
               options={metadata.measures}
               value={selectedMeasures}
               onChange={(v) => onDimensionOrMeasureChange(v, 'measures')}
+              filterOption={filterOption}
               placeholder={metadataIsLoading ? 'Loading measures...' : 'Select measures...'}
               isLoading={metadataIsLoading}
             />

@@ -50,10 +50,11 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 				Type:  "view",
 				Dimensions: []CubeDimension{
 					{
-						Name:       "order_details.status",
-						Title:      "Order Status",
-						ShortTitle: "Status",
-						Type:       "string",
+						Name:        "order_details.status",
+						Title:       "Order Status",
+						ShortTitle:  "Status",
+						Type:        "string",
+						Description: "Current status of the order",
 					},
 					{
 						Name:       "order_details.customer",
@@ -64,10 +65,11 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 				},
 				Measures: []CubeMeasure{
 					{
-						Name:       "order_details.count",
-						Title:      "Orders Count",
-						ShortTitle: "Count",
-						Type:       "number",
+						Name:        "order_details.count",
+						Title:       "Orders Count",
+						ShortTitle:  "Count",
+						Type:        "number",
+						Description: "Total number of orders",
 					},
 					{
 						Name:       "order_details.total",
@@ -88,12 +90,13 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 	}
 
 	expectedDimensions := []struct {
-		Value string
-		Label string
-		Type  string
+		Value       string
+		Label       string
+		Type        string
+		Description string
 	}{
-		{"order_details.status", "order_details.status", "string"},
-		{"order_details.customer", "order_details.customer", "string"},
+		{"order_details.status", "order_details.status", "string", "Current status of the order"},
+		{"order_details.customer", "order_details.customer", "string", ""},
 	}
 	for i, expected := range expectedDimensions {
 		if result.Dimensions[i].Value != expected.Value {
@@ -105,6 +108,9 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 		if result.Dimensions[i].Type != expected.Type {
 			t.Errorf("Expected dimension %d type to be %s, got %s", i, expected.Type, result.Dimensions[i].Type)
 		}
+		if result.Dimensions[i].Description != expected.Description {
+			t.Errorf("Expected dimension %d description to be %q, got %q", i, expected.Description, result.Dimensions[i].Description)
+		}
 	}
 
 	// Check measures
@@ -113,12 +119,13 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 	}
 
 	expectedMeasures := []struct {
-		Value string
-		Label string
-		Type  string
+		Value       string
+		Label       string
+		Type        string
+		Description string
 	}{
-		{"order_details.count", "order_details.count", "number"},
-		{"order_details.total", "order_details.total", "number"},
+		{"order_details.count", "order_details.count", "number", "Total number of orders"},
+		{"order_details.total", "order_details.total", "number", ""},
 	}
 	for i, expected := range expectedMeasures {
 		if result.Measures[i].Value != expected.Value {
@@ -129,6 +136,9 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 		}
 		if result.Measures[i].Type != expected.Type {
 			t.Errorf("Expected measure %d type to be %s, got %s", i, expected.Type, result.Measures[i].Type)
+		}
+		if result.Measures[i].Description != expected.Description {
+			t.Errorf("Expected measure %d description to be %q, got %q", i, expected.Description, result.Measures[i].Description)
 		}
 	}
 }
@@ -203,10 +213,11 @@ func TestHandleMetadata(t *testing.T) {
 					Type:  "view",
 					Dimensions: []CubeDimension{
 						{
-							Name:       "order_details.status",
-							Title:      "Order Status",
-							ShortTitle: "Status",
-							Type:       "string",
+							Name:        "order_details.status",
+							Title:       "Order Status",
+							ShortTitle:  "Status",
+							Type:        "string",
+							Description: "Current order status",
 						},
 						{
 							Name:       "order_details.customers_first_name",
@@ -217,10 +228,11 @@ func TestHandleMetadata(t *testing.T) {
 					},
 					Measures: []CubeMeasure{
 						{
-							Name:       "count",
-							Title:      "Orders Count",
-							ShortTitle: "Count",
-							Type:       "number",
+							Name:        "count",
+							Title:       "Orders Count",
+							ShortTitle:  "Count",
+							Type:        "number",
+							Description: "Total number of orders",
 						},
 					},
 				},
@@ -279,22 +291,25 @@ func TestHandleMetadata(t *testing.T) {
 
 	// Verify the dimensions contain expected values from the view (not raw cubes)
 	expectedDimensions := map[string]struct {
-		Label string
-		Type  string
+		Label       string
+		Type        string
+		Description string
 	}{
-		"order_details.status":               {"order_details.status", "string"},
-		"order_details.customers_first_name": {"order_details.customers_first_name", "string"},
+		"order_details.status":               {"order_details.status", "string", "Current order status"},
+		"order_details.customers_first_name": {"order_details.customers_first_name", "string", ""},
 	}
 
 	actualDimensions := make(map[string]struct {
-		Label string
-		Type  string
+		Label       string
+		Type        string
+		Description string
 	})
 	for _, dimension := range metadata.Dimensions {
 		actualDimensions[dimension.Value] = struct {
-			Label string
-			Type  string
-		}{dimension.Label, dimension.Type}
+			Label       string
+			Type        string
+			Description string
+		}{dimension.Label, dimension.Type, dimension.Description}
 	}
 
 	for expectedValue, expected := range expectedDimensions {
@@ -306,6 +321,9 @@ func TestHandleMetadata(t *testing.T) {
 			}
 			if actual.Type != expected.Type {
 				t.Errorf("Expected dimension %s to have type '%s', got '%s'", expectedValue, expected.Type, actual.Type)
+			}
+			if actual.Description != expected.Description {
+				t.Errorf("Expected dimension %s to have description %q, got %q", expectedValue, expected.Description, actual.Description)
 			}
 		}
 	}
@@ -321,23 +339,44 @@ func TestHandleMetadata(t *testing.T) {
 		}
 	}
 
+	// Verify description field in raw JSON: present when set, omitted when empty
+	if dimensions, ok := genericResponse["dimensions"].([]interface{}); ok {
+		for _, dim := range dimensions {
+			if dimObj, ok := dim.(map[string]interface{}); ok {
+				value, _ := dimObj["value"].(string)
+				desc, hasDesc := dimObj["description"]
+				if expected, exists := expectedDimensions[value]; exists {
+					if expected.Description != "" && (!hasDesc || desc != expected.Description) {
+						t.Errorf("Dimension %s: expected description %q in JSON, got %v", value, expected.Description, desc)
+					}
+					if expected.Description == "" && hasDesc {
+						t.Errorf("Dimension %s: expected description to be omitted from JSON, but found %v", value, desc)
+					}
+				}
+			}
+		}
+	}
+
 	// Verify the measures contain expected values
 	expectedMeasures := map[string]struct {
-		Label string
-		Type  string
+		Label       string
+		Type        string
+		Description string
 	}{
-		"count": {"count", "number"},
+		"count": {"count", "number", "Total number of orders"},
 	}
 
 	actualMeasures := make(map[string]struct {
-		Label string
-		Type  string
+		Label       string
+		Type        string
+		Description string
 	})
 	for _, measure := range metadata.Measures {
 		actualMeasures[measure.Value] = struct {
-			Label string
-			Type  string
-		}{measure.Label, measure.Type}
+			Label       string
+			Type        string
+			Description string
+		}{measure.Label, measure.Type, measure.Description}
 	}
 
 	for expectedValue, expected := range expectedMeasures {
@@ -349,6 +388,9 @@ func TestHandleMetadata(t *testing.T) {
 			}
 			if actual.Type != expected.Type {
 				t.Errorf("Expected measure %s to have type '%s', got '%s'", expectedValue, expected.Type, actual.Type)
+			}
+			if actual.Description != expected.Description {
+				t.Errorf("Expected measure %s to have description %q, got %q", expectedValue, expected.Description, actual.Description)
 			}
 		}
 	}

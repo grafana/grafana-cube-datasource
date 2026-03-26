@@ -30,11 +30,14 @@ type MetadataResponse struct {
 	Measures   []SelectOption `json:"measures"`
 }
 
-// SelectOption represents an option for select components
+// SelectOption represents an option for select components.
+// The Description field maps to Grafana's SelectableValue.description,
+// which MultiSelect renders as subtitle text below each option label.
 type SelectOption struct {
-	Label string `json:"label"`
-	Value string `json:"value"`
-	Type  string `json:"type"`
+	Label       string `json:"label"`
+	Value       string `json:"value"`
+	Type        string `json:"type"`
+	Description string `json:"description,omitempty"`
 }
 
 // ModelFile represents a data model file from Cube
@@ -197,9 +200,10 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 		for _, dimension := range item.Dimensions {
 			if !processedDimensions[dimension.Name] {
 				dimensions = append(dimensions, SelectOption{
-					Label: dimension.Name,
-					Value: dimension.Name,
-					Type:  dimension.Type,
+					Label:       dimension.Name,
+					Value:       dimension.Name,
+					Type:        dimension.Type,
+					Description: dimension.Description,
 				})
 				processedDimensions[dimension.Name] = true
 			}
@@ -209,9 +213,10 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 		for _, measure := range item.Measures {
 			if !processedMeasures[measure.Name] {
 				measures = append(measures, SelectOption{
-					Label: measure.Name,
-					Value: measure.Name,
-					Type:  measure.Type,
+					Label:       measure.Name,
+					Value:       measure.Name,
+					Type:        measure.Type,
+					Description: measure.Description,
 				})
 				processedMeasures[measure.Name] = true
 			}

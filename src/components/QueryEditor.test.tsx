@@ -1,5 +1,6 @@
 import React, { act } from 'react';
 import { screen, waitFor, fireEvent } from '@testing-library/react';
+import * as GrafanaUI from '@grafana/ui';
 import { QueryEditor } from './QueryEditor';
 import { CubeQuery, Operator } from '../types';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -100,6 +101,109 @@ describe('QueryEditor', () => {
     });
 
     expect(datasource.getMetadata).toHaveBeenCalledTimes(1);
+  });
+
+  it('should pass metadata descriptions through to MultiSelect options', async () => {
+    const mockMetadata = {
+      dimensions: [
+        {
+          label: 'orders.created_at',
+          value: 'orders.created_at',
+          description: 'Timestamp field with time',
+        },
+      ],
+      measures: [
+        {
+          label: 'orders.count',
+          value: 'orders.count',
+          description: 'Total number of orders',
+        },
+      ],
+    };
+
+    const multiSelectSpy = jest.spyOn(GrafanaUI, 'MultiSelect').mockImplementation((props: any) => (
+      <div data-testid={`multiselect-${props['aria-label']}`}>{props.placeholder}</div>
+    ));
+
+    try {
+      const datasource = createMockDataSource(mockMetadata);
+      const query = createMockQuery();
+
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
+        expect(screen.getByText('Select measures...')).toBeInTheDocument();
+      });
+
+      const getLastMultiSelectProps = (ariaLabel: string) =>
+        [...multiSelectSpy.mock.calls]
+          .reverse()
+          .map(([props]) => props)
+          .find((props) => props['aria-label'] === ariaLabel);
+
+      expect(getLastMultiSelectProps('Dimensions')?.options).toEqual(mockMetadata.dimensions);
+      expect(getLastMultiSelectProps('Measures')?.options).toEqual(mockMetadata.measures);
+    } finally {
+      multiSelectSpy.mockRestore();
+    }
+  });
+
+  it('should support top-level SelectableValue.description in filterOption', async () => {
+    const mockMetadata = {
+      dimensions: [
+        {
+          label: 'orders.created_at',
+          value: 'orders.created_at',
+          description: 'Timestamp field with time',
+        },
+      ],
+      measures: [],
+    };
+
+    const multiSelectSpy = jest.spyOn(GrafanaUI, 'MultiSelect').mockImplementation((props: any) => (
+      <div data-testid={`multiselect-${props['aria-label']}`}>{props.placeholder}</div>
+    ));
+
+    try {
+      const datasource = createMockDataSource(mockMetadata);
+      const query = createMockQuery();
+
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
+      });
+
+      const dimensionsProps = [...multiSelectSpy.mock.calls]
+        .reverse()
+        .map(([props]) => props)
+        .find((props) => props['aria-label'] === 'Dimensions');
+
+      expect(dimensionsProps).toBeDefined();
+      expect(
+        dimensionsProps!.filterOption!(
+          {
+            label: 'orders.created_at',
+            value: 'orders.created_at',
+            description: 'Timestamp field with time',
+          },
+          'timestamp'
+        )
+      ).toBe(true);
+      expect(
+        dimensionsProps!.filterOption!(
+          {
+            label: 'orders.status',
+            value: 'orders.status',
+            description: 'Current order status',
+          },
+          'timestamp'
+        )
+      ).toBe(false);
+    } finally {
+      multiSelectSpy.mockRestore();
+    }
   });
 
   it('should handle metadata fetch errors gracefully', async () => {
@@ -909,6 +1013,71 @@ describe('QueryEditor', () => {
         const newQuery = JSON.parse(newCall[1].query);
         expect(newQuery.timeDimensions?.[0]?.dateRange).not.toEqual(initialDateRange);
       });
+    });
+  });
+
+  describe('description-based search in dropdowns', () => {
+    it('should match rendered dropdown options by description text', async () => {
+      const mockMetadata = {
+        dimensions: [
+          { label: 'orders.status', value: 'orders.status', description: '' },
+          { label: 'orders.created_at', value: 'orders.created_at', description: 'Timestamp field with time' },
+          { label: 'orders.priority', value: 'orders.priority', description: 'Priority level for sorting' },
+        ],
+        measures: [],
+      };
+
+      const datasource = createMockDataSource(mockMetadata);
+      const query = createMockQuery();
+
+      const { user } = setup(
+        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
+      });
+
+      const dimensionsInput = screen.getByRole('combobox', { name: 'Dimensions' });
+      await user.click(dimensionsInput);
+
+      // Type a term that only appears in a description, not any label
+      await user.type(dimensionsInput, 'Timestamp');
+
+      // The option whose description matches should be visible
+      expect(screen.getByText('orders.created_at')).toBeInTheDocument();
+
+      // Options that don't match on label or description should be filtered out
+      expect(screen.queryByText('orders.status')).not.toBeInTheDocument();
+      expect(screen.queryByText('orders.priority')).not.toBeInTheDocument();
+    });
+
+    it('should still match options by label as before', async () => {
+      const mockMetadata = {
+        dimensions: [
+          { label: 'orders.status', value: 'orders.status', description: 'Order status' },
+          { label: 'orders.created_at', value: 'orders.created_at', description: 'Timestamp' },
+        ],
+        measures: [],
+      };
+
+      const datasource = createMockDataSource(mockMetadata);
+      const query = createMockQuery();
+
+      const { user } = setup(
+        <QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
+      });
+
+      const dimensionsInput = screen.getByRole('combobox', { name: 'Dimensions' });
+      await user.click(dimensionsInput);
+      await user.type(dimensionsInput, 'status');
+
+      expect(screen.getByText('orders.status')).toBeInTheDocument();
+      expect(screen.queryByText('orders.created_at')).not.toBeInTheDocument();
     });
   });
 
