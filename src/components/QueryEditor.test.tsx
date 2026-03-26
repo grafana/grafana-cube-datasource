@@ -182,7 +182,7 @@ describe('QueryEditor', () => {
 
       expect(dimensionsProps).toBeDefined();
       expect(
-        dimensionsProps.filterOption(
+        dimensionsProps!.filterOption!(
           {
             label: 'orders.created_at',
             value: 'orders.created_at',
@@ -192,7 +192,7 @@ describe('QueryEditor', () => {
         )
       ).toBe(true);
       expect(
-        dimensionsProps.filterOption(
+        dimensionsProps!.filterOption!(
           {
             label: 'orders.status',
             value: 'orders.status',
