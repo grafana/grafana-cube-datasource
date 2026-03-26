@@ -9,6 +9,7 @@ export interface MetadataOption {
   label: string;
   value: string;
   type: string;
+  description?: string;
 }
 
 export interface MetadataResponse {

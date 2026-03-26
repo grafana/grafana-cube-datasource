@@ -235,16 +235,18 @@ type CubeMeta struct {
 
 // CubeDimension represents a dimension in a cube
 type CubeDimension struct {
-	Name       string `json:"name"`
-	Title      string `json:"title"`
-	Type       string `json:"type"`
-	ShortTitle string `json:"shortTitle"`
+	Name        string `json:"name"`
+	Title       string `json:"title"`
+	Type        string `json:"type"`
+	ShortTitle  string `json:"shortTitle"`
+	Description string `json:"description"`
 }
 
 // CubeMeasure represents a measure in a cube
 type CubeMeasure struct {
-	Name       string `json:"name"`
-	Title      string `json:"title"`
-	Type       string `json:"type"`
-	ShortTitle string `json:"shortTitle"`
+	Name        string `json:"name"`
+	Title       string `json:"title"`
+	Type        string `json:"type"`
+	ShortTitle  string `json:"shortTitle"`
+	Description string `json:"description"`
 }
