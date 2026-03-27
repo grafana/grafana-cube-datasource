@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0 (2026-03-27)
+
+### Features
+
+- **Measure/dimension descriptions in dropdowns**: Surface Cube field descriptions as subtitle text in the query editor's Dimensions and Measures dropdowns, with search matching against descriptions too (#235)
+- **Data Model tab hint after Save & Test**: Always show the Data Model configuration tab hint after a successful connection test, so new users discover model generation immediately (#189)
+
+**Full Changelog**: [v0.3.3...v0.4.0](https://github.com/grafana/grafana-cube-datasource/compare/v0.3.3...v0.4.0)
+
 ## 0.3.3 (2026-03-20)
 
 ### Bug Fixes
