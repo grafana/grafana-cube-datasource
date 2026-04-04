@@ -19,7 +19,7 @@
   "devDependencies": {
     "@cubejs-client/core": "1.6.30",
     "@grafana/eslint-config": "9.0.0",
-    "@grafana/plugin-e2e": "3.4.10",
+    "@grafana/plugin-e2e": "3.4.11",
     "@grafana/tsconfig": "2.0.1",
     "@playwright/test": "1.59.0",
     "@stylistic/eslint-plugin-ts": "4.4.1",
