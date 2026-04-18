@@ -17,13 +17,13 @@
   "author": "Grafana",
   "license": "AGPL-3.0",
   "devDependencies": {
-    "@cubejs-client/core": "1.6.33",
+    "@cubejs-client/core": "1.6.34",
     "@grafana/eslint-config": "9.0.0",
     "@grafana/plugin-e2e": "3.5.0",
     "@grafana/tsconfig": "2.0.1",
     "@playwright/test": "1.59.1",
     "@stylistic/eslint-plugin-ts": "4.4.1",
-    "@swc/core": "1.15.24",
+    "@swc/core": "1.15.26",
     "@swc/helpers": "0.5.21",
     "@swc/jest": "0.2.39",
     "@testing-library/dom": "10.4.1",
@@ -71,11 +71,11 @@
   },
   "dependencies": {
     "@emotion/css": "11.13.5",
-    "@grafana/data": "12.4.2",
-    "@grafana/i18n": "12.4.2",
+    "@grafana/data": "12.4.3",
+    "@grafana/i18n": "12.4.3",
     "@grafana/plugin-ui": "0.13.1",
-    "@grafana/runtime": "12.4.2",
-    "@grafana/schema": "12.4.2",
+    "@grafana/runtime": "12.4.3",
+    "@grafana/schema": "12.4.3",
     "@grafana/ui": "12.4.2",
     "@tanstack/react-query": "5.99.0",
     "@tanstack/react-query-devtools": "5.99.0",
@@ -86,7 +86,7 @@
   },
   "packageManager": "npm@11.12.1",
   "volta": {
-    "node": "24.14.1"
+    "node": "24.15.0"
   },
   "overrides": {
     "lodash": "4.18.1",
