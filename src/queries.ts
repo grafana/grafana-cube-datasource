@@ -10,6 +10,12 @@ export interface MetadataOption {
   value: string;
   type: string;
   description?: string;
+  // cube identifies the cube/view this field originates from. Required for
+  // join-graph aware UI affordances (e.g. disabling cross-component options).
+  cube: string;
+  // connectedComponent is the join-graph component id reported by Cube's
+  // /v1/meta endpoint. Two fields are joinable iff they share this id.
+  connectedComponent: number;
 }
 
 export interface MetadataResponse {
