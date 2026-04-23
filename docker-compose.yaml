@@ -15,7 +15,7 @@ services:
       - cube
 
   cube:
-    image: cubejs/cube:latest@sha256:aeb5d1f4bebdecf50efdd14d2a712a75e7f6ed5d8dcd2eb31a3370c2902171f1
+    image: cubejs/cube:latest@sha256:f70716f70455decb4ec03a579d3c495c930c546ac3aababd0a854bb016f5680e
     ports:
       - 4000:4000
       - 15432:15432
@@ -25,7 +25,7 @@ services:
       - postgres
 
   postgres:
-    image: postgres:18@sha256:52e6ffd11fddd081ae63880b635b2a61c14008c17fc98cdc7ce5472265516dd0
+    image: postgres:18@sha256:059fa0289cc5a184034e05a1f4f6d6fd79f69dc718b8b04ab60b6b469eed411e
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
