@@ -175,7 +175,7 @@ npm run dev
 **Terminal 2 - Backend Development with Auto-reload:**
 
 ```bash
-DEVELOPMENT=true docker compose up --build
+DEVELOPMENT=true npm run server
 ```
 
 This setup provides:
@@ -183,6 +183,8 @@ This setup provides:
 - **Frontend hot-reloading**: Changes to TypeScript/React code automatically refresh the browser
 - **Backend auto-rebuilding**: Changes to Go code automatically rebuild and reload the plugin
 - **Built-in debugging**: Delve debugger available on port 2345
+
+> **Staleness guardrail:** The Grafana container checks for missing or stale frontend builds on startup. If `dist/module.js` is missing, the container exits with an error. If source files are newer than the build, it prints a warning. This catches the case where you switch branches or pull changes without rebuilding.
 
 The docker-compose setup includes Cube and Postgres with sample data, starting:
 
@@ -227,7 +229,7 @@ mage -l
 # Production build
 npm run build
 
-# Alternative Docker setup (without auto-reload)
+# Start all services (Grafana + Cube + Postgres)
 npm run server
 ```
 
