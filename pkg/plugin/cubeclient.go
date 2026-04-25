@@ -226,11 +226,15 @@ type CubeMetaResponse struct {
 
 // CubeMeta represents metadata for a single cube or view
 type CubeMeta struct {
-	Name       string          `json:"name"`
-	Title      string          `json:"title"`
-	Type       string          `json:"type"` // "cube" or "view"
-	Dimensions []CubeDimension `json:"dimensions"`
-	Measures   []CubeMeasure   `json:"measures"`
+	Name  string `json:"name"`
+	Title string `json:"title"`
+	Type  string `json:"type"` // "cube" or "view"
+	// ConnectedComponent identifies which join-graph component this cube belongs to.
+	// Cube populates this on /v1/meta from JoinGraph.connectedComponents(); cubes that
+	// share a component can be queried together, while different components cannot be joined.
+	ConnectedComponent int             `json:"connectedComponent"`
+	Dimensions         []CubeDimension `json:"dimensions"`
+	Measures           []CubeMeasure   `json:"measures"`
 }
 
 // CubeDimension represents a dimension in a cube

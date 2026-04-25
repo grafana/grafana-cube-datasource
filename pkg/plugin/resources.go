@@ -33,11 +33,16 @@ type MetadataResponse struct {
 // SelectOption represents an option for select components.
 // The Description field maps to Grafana's SelectableValue.description,
 // which MultiSelect renders as subtitle text below each option label.
+// Cube and ConnectedComponent identify which cube/view the field originates
+// from and which join-graph component it belongs to, so the frontend can
+// disable options that aren't joinable with the current selection.
 type SelectOption struct {
-	Label       string `json:"label"`
-	Value       string `json:"value"`
-	Type        string `json:"type"`
-	Description string `json:"description,omitempty"`
+	Label              string `json:"label"`
+	Value              string `json:"value"`
+	Type               string `json:"type"`
+	Description        string `json:"description,omitempty"`
+	Cube               string `json:"cube"`
+	ConnectedComponent int    `json:"connectedComponent"`
 }
 
 // ModelFile represents a data model file from Cube
@@ -200,10 +205,12 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 		for _, dimension := range item.Dimensions {
 			if !processedDimensions[dimension.Name] {
 				dimensions = append(dimensions, SelectOption{
-					Label:       dimension.Name,
-					Value:       dimension.Name,
-					Type:        dimension.Type,
-					Description: dimension.Description,
+					Label:              dimension.Name,
+					Value:              dimension.Name,
+					Type:               dimension.Type,
+					Description:        dimension.Description,
+					Cube:               item.Name,
+					ConnectedComponent: item.ConnectedComponent,
 				})
 				processedDimensions[dimension.Name] = true
 			}
@@ -213,10 +220,12 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 		for _, measure := range item.Measures {
 			if !processedMeasures[measure.Name] {
 				measures = append(measures, SelectOption{
-					Label:       measure.Name,
-					Value:       measure.Name,
-					Type:        measure.Type,
-					Description: measure.Description,
+					Label:              measure.Name,
+					Value:              measure.Name,
+					Type:               measure.Type,
+					Description:        measure.Description,
+					Cube:               item.Name,
+					ConnectedComponent: item.ConnectedComponent,
 				})
 				processedMeasures[measure.Name] = true
 			}

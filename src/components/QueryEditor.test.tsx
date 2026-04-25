@@ -1081,6 +1081,111 @@ describe('QueryEditor', () => {
     });
   });
 
+  describe('join-graph aware disabling (connectedComponent)', () => {
+    it('disables options from a different connected component once a field is selected', async () => {
+      // Two cubes belonging to different connected components: nothing in
+      // marketing_events is joinable with anything in orders. After selecting
+      // an orders dimension, the marketing_events option should be disabled
+      // and carry the not-joinable reason in its description.
+      const mockMetadata = {
+        dimensions: [
+          { label: 'orders.status', value: 'orders.status', cube: 'orders', connectedComponent: 1 },
+          {
+            label: 'marketing_events.channel',
+            value: 'marketing_events.channel',
+            description: 'attribution channel',
+            cube: 'marketing_events',
+            connectedComponent: 2,
+          },
+        ],
+        measures: [
+          { label: 'orders.count', value: 'orders.count', cube: 'orders', connectedComponent: 1 },
+        ],
+      };
+
+      const multiSelectSpy = jest.spyOn(GrafanaUI, 'MultiSelect').mockImplementation((props: any) => (
+        <div data-testid={`multiselect-${props['aria-label']}`}>{props.placeholder}</div>
+      ));
+
+      try {
+        const datasource = createMockDataSource(mockMetadata);
+        const query = createMockQuery({ dimensions: ['orders.status'] });
+
+        setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+        // Wait for metadata to actually load and propagate before inspecting
+        // the captured MultiSelect props - the joinability decoration only
+        // happens once metadata is populated.
+        await waitFor(() => {
+          const call = [...multiSelectSpy.mock.calls]
+            .reverse()
+            .map(([props]) => props)
+            .find((props) => props['aria-label'] === 'Dimensions');
+          expect(call?.options?.length ?? 0).toBeGreaterThan(0);
+        });
+
+        const lastDimensionsCall = [...multiSelectSpy.mock.calls]
+          .reverse()
+          .map(([props]) => props)
+          .find((props) => props['aria-label'] === 'Dimensions' && (props.options?.length ?? 0) > 0);
+
+        const options = (lastDimensionsCall!.options ?? []) as Array<Record<string, unknown>>;
+        const status = options.find((o) => o.value === 'orders.status');
+        const channel = options.find((o) => o.value === 'marketing_events.channel');
+
+        expect(status?.isDisabled).toBeUndefined();
+        expect(channel?.isDisabled).toBe(true);
+        expect(channel?.description).toBe('attribution channel — Not joinable with: orders');
+      } finally {
+        multiSelectSpy.mockRestore();
+      }
+    });
+
+    it('does not disable any options when nothing is selected', async () => {
+      const mockMetadata = {
+        dimensions: [
+          { label: 'orders.status', value: 'orders.status', cube: 'orders', connectedComponent: 1 },
+          {
+            label: 'marketing_events.channel',
+            value: 'marketing_events.channel',
+            cube: 'marketing_events',
+            connectedComponent: 2,
+          },
+        ],
+        measures: [],
+      };
+
+      const multiSelectSpy = jest.spyOn(GrafanaUI, 'MultiSelect').mockImplementation((props: any) => (
+        <div data-testid={`multiselect-${props['aria-label']}`}>{props.placeholder}</div>
+      ));
+
+      try {
+        const datasource = createMockDataSource(mockMetadata);
+        const query = createMockQuery();
+
+        setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+        await waitFor(() => {
+          const call = [...multiSelectSpy.mock.calls]
+            .reverse()
+            .map(([props]) => props)
+            .find((props) => props['aria-label'] === 'Dimensions');
+          expect(call?.options?.length ?? 0).toBeGreaterThan(0);
+        });
+
+        const lastDimensionsCall = [...multiSelectSpy.mock.calls]
+          .reverse()
+          .map(([props]) => props)
+          .find((props) => props['aria-label'] === 'Dimensions' && (props.options?.length ?? 0) > 0);
+
+        const options = (lastDimensionsCall!.options ?? []) as Array<Record<string, unknown>>;
+        expect(options.every((o) => !o.isDisabled)).toBe(true);
+      } finally {
+        multiSelectSpy.mockRestore();
+      }
+    });
+  });
+
   describe('filter state management integration', () => {
     /**
      * Integration test to verify that adding a filter with multiple values

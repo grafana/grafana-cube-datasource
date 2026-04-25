@@ -12,6 +12,7 @@ import { FilterField } from './FilterField/FilterField';
 import { useQueryEditorHandlers } from '../hooks/useQueryEditorHandlers';
 import { buildCubeQueryJson } from '../utils/buildCubeQuery';
 import { detectUnsupportedFeatures } from '../utils/detectUnsupportedFeatures';
+import { decorateWithJoinability, getJoinabilityState } from '../utils/joinability';
 import { JsonQueryViewer } from './JsonQueryViewer';
 
 type Props = QueryEditorProps<DataSource, CubeQuery, CubeDataSourceOptions>;
@@ -126,6 +127,25 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
     .filter((option): option is MetadataOption => option !== undefined);
   const currentLimit = query.limit ?? '';
 
+  // Disable options that belong to a different join-graph component than the
+  // current selection. Cube cannot join across connected components, so
+  // surfacing this in the picker prevents users from building queries that
+  // would error at execution time. The selected cube name(s) are appended to
+  // the disabled-option description for context.
+  const joinabilityState = useMemo(
+    () => getJoinabilityState(query, metadata),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [query.dimensions, query.measures, metadata]
+  );
+  const dimensionOptions = useMemo(
+    () => decorateWithJoinability(metadata.dimensions, joinabilityState),
+    [metadata.dimensions, joinabilityState]
+  );
+  const measureOptions = useMemo(
+    () => decorateWithJoinability(metadata.measures, joinabilityState),
+    [metadata.measures, joinabilityState]
+  );
+
   const filterOption = useCallback((option: SelectableValue<string>, searchQuery: string) => {
     const q = searchQuery.toLowerCase();
     const label = option.label?.toLowerCase() ?? '';
@@ -147,7 +167,7 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
           <div className={styles.multiSelectContainer}>
             <MultiSelect
               aria-label="Dimensions"
-              options={metadata.dimensions}
+              options={dimensionOptions}
               value={selectedDimensions}
               onChange={(v) => onDimensionOrMeasureChange(v, 'dimensions')}
               filterOption={filterOption}
@@ -163,7 +183,7 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
           <div className={styles.multiSelectContainer}>
             <MultiSelect
               aria-label="Measures"
-              options={metadata.measures}
+              options={measureOptions}
               value={selectedMeasures}
               onChange={(v) => onDimensionOrMeasureChange(v, 'measures')}
               filterOption={filterOption}
@@ -189,7 +209,7 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
       <Field label="Filters" description="Filter results by field values">
         <FilterField
           filters={query.filters?.filter((f): f is CubeFilter => isCubeFilter(f))}
-          dimensions={metadata.dimensions}
+          dimensions={dimensionOptions}
           onChange={onFiltersChange}
           datasource={datasource}
         />
