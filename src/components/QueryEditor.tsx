@@ -159,9 +159,21 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
     return selectedFields.map((field) => ({ label: field.split('.').pop() || field, value: field }));
   }, [query.dimensions, query.measures]);
 
+  const hasNoViews =
+    !metadataIsLoading && !metadataIsError && metadata.dimensions.length === 0 && metadata.measures.length === 0;
+
   return (
     <>
       {metadataIsError && <Alert title="Error fetching metadata" severity="error" />}
+      {hasNoViews && (
+        <Alert title="No views found" severity="info">
+          Define{' '}
+          <TextLink href="https://cube.dev/docs/product/data-modeling/concepts/data-model-syntax#views" external>
+            views
+          </TextLink>{' '}
+          in your Cube data model to expose dimensions and measures.
+        </Alert>
+      )}
       <InlineField label="Dimensions" labelWidth={16} tooltip="Select the dimensions to group your data by" grow>
         <div className={styles.multiSelectWrapper}>
           <div className={styles.multiSelectContainer}>

@@ -1318,36 +1318,35 @@ func TestHandleDbSchemaWithMissingURL(t *testing.T) {
 }
 
 func TestExtractMetadataPropagatesCubeAndConnectedComponent(t *testing.T) {
-	// When Cube reports cubes belonging to different connected components
-	// (i.e. cubes that cannot be joined together), each emitted SelectOption
-	// must carry the Cube name and ConnectedComponent so the frontend can
-	// disable cross-component options once a selection has been made.
+	// Views belonging to different connected components must carry the
+	// view name and ConnectedComponent so the frontend can disable
+	// cross-component options once a selection has been made.
 	ds := &Datasource{}
 
 	metaResponse := &CubeMetaResponse{
 		Cubes: []CubeMeta{
 			{
-				Name:               "orders",
-				Title:              "Orders",
-				Type:               "cube",
+				Name:               "order_overview",
+				Title:              "Order Overview",
+				Type:               "view",
 				ConnectedComponent: 1,
 				Dimensions: []CubeDimension{
-					{Name: "orders.status", Type: "string"},
+					{Name: "order_overview.status", Type: "string"},
 				},
 				Measures: []CubeMeasure{
-					{Name: "orders.count", Type: "number"},
+					{Name: "order_overview.count", Type: "number"},
 				},
 			},
 			{
-				Name:               "marketing_events",
-				Title:              "Marketing Events",
-				Type:               "cube",
+				Name:               "marketing_overview",
+				Title:              "Marketing Overview",
+				Type:               "view",
 				ConnectedComponent: 2,
 				Dimensions: []CubeDimension{
-					{Name: "marketing_events.channel", Type: "string"},
+					{Name: "marketing_overview.channel", Type: "string"},
 				},
 				Measures: []CubeMeasure{
-					{Name: "marketing_events.count", Type: "number"},
+					{Name: "marketing_overview.count", Type: "number"},
 				},
 			},
 		},
@@ -1355,7 +1354,6 @@ func TestExtractMetadataPropagatesCubeAndConnectedComponent(t *testing.T) {
 
 	result := ds.extractMetadataFromResponse(metaResponse)
 
-	// Build lookup maps so we don't depend on ordering.
 	dimsByValue := make(map[string]SelectOption, len(result.Dimensions))
 	for _, d := range result.Dimensions {
 		dimsByValue[d.Value] = d
@@ -1371,10 +1369,10 @@ func TestExtractMetadataPropagatesCubeAndConnectedComponent(t *testing.T) {
 		cube               string
 		connectedComponent int
 	}{
-		{dimsByValue, "orders.status", "orders", 1},
-		{dimsByValue, "marketing_events.channel", "marketing_events", 2},
-		{measuresByValue, "orders.count", "orders", 1},
-		{measuresByValue, "marketing_events.count", "marketing_events", 2},
+		{dimsByValue, "order_overview.status", "order_overview", 1},
+		{dimsByValue, "marketing_overview.channel", "marketing_overview", 2},
+		{measuresByValue, "order_overview.count", "order_overview", 1},
+		{measuresByValue, "marketing_overview.count", "marketing_overview", 2},
 	}
 
 	for _, e := range expectations {
@@ -1392,8 +1390,7 @@ func TestExtractMetadataPropagatesCubeAndConnectedComponent(t *testing.T) {
 	}
 
 	// Round-trip through JSON to verify the field names match what the
-	// frontend expects (cube, connectedComponent), since changing those
-	// would silently break the wire contract.
+	// frontend expects (cube, connectedComponent).
 	body, err := json.Marshal(result)
 	if err != nil {
 		t.Fatalf("failed to marshal metadata response: %v", err)
@@ -1414,6 +1411,54 @@ func TestExtractMetadataPropagatesCubeAndConnectedComponent(t *testing.T) {
 	}
 	if _, ok := first["connectedComponent"]; !ok {
 		t.Errorf("expected dimension JSON to include 'connectedComponent' key, got %v", first)
+	}
+}
+
+func TestExtractMetadataIgnoresCubesWithoutViews(t *testing.T) {
+	// When the response contains only cubes (no views), the metadata should
+	// be empty — cubes are internal implementation and must not leak through.
+	ds := &Datasource{}
+
+	metaResponse := &CubeMetaResponse{
+		Cubes: []CubeMeta{
+			{
+				Name:  "orders",
+				Title: "Orders",
+				Type:  "cube",
+				Dimensions: []CubeDimension{
+					{Name: "orders.status", Type: "string"},
+				},
+				Measures: []CubeMeasure{
+					{Name: "orders.count", Type: "number"},
+				},
+			},
+		},
+	}
+
+	result := ds.extractMetadataFromResponse(metaResponse)
+
+	if len(result.Dimensions) != 0 {
+		t.Errorf("expected 0 dimensions when only cubes present, got %d", len(result.Dimensions))
+	}
+	if len(result.Measures) != 0 {
+		t.Errorf("expected 0 measures when only cubes present, got %d", len(result.Measures))
+	}
+}
+
+func TestExtractMetadataEmptyResponse(t *testing.T) {
+	ds := &Datasource{}
+
+	metaResponse := &CubeMetaResponse{
+		Cubes: []CubeMeta{},
+	}
+
+	result := ds.extractMetadataFromResponse(metaResponse)
+
+	if len(result.Dimensions) != 0 {
+		t.Errorf("expected 0 dimensions for empty response, got %d", len(result.Dimensions))
+	}
+	if len(result.Measures) != 0 {
+		t.Errorf("expected 0 measures for empty response, got %d", len(result.Measures))
 	}
 }
 
