@@ -174,8 +174,8 @@ func (d *Datasource) handleMetadata(ctx context.Context, req *backend.CallResour
 // defined, an empty response is returned so the query editor can prompt the
 // user to create views rather than silently exposing raw cubes.
 func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse) MetadataResponse {
-	var dimensions []SelectOption
-	var measures []SelectOption
+	dimensions := make([]SelectOption, 0)
+	measures := make([]SelectOption, 0)
 
 	processedDimensions := make(map[string]bool)
 	processedMeasures := make(map[string]bool)

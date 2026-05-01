@@ -1443,6 +1443,17 @@ func TestExtractMetadataIgnoresCubesWithoutViews(t *testing.T) {
 	if len(result.Measures) != 0 {
 		t.Errorf("expected 0 measures when only cubes present, got %d", len(result.Measures))
 	}
+
+	body, err := json.Marshal(result)
+	if err != nil {
+		t.Fatalf("failed to marshal metadata response: %v", err)
+	}
+	if !strings.Contains(string(body), `"dimensions":[]`) {
+		t.Errorf("expected dimensions to marshal as an empty array, got %s", body)
+	}
+	if !strings.Contains(string(body), `"measures":[]`) {
+		t.Errorf("expected measures to marshal as an empty array, got %s", body)
+	}
 }
 
 func TestExtractMetadataEmptyResponse(t *testing.T) {
@@ -1459,6 +1470,17 @@ func TestExtractMetadataEmptyResponse(t *testing.T) {
 	}
 	if len(result.Measures) != 0 {
 		t.Errorf("expected 0 measures for empty response, got %d", len(result.Measures))
+	}
+
+	body, err := json.Marshal(result)
+	if err != nil {
+		t.Fatalf("failed to marshal metadata response: %v", err)
+	}
+	if !strings.Contains(string(body), `"dimensions":[]`) {
+		t.Errorf("expected dimensions to marshal as an empty array, got %s", body)
+	}
+	if !strings.Contains(string(body), `"measures":[]`) {
+		t.Errorf("expected measures to marshal as an empty array, got %s", body)
 	}
 }
 
