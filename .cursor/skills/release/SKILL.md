@@ -74,7 +74,7 @@ Work inside the worktree (`/tmp/cube-ds-release`).
 3. **Create the release branch and bump:**
 
    ```bash
-   git checkout -b sj/release/v<VERSION>
+   git checkout -b release/v<VERSION>
    npm version <patch|minor|major> --no-git-tag-version
    ```
 
@@ -190,9 +190,9 @@ gcom-ops /instances/ops/plugins/grafana-cube-datasource -dversion=latest
 Then restart each instance so the new version takes effect:
 
 ```bash
-gcom-ops /instances/bidev/restart -d 'reason=SamJ here- bump Cube DS to version <VERSION>'
-gcom-ops /instances/bi/restart -d 'reason=SamJ here- bump Cube DS to version <VERSION>'
-gcom-ops /instances/ops/restart -d 'reason=SamJ here- bump Cube DS to version <VERSION>'
+gcom-ops /instances/bidev/restart -d 'reason=bump Cube DS to version <VERSION>'
+gcom-ops /instances/bi/restart -d 'reason=bump Cube DS to version <VERSION>'
+gcom-ops /instances/ops/restart -d 'reason=bump Cube DS to version <VERSION>'
 ```
 
 ## Post-release
