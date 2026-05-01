@@ -100,10 +100,7 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
   const cubeQueryJson = useCubeQueryJson(query, datasource);
 
   const { data, isLoading: metadataIsLoading, isError: metadataIsError } = useMetadataQuery({ datasource });
-  const metadata = {
-    dimensions: data?.dimensions ?? [],
-    measures: data?.measures ?? [],
-  };
+  const metadata = data ?? { dimensions: [], measures: [] };
 
   const { data: compiledSql, isLoading: compiledSqlIsLoading } = useCompiledSqlQuery({
     datasource,
