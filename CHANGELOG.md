@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0 (2026-05-01)
+
+### Features
+
+- **View-scoped visual queries**: The visual query builder now scopes to one Cube view at a time, treating views as the curated public query surface. Fields from other views are disabled with guidance to model cross-view combinations as a new view. The `/metadata` resource now exposes only view members (#304)
+
+**Full Changelog**: [v0.4.0...v0.5.0](https://github.com/grafana/grafana-cube-datasource/compare/v0.4.0...v0.5.0)
+
 ## 0.4.0 (2026-03-27)
 
 ### Features
