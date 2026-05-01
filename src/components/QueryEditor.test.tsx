@@ -206,6 +206,78 @@ describe('QueryEditor', () => {
     }
   });
 
+  it('should search the original description instead of injected view-selection text', async () => {
+    const mockMetadata = {
+      dimensions: [
+        {
+          label: 'orders.status',
+          value: 'orders.status',
+          description: 'order status',
+          cube: 'orders',
+        },
+        {
+          label: 'marketing_events.channel',
+          value: 'marketing_events.channel',
+          description: 'attribution channel',
+          cube: 'marketing_events',
+        },
+      ],
+      measures: [],
+    };
+
+    const multiSelectSpy = jest.spyOn(GrafanaUI, 'MultiSelect').mockImplementation((props: any) => (
+      <div data-testid={`multiselect-${props['aria-label']}`}>{props.placeholder}</div>
+    ));
+
+    try {
+      const datasource = createMockDataSource(mockMetadata);
+      const query = createMockQuery({ dimensions: ['orders.status'] });
+
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
+      });
+
+      const dimensionsProps = [...multiSelectSpy.mock.calls]
+        .reverse()
+        .map(([props]) => props)
+        .find((props) => props['aria-label'] === 'Dimensions');
+      const channel = (dimensionsProps!.options ?? []).find(
+        (option: { value?: unknown }) => option.value === 'marketing_events.channel'
+      );
+      expect(channel).toBeDefined();
+
+      expect(channel!.description).toBe('Unavailable: query is scoped to orders');
+      expect(dimensionsProps!.filterOption!(channel!, 'orders')).toBe(false);
+      expect(dimensionsProps!.filterOption!(channel!, 'unavailable')).toBe(false);
+      expect(dimensionsProps!.filterOption!(channel!, 'una')).toBe(false);
+      expect(dimensionsProps!.filterOption!(channel!, 'attribution')).toBe(true);
+      expect(
+        dimensionsProps!.filterOption!(
+          {
+            label: channel!.label,
+            value: channel!.value,
+            data: channel!,
+          },
+          'unavailable'
+        )
+      ).toBe(false);
+      expect(
+        dimensionsProps!.filterOption!(
+          {
+            label: channel!.label,
+            value: channel!.value,
+            data: channel!,
+          },
+          'attribution'
+        )
+      ).toBe(true);
+    } finally {
+      multiSelectSpy.mockRestore();
+    }
+  });
+
   it('should handle metadata fetch errors gracefully', async () => {
     const datasource = createMockDataSource();
     datasource.getMetadata = jest.fn().mockRejectedValue(new Error('API Error'));
@@ -1078,6 +1150,100 @@ describe('QueryEditor', () => {
 
       expect(screen.getByText('orders.status')).toBeInTheDocument();
       expect(screen.queryByText('orders.created_at')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('view-scoped selection', () => {
+    it('disables options from a different view once a field is selected', async () => {
+      const mockMetadata = {
+        dimensions: [
+          { label: 'orders.status', value: 'orders.status', cube: 'orders' },
+          {
+            label: 'marketing_events.channel',
+            value: 'marketing_events.channel',
+            description: 'attribution channel',
+            cube: 'marketing_events',
+          },
+        ],
+        measures: [{ label: 'orders.count', value: 'orders.count', cube: 'orders' }],
+      };
+
+      const multiSelectSpy = jest.spyOn(GrafanaUI, 'MultiSelect').mockImplementation((props: any) => (
+        <div data-testid={`multiselect-${props['aria-label']}`}>{props.placeholder}</div>
+      ));
+
+      try {
+        const datasource = createMockDataSource(mockMetadata);
+        const query = createMockQuery({ dimensions: ['orders.status'] });
+
+        setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+        await waitFor(() => {
+          const call = [...multiSelectSpy.mock.calls]
+            .reverse()
+            .map(([props]) => props)
+            .find((props) => props['aria-label'] === 'Dimensions');
+          expect(call?.options?.length ?? 0).toBeGreaterThan(0);
+        });
+
+        const lastDimensionsCall = [...multiSelectSpy.mock.calls]
+          .reverse()
+          .map(([props]) => props)
+          .find((props) => props['aria-label'] === 'Dimensions' && (props.options?.length ?? 0) > 0);
+
+        const options = (lastDimensionsCall!.options ?? []) as Array<Record<string, unknown>>;
+        const status = options.find((o) => o.value === 'orders.status');
+        const channel = options.find((o) => o.value === 'marketing_events.channel');
+
+        expect(status?.isDisabled).toBeUndefined();
+        expect(channel?.isDisabled).toBe(true);
+        expect(channel?.description).toBe('Unavailable: query is scoped to orders');
+      } finally {
+        multiSelectSpy.mockRestore();
+      }
+    });
+
+    it('does not disable any options when nothing is selected', async () => {
+      const mockMetadata = {
+        dimensions: [
+          { label: 'orders.status', value: 'orders.status', cube: 'orders' },
+          {
+            label: 'marketing_events.channel',
+            value: 'marketing_events.channel',
+            cube: 'marketing_events',
+          },
+        ],
+        measures: [],
+      };
+
+      const multiSelectSpy = jest.spyOn(GrafanaUI, 'MultiSelect').mockImplementation((props: any) => (
+        <div data-testid={`multiselect-${props['aria-label']}`}>{props.placeholder}</div>
+      ));
+
+      try {
+        const datasource = createMockDataSource(mockMetadata);
+        const query = createMockQuery();
+
+        setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+        await waitFor(() => {
+          const call = [...multiSelectSpy.mock.calls]
+            .reverse()
+            .map(([props]) => props)
+            .find((props) => props['aria-label'] === 'Dimensions');
+          expect(call?.options?.length ?? 0).toBeGreaterThan(0);
+        });
+
+        const lastDimensionsCall = [...multiSelectSpy.mock.calls]
+          .reverse()
+          .map(([props]) => props)
+          .find((props) => props['aria-label'] === 'Dimensions' && (props.options?.length ?? 0) > 0);
+
+        const options = (lastDimensionsCall!.options ?? []) as Array<Record<string, unknown>>;
+        expect(options.every((o) => !o.isDisabled)).toBe(true);
+      } finally {
+        multiSelectSpy.mockRestore();
+      }
     });
   });
 

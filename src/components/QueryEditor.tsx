@@ -12,6 +12,7 @@ import { FilterField } from './FilterField/FilterField';
 import { useQueryEditorHandlers } from '../hooks/useQueryEditorHandlers';
 import { buildCubeQueryJson } from '../utils/buildCubeQuery';
 import { detectUnsupportedFeatures } from '../utils/detectUnsupportedFeatures';
+import { decorateWithViewSelection, getViewSelectionState } from '../utils/viewSelection';
 import { JsonQueryViewer } from './JsonQueryViewer';
 
 type Props = QueryEditorProps<DataSource, CubeQuery, CubeDataSourceOptions>;
@@ -126,10 +127,28 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
     .filter((option): option is MetadataOption => option !== undefined);
   const currentLimit = query.limit ?? '';
 
-  const filterOption = useCallback((option: SelectableValue<string>, searchQuery: string) => {
+  // Cube views are the curated public query surface. Keep visual-builder
+  // queries scoped to one view so model authors control the intended join path.
+  const viewSelectionState = useMemo(
+    () => getViewSelectionState(query, metadata),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [query.dimensions, query.measures, query.filters, metadata]
+  );
+  const dimensionOptions = useMemo(
+    () => decorateWithViewSelection(metadata.dimensions, viewSelectionState),
+    [metadata.dimensions, viewSelectionState]
+  );
+  const measureOptions = useMemo(
+    () => decorateWithViewSelection(metadata.measures, viewSelectionState),
+    [metadata.measures, viewSelectionState]
+  );
+
+  const filterOption = useCallback((option: SelectableValue<string> & { data?: SelectableValue<string> }, searchQuery: string) => {
     const q = searchQuery.toLowerCase();
-    const label = option.label?.toLowerCase() ?? '';
-    const desc = (option.description ?? option.data?.description ?? '').toLowerCase();
+    const selectable = option.data?.value !== undefined ? option.data : option;
+    const label = selectable.label?.toLowerCase() ?? option.label?.toLowerCase() ?? '';
+    const originalDescription = selectable.data?.originalDescription;
+    const desc = (typeof originalDescription === 'string' ? originalDescription : selectable.description ?? '').toLowerCase();
     return label.includes(q) || desc.includes(q);
   }, []);
 
@@ -142,12 +161,21 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
   return (
     <>
       {metadataIsError && <Alert title="Error fetching metadata" severity="error" />}
+      {!metadataIsLoading && !metadataIsError && metadata.dimensions.length === 0 && metadata.measures.length === 0 && (
+        <Alert title="No views found" severity="info">
+          Define{' '}
+          <TextLink href="https://cube.dev/docs/product/data-modeling/concepts/data-model-syntax#views" external>
+            views
+          </TextLink>{' '}
+          in your Cube data model to expose dimensions and measures.
+        </Alert>
+      )}
       <InlineField label="Dimensions" labelWidth={16} tooltip="Select the dimensions to group your data by" grow>
         <div className={styles.multiSelectWrapper}>
           <div className={styles.multiSelectContainer}>
             <MultiSelect
               aria-label="Dimensions"
-              options={metadata.dimensions}
+              options={dimensionOptions}
               value={selectedDimensions}
               onChange={(v) => onDimensionOrMeasureChange(v, 'dimensions')}
               filterOption={filterOption}
@@ -163,7 +191,7 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
           <div className={styles.multiSelectContainer}>
             <MultiSelect
               aria-label="Measures"
-              options={metadata.measures}
+              options={measureOptions}
               value={selectedMeasures}
               onChange={(v) => onDimensionOrMeasureChange(v, 'measures')}
               filterOption={filterOption}
@@ -189,7 +217,7 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
       <Field label="Filters" description="Filter results by field values">
         <FilterField
           filters={query.filters?.filter((f): f is CubeFilter => isCubeFilter(f))}
-          dimensions={metadata.dimensions}
+          dimensions={dimensionOptions}
           onChange={onFiltersChange}
           datasource={datasource}
         />
