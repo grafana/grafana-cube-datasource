@@ -138,6 +138,29 @@ gh run list --workflow=publish.yaml --limit 1 --repo grafana/grafana-cube-dataso
 
 Wait for `"status": "completed"` and `"conclusion": "success"`.
 
+## Phase 5 — Update internal Grafana instances
+
+After the catalog publish completes, bump the plugin on the internal Grafana
+Cloud instances and restart them. Use `gcom-ops` from the sibling
+`deployment_tools` repo (`../deployment_tools/scripts/gcom/gcom-ops`), or a
+local alias if available.
+
+Update each instance to the latest catalog version:
+
+```bash
+gcom-ops /instances/bidev/plugins/grafana-cube-datasource -dversion=latest
+gcom-ops /instances/bi/plugins/grafana-cube-datasource -dversion=latest
+gcom-ops /instances/ops/plugins/grafana-cube-datasource -dversion=latest
+```
+
+Then restart each instance so the new version takes effect:
+
+```bash
+gcom-ops /instances/bidev/restart -d 'reason=SamJ here- bump Cube DS to version <VERSION>'
+gcom-ops /instances/bi/restart -d 'reason=SamJ here- bump Cube DS to version <VERSION>'
+gcom-ops /instances/ops/restart -d 'reason=SamJ here- bump Cube DS to version <VERSION>'
+```
+
 ## Post-release
 
 - Clean up the local release branch: `git branch -d sj/release/v<VERSION>`
