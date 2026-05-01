@@ -21,10 +21,13 @@ they won't interfere with the user's working tree.
 ## Worktree setup
 
 All git operations (Phases 2–3) run in a temporary worktree to avoid disrupting
-the user's checkout. Create it at the start and clean it up at the end:
+the user's checkout. Create it at the start and clean it up at the end. Use
+`--detach` so the worktree doesn't try to claim the `main` branch (which is
+likely already checked out in the user's primary worktree — Git forbids the
+same branch being checked out twice):
 
 ```bash
-git worktree add /tmp/cube-ds-release main
+git worktree add --detach /tmp/cube-ds-release main
 ```
 
 Run Phase 2 and Phase 3 commands inside `/tmp/cube-ds-release`. When finished:
@@ -53,10 +56,11 @@ If the user provides a PR to babysit before releasing:
 
 Work inside the worktree (`/tmp/cube-ds-release`).
 
-1. **Pull latest main:**
+1. **Sync to latest main.** The worktree is detached, so `git pull` won't work
+   — fetch and re-point HEAD instead:
 
    ```bash
-   cd /tmp/cube-ds-release && git pull
+   cd /tmp/cube-ds-release && git fetch origin && git checkout --detach origin/main
    ```
 
 2. **Determine the version bump.** Review commits since the last tag:
@@ -112,11 +116,13 @@ Work inside the worktree (`/tmp/cube-ds-release`).
 
 ## Phase 3 — Tag & push
 
-Still inside the worktree:
+Still inside the worktree. Re-point the detached HEAD to the freshly merged
+`main` (don't use `git checkout main` — `main` is checked out in the user's
+primary worktree):
 
 ```bash
 cd /tmp/cube-ds-release
-git checkout main && git pull
+git fetch origin && git checkout --detach origin/main
 git tag v<VERSION>
 git push origin v<VERSION>
 ```
