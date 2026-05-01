@@ -1,5 +1,5 @@
 import { MetadataOption } from '../queries';
-import { decorateWithViewSelection, getViewSelectionState, ONE_VIEW_PER_QUERY_REASON } from './viewSelection';
+import { decorateWithViewSelection, getViewSelectionState } from './viewSelection';
 
 const opt = (value: string, view = value.split('.')[0], extra: Partial<MetadataOption> = {}): MetadataOption => ({
   label: value,
@@ -72,19 +72,17 @@ describe('decorateWithViewSelection', () => {
 
     const channel = decorated.find((o) => o.value === 'marketing_events.channel');
     expect(channel?.isDisabled).toBe(true);
-    expect(channel?.description).toBe(`${ONE_VIEW_PER_QUERY_REASON}: currently using orders`);
+    expect(channel?.description).toBe('Unavailable: query is scoped to orders');
   });
 
-  it('appends the reason to existing descriptions instead of overwriting', () => {
+  it('replaces descriptions with the unavailable reason for disabled options', () => {
     const [decorated] = decorateWithViewSelection(
       [opt('marketing_events.channel', 'marketing_events', { description: 'attribution channel' })],
       { view: 'orders' }
     );
 
     expect(decorated.isDisabled).toBe(true);
-    expect(decorated.description).toBe(
-      `attribution channel — ${ONE_VIEW_PER_QUERY_REASON}: currently using orders`
-    );
+    expect(decorated.description).toBe('Unavailable: query is scoped to orders');
   });
 
   it('preserves the original description in option data for disabled options', () => {

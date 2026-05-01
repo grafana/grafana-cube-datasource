@@ -248,11 +248,31 @@ describe('QueryEditor', () => {
       );
       expect(channel).toBeDefined();
 
-      expect(channel!.description).toBe(
-        'attribution channel — Select fields from one view per query: currently using orders'
-      );
+      expect(channel!.description).toBe('Unavailable: query is scoped to orders');
       expect(dimensionsProps!.filterOption!(channel!, 'orders')).toBe(false);
+      expect(dimensionsProps!.filterOption!(channel!, 'unavailable')).toBe(false);
+      expect(dimensionsProps!.filterOption!(channel!, 'una')).toBe(false);
       expect(dimensionsProps!.filterOption!(channel!, 'attribution')).toBe(true);
+      expect(
+        dimensionsProps!.filterOption!(
+          {
+            label: channel!.label,
+            value: channel!.value,
+            data: channel!,
+          },
+          'unavailable'
+        )
+      ).toBe(false);
+      expect(
+        dimensionsProps!.filterOption!(
+          {
+            label: channel!.label,
+            value: channel!.value,
+            data: channel!,
+          },
+          'attribution'
+        )
+      ).toBe(true);
     } finally {
       multiSelectSpy.mockRestore();
     }
@@ -1177,9 +1197,7 @@ describe('QueryEditor', () => {
 
         expect(status?.isDisabled).toBeUndefined();
         expect(channel?.isDisabled).toBe(true);
-        expect(channel?.description).toBe(
-          'attribution channel — Select fields from one view per query: currently using orders'
-        );
+        expect(channel?.description).toBe('Unavailable: query is scoped to orders');
       } finally {
         multiSelectSpy.mockRestore();
       }

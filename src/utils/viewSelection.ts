@@ -1,6 +1,6 @@
 import { MetadataOption } from '../queries';
 
-export const ONE_VIEW_PER_QUERY_REASON = 'Select fields from one view per query';
+export const UNAVAILABLE_PREFIX = 'Unavailable';
 
 interface ViewSelectionQuery {
   dimensions?: string[];
@@ -59,7 +59,7 @@ export function decorateWithViewSelection<T extends MetadataOption>(
     return options;
   }
 
-  const reason = `${ONE_VIEW_PER_QUERY_REASON}: currently using ${state.view}`;
+  const reason = `${UNAVAILABLE_PREFIX}: query is scoped to ${state.view}`;
 
   return options.map((option) => {
     if (option.cube === state.view) {
@@ -70,10 +70,10 @@ export function decorateWithViewSelection<T extends MetadataOption>(
     return {
       ...option,
       isDisabled: true,
-      description: option.description ? `${option.description} — ${reason}` : reason,
+      description: reason,
       data: {
         ...optionWithData.data,
-        originalDescription: option.description,
+        originalDescription: option.description ?? '',
       },
     };
   });

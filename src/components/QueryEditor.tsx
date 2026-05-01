@@ -143,13 +143,12 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
     [metadata.measures, viewSelectionState]
   );
 
-  const filterOption = useCallback((option: SelectableValue<string>, searchQuery: string) => {
+  const filterOption = useCallback((option: SelectableValue<string> & { data?: SelectableValue<string> }, searchQuery: string) => {
     const q = searchQuery.toLowerCase();
-    const label = option.label?.toLowerCase() ?? '';
-    const originalDescription = option.data?.originalDescription;
-    const desc = (
-      typeof originalDescription === 'string' ? originalDescription : option.description ?? option.data?.description ?? ''
-    ).toLowerCase();
+    const selectable = option.data?.value !== undefined ? option.data : option;
+    const label = selectable.label?.toLowerCase() ?? option.label?.toLowerCase() ?? '';
+    const originalDescription = selectable.data?.originalDescription;
+    const desc = (typeof originalDescription === 'string' ? originalDescription : selectable.description ?? '').toLowerCase();
     return label.includes(q) || desc.includes(q);
   }, []);
 
