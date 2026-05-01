@@ -10,6 +10,9 @@ export interface MetadataOption {
   value: string;
   type: string;
   description?: string;
+  // cube identifies the Cube view this field originates from. Visual queries
+  // are intentionally scoped to a single view.
+  cube: string;
 }
 
 export interface MetadataResponse {

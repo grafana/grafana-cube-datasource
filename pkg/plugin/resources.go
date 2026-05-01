@@ -38,6 +38,9 @@ type SelectOption struct {
 	Value       string `json:"value"`
 	Type        string `json:"type"`
 	Description string `json:"description,omitempty"`
+	// Cube identifies the Cube view this field originates from. The visual
+	// query builder uses this as the curated query scope.
+	Cube string `json:"cube"`
 }
 
 // ModelFile represents a data model file from Cube
@@ -164,39 +167,24 @@ func (d *Datasource) handleMetadata(ctx context.Context, req *backend.CallResour
 	})
 }
 
-// extractMetadataFromResponse extracts dimensions and measures from Cube metadata
+// extractMetadataFromResponse extracts dimensions and measures from views only.
+// Cubes are implementation details; views are the public API for the visual
+// query builder. If no views are defined, return empty arrays so the UI can
+// explain that views are required instead of exposing raw cubes.
 func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse) MetadataResponse {
-	var dimensions []SelectOption
-	var measures []SelectOption
+	dimensions := make([]SelectOption, 0)
+	measures := make([]SelectOption, 0)
 
-	// Filter to only include views from the cubes array
-	var views []CubeMeta
-	var cubes []CubeMeta
-	for _, cube := range metaResponse.Cubes {
-		if cube.Type == "view" {
-			views = append(views, cube)
-		} else {
-			cubes = append(cubes, cube)
-		}
-	}
-
-	// Use views if available (they represent the curated data model), otherwise fall back to cubes
-	var itemsToProcess []CubeMeta
-	if len(views) > 0 {
-		itemsToProcess = views
-		backend.Logger.Debug("Using views for metadata", "viewCount", len(views))
-	} else {
-		itemsToProcess = cubes
-		backend.Logger.Debug("Using cubes for metadata (no views found)", "cubeCount", len(cubes))
-	}
-
-	// Track processed items to avoid duplicates
 	processedDimensions := make(map[string]bool)
 	processedMeasures := make(map[string]bool)
 
-	// Iterate through views/cubes and collect dimensions and measures
-	for _, item := range itemsToProcess {
-		// Collect dimensions
+	viewCount := 0
+	for _, item := range metaResponse.Cubes {
+		if item.Type != "view" {
+			continue
+		}
+		viewCount++
+
 		for _, dimension := range item.Dimensions {
 			if !processedDimensions[dimension.Name] {
 				dimensions = append(dimensions, SelectOption{
@@ -204,12 +192,12 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 					Value:       dimension.Name,
 					Type:        dimension.Type,
 					Description: dimension.Description,
+					Cube:        item.Name,
 				})
 				processedDimensions[dimension.Name] = true
 			}
 		}
 
-		// Collect measures
 		for _, measure := range item.Measures {
 			if !processedMeasures[measure.Name] {
 				measures = append(measures, SelectOption{
@@ -217,13 +205,14 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 					Value:       measure.Name,
 					Type:        measure.Type,
 					Description: measure.Description,
+					Cube:        item.Name,
 				})
 				processedMeasures[measure.Name] = true
 			}
 		}
 	}
 
-	backend.Logger.Debug("Extracted metadata", "dimensions", len(dimensions), "measures", len(measures))
+	backend.Logger.Debug("Extracted metadata from views", "views", viewCount, "dimensions", len(dimensions), "measures", len(measures))
 
 	return MetadataResponse{
 		Dimensions: dimensions,

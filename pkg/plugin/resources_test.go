@@ -94,9 +94,10 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 		Label       string
 		Type        string
 		Description string
+		Cube        string
 	}{
-		{"order_details.status", "order_details.status", "string", "Current status of the order"},
-		{"order_details.customer", "order_details.customer", "string", ""},
+		{"order_details.status", "order_details.status", "string", "Current status of the order", "order_details"},
+		{"order_details.customer", "order_details.customer", "string", "", "order_details"},
 	}
 	for i, expected := range expectedDimensions {
 		if result.Dimensions[i].Value != expected.Value {
@@ -111,6 +112,9 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 		if result.Dimensions[i].Description != expected.Description {
 			t.Errorf("Expected dimension %d description to be %q, got %q", i, expected.Description, result.Dimensions[i].Description)
 		}
+		if result.Dimensions[i].Cube != expected.Cube {
+			t.Errorf("Expected dimension %d cube to be %q, got %q", i, expected.Cube, result.Dimensions[i].Cube)
+		}
 	}
 
 	// Check measures
@@ -123,9 +127,10 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 		Label       string
 		Type        string
 		Description string
+		Cube        string
 	}{
-		{"order_details.count", "order_details.count", "number", "Total number of orders"},
-		{"order_details.total", "order_details.total", "number", ""},
+		{"order_details.count", "order_details.count", "number", "Total number of orders", "order_details"},
+		{"order_details.total", "order_details.total", "number", "", "order_details"},
 	}
 	for i, expected := range expectedMeasures {
 		if result.Measures[i].Value != expected.Value {
@@ -140,6 +145,48 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 		if result.Measures[i].Description != expected.Description {
 			t.Errorf("Expected measure %d description to be %q, got %q", i, expected.Description, result.Measures[i].Description)
 		}
+		if result.Measures[i].Cube != expected.Cube {
+			t.Errorf("Expected measure %d cube to be %q, got %q", i, expected.Cube, result.Measures[i].Cube)
+		}
+	}
+}
+
+func TestExtractMetadataIgnoresCubesWithoutViews(t *testing.T) {
+	ds := &Datasource{}
+
+	metaResponse := &CubeMetaResponse{
+		Cubes: []CubeMeta{
+			{
+				Name: "orders",
+				Type: "cube",
+				Dimensions: []CubeDimension{
+					{Name: "orders.status", Type: "string"},
+				},
+				Measures: []CubeMeasure{
+					{Name: "orders.count", Type: "number"},
+				},
+			},
+		},
+	}
+
+	result := ds.extractMetadataFromResponse(metaResponse)
+
+	if len(result.Dimensions) != 0 {
+		t.Errorf("expected 0 dimensions when only cubes are present, got %d", len(result.Dimensions))
+	}
+	if len(result.Measures) != 0 {
+		t.Errorf("expected 0 measures when only cubes are present, got %d", len(result.Measures))
+	}
+
+	body, err := json.Marshal(result)
+	if err != nil {
+		t.Fatalf("failed to marshal metadata response: %v", err)
+	}
+	if !strings.Contains(string(body), `"dimensions":[]`) {
+		t.Errorf("expected dimensions to marshal as an empty array, got %s", body)
+	}
+	if !strings.Contains(string(body), `"measures":[]`) {
+		t.Errorf("expected measures to marshal as an empty array, got %s", body)
 	}
 }
 
@@ -251,9 +298,9 @@ func TestHandleMetadata(t *testing.T) {
 
 	// Create a mock request with metadata path
 	req := &backend.CallResourceRequest{
-		Path:   "metadata",
-		Method: "GET",
-		URL:    "/metadata",
+		Path:          "metadata",
+		Method:        "GET",
+		URL:           "/metadata",
 		PluginContext: newTestPluginContext(server.URL),
 	}
 
@@ -447,9 +494,9 @@ func TestHandleTagValues(t *testing.T) {
 
 	// Create a mock request with tag-values path and key parameter
 	req := &backend.CallResourceRequest{
-		Path:   "tag-values",
-		Method: "GET",
-		URL:    "/tag-values?key=orders.status",
+		Path:          "tag-values",
+		Method:        "GET",
+		URL:           "/tag-values?key=orders.status",
 		PluginContext: newTestPluginContext(server.URL),
 	}
 
@@ -518,9 +565,9 @@ func TestHandleTagValuesWithDuplicates(t *testing.T) {
 	ds := Datasource{BaseURL: server.URL}
 
 	req := &backend.CallResourceRequest{
-		Path:   "tag-values",
-		Method: "GET",
-		URL:    "/tag-values?key=orders.status",
+		Path:          "tag-values",
+		Method:        "GET",
+		URL:           "/tag-values?key=orders.status",
 		PluginContext: newTestPluginContext(server.URL),
 	}
 
@@ -545,9 +592,9 @@ func TestHandleTagValuesMissingKey(t *testing.T) {
 	ds := Datasource{}
 
 	req := &backend.CallResourceRequest{
-		Path:         "tag-values",
-		Method:       "GET",
-		URL:          "/tag-values",
+		Path:          "tag-values",
+		Method:        "GET",
+		URL:           "/tag-values",
 		PluginContext: newTestPluginContext("http://example.com"),
 	}
 
@@ -579,9 +626,9 @@ func TestHandleTagValuesWithNumericValues(t *testing.T) {
 	ds := Datasource{BaseURL: server.URL}
 
 	req := &backend.CallResourceRequest{
-		Path:   "tag-values",
-		Method: "GET",
-		URL:    "/tag-values?key=orders.year",
+		Path:          "tag-values",
+		Method:        "GET",
+		URL:           "/tag-values?key=orders.year",
 		PluginContext: newTestPluginContext(server.URL),
 	}
 
@@ -645,9 +692,9 @@ func TestHandleTagValuesWithScopingFilters(t *testing.T) {
 	encodedFilters := url.QueryEscape(filtersJSON)
 
 	req := &backend.CallResourceRequest{
-		Path:   "tag-values",
-		Method: "GET",
-		URL:    "/tag-values?key=orders.customer_name&filters=" + encodedFilters,
+		Path:          "tag-values",
+		Method:        "GET",
+		URL:           "/tag-values?key=orders.customer_name&filters=" + encodedFilters,
 		PluginContext: newTestPluginContext(server.URL),
 	}
 
@@ -706,9 +753,9 @@ func TestHandleTagValuesEmptyResponse(t *testing.T) {
 	ds := Datasource{BaseURL: server.URL}
 
 	req := &backend.CallResourceRequest{
-		Path:   "tag-values",
-		Method: "GET",
-		URL:    "/tag-values?key=orders.status",
+		Path:          "tag-values",
+		Method:        "GET",
+		URL:           "/tag-values?key=orders.status",
 		PluginContext: newTestPluginContext(server.URL),
 	}
 
@@ -767,9 +814,9 @@ func TestHandleTagValuesContinueWaitThenSuccess(t *testing.T) {
 	}
 
 	req := &backend.CallResourceRequest{
-		Path:   "tag-values",
-		Method: "GET",
-		URL:    "/tag-values?key=orders.status",
+		Path:          "tag-values",
+		Method:        "GET",
+		URL:           "/tag-values?key=orders.status",
 		PluginContext: newTestPluginContext(server.URL),
 	}
 
@@ -808,9 +855,9 @@ func TestHandleTagValuesContinueWaitContextCancelled(t *testing.T) {
 	}
 
 	req := &backend.CallResourceRequest{
-		Path:   "tag-values",
-		Method: "GET",
-		URL:    "/tag-values?key=orders.status",
+		Path:          "tag-values",
+		Method:        "GET",
+		URL:           "/tag-values?key=orders.status",
 		PluginContext: newTestPluginContext(server.URL),
 	}
 
@@ -845,9 +892,9 @@ func TestHandleTagValuesForwardsCubeErrorStatusAndBody(t *testing.T) {
 	ds := Datasource{BaseURL: server.URL}
 
 	req := &backend.CallResourceRequest{
-		Path:   "tag-values",
-		Method: "GET",
-		URL:    "/tag-values?key=orders.status",
+		Path:          "tag-values",
+		Method:        "GET",
+		URL:           "/tag-values?key=orders.status",
 		PluginContext: newTestPluginContext(server.URL),
 	}
 
@@ -903,9 +950,9 @@ func TestHandleSQLCompilation(t *testing.T) {
 	// Create a mock request with the SQL compilation path
 	req := &backend.CallResourceRequest{
 		PluginContext: newTestPluginContext(server.URL),
-		Path:   "sql",
-		Method: "GET",
-		URL:    "/sql?query=" + `{"measures":["orders.count"],"dimensions":["orders.users_city"]}`,
+		Path:          "sql",
+		Method:        "GET",
+		URL:           "/sql?query=" + `{"measures":["orders.count"],"dimensions":["orders.users_city"]}`,
 	}
 
 	resp := callHandler(t, ds.handleSQLCompilation, req)
@@ -939,9 +986,9 @@ func TestHandleSQLCompilationInvalidJSON(t *testing.T) {
 	// Create a mock request with invalid JSON
 	req := &backend.CallResourceRequest{
 		PluginContext: newTestPluginContext(server.URL),
-		Path:   "sql",
-		Method: "GET",
-		URL:    "/sql?query=invalid-json",
+		Path:          "sql",
+		Method:        "GET",
+		URL:           "/sql?query=invalid-json",
 	}
 
 	resp := callHandler(t, ds.handleSQLCompilation, req)
@@ -1051,8 +1098,8 @@ func TestHandleModelFiles(t *testing.T) {
         primary_key: true`,
 				},
 				{
-				FileName: "orders.yml",
-				Content: `cubes:
+					FileName: "orders.yml",
+					Content: `cubes:
   - name: orders
     sql_table: orders
     dimensions:
@@ -1075,8 +1122,8 @@ func TestHandleModelFiles(t *testing.T) {
 
 	req := &backend.CallResourceRequest{
 		PluginContext: newTestPluginContext(server.URL),
-		Path:   "model-files",
-		Method: "GET",
+		Path:          "model-files",
+		Method:        "GET",
 	}
 
 	resp := callHandler(t, ds.handleModelFiles, req)
@@ -1172,8 +1219,8 @@ func TestHandleDbSchema(t *testing.T) {
 
 	req := &backend.CallResourceRequest{
 		PluginContext: newTestPluginContext(server.URL),
-		Path:   "db-schema",
-		Method: "GET",
+		Path:          "db-schema",
+		Method:        "GET",
 	}
 
 	resp := callHandler(t, ds.handleDbSchema, req)
@@ -1228,8 +1275,8 @@ func TestHandleDbSchemaWithAPIError(t *testing.T) {
 
 	req := &backend.CallResourceRequest{
 		PluginContext: newTestPluginContext(server.URL),
-		Path:   "db-schema",
-		Method: "GET",
+		Path:          "db-schema",
+		Method:        "GET",
 	}
 
 	resp := callHandler(t, ds.handleDbSchema, req)
@@ -1264,8 +1311,8 @@ func TestHandleDbSchemaWithInvalidJSON(t *testing.T) {
 
 	req := &backend.CallResourceRequest{
 		PluginContext: newTestPluginContext(server.URL),
-		Path:   "db-schema",
-		Method: "GET",
+		Path:          "db-schema",
+		Method:        "GET",
 	}
 
 	resp := callHandler(t, ds.handleDbSchema, req)
@@ -1346,8 +1393,8 @@ func TestCallResourceDbSchemaRouting(t *testing.T) {
 
 	req := &backend.CallResourceRequest{
 		PluginContext: newTestPluginContext(server.URL),
-		Path:   "db-schema",
-		Method: "GET",
+		Path:          "db-schema",
+		Method:        "GET",
 	}
 
 	// Test that CallResource correctly routes to handleDbSchema
@@ -1495,9 +1542,9 @@ func TestHandleGenerateSchema(t *testing.T) {
 
 	req := &backend.CallResourceRequest{
 		PluginContext: newTestPluginContext(server.URL),
-		Path:   "generate-schema",
-		Method: "POST",
-		Body:   requestBodyBytes,
+		Path:          "generate-schema",
+		Method:        "POST",
+		Body:          requestBodyBytes,
 	}
 
 	resp := callHandler(t, ds.handleGenerateSchema, req)
@@ -1620,9 +1667,9 @@ func TestHandleGenerateSchemaWithAPIError(t *testing.T) {
 
 	req := &backend.CallResourceRequest{
 		PluginContext: newTestPluginContext(server.URL),
-		Path:   "generate-schema",
-		Method: "POST",
-		Body:   requestBodyBytes,
+		Path:          "generate-schema",
+		Method:        "POST",
+		Body:          requestBodyBytes,
 	}
 
 	resp := callHandler(t, ds.handleGenerateSchema, req)
@@ -1676,9 +1723,9 @@ func TestHandleGenerateSchemaWithInvalidAPIResponse(t *testing.T) {
 
 	req := &backend.CallResourceRequest{
 		PluginContext: newTestPluginContext(server.URL),
-		Path:   "generate-schema",
-		Method: "POST",
-		Body:   requestBodyBytes,
+		Path:          "generate-schema",
+		Method:        "POST",
+		Body:          requestBodyBytes,
 	}
 
 	resp := callHandler(t, ds.handleGenerateSchema, req)
@@ -1748,9 +1795,9 @@ func TestCallResourceGenerateSchemaRouting(t *testing.T) {
 
 	req := &backend.CallResourceRequest{
 		PluginContext: newTestPluginContextWithUser(server.URL, "Admin"),
-		Path:   "generate-schema",
-		Method: "POST",
-		Body:   requestBodyBytes,
+		Path:          "generate-schema",
+		Method:        "POST",
+		Body:          requestBodyBytes,
 	}
 
 	// Test that CallResource correctly routes to handleGenerateSchema
