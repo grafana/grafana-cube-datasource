@@ -13,6 +13,26 @@ description: >-
 Full release lifecycle for `grafana/grafana-cube-datasource`. Covers babysitting
 a PR, creating a release PR, tagging, and CD deployment.
 
+**Run locally.** This skill requires local credentials (GPG tag signing via
+1Password, `gcom-ops` auth) that are not available in cloud agents. It is safe
+to run as a background agent -- all git operations use an isolated worktree so
+they won't interfere with the user's working tree.
+
+## Worktree setup
+
+All git operations (Phases 2–3) run in a temporary worktree to avoid disrupting
+the user's checkout. Create it at the start and clean it up at the end:
+
+```bash
+git worktree add /tmp/cube-ds-release main
+```
+
+Run Phase 2 and Phase 3 commands inside `/tmp/cube-ds-release`. When finished:
+
+```bash
+git worktree remove /tmp/cube-ds-release
+```
+
 ## Phase 1 — Babysit & merge the feature PR
 
 If the user provides a PR to babysit before releasing:
@@ -25,14 +45,21 @@ If the user provides a PR to babysit before releasing:
    `gh run view <run-id> --repo grafana/grafana-cube-datasource --log-failed`
 4. Once green + mergeable, merge with squash and delete the remote branch:
    `gh pr merge <PR> --repo grafana/grafana-cube-datasource --squash --delete-branch`
-5. Switch to main and pull: `git checkout main && git pull`
-6. Delete local branches for the merged PR and any predecessor PRs the user
+5. Delete local branches for the merged PR and any predecessor PRs the user
    mentions: `git branch -D <branch> ...`
-7. Prune stale remote-tracking refs: `git fetch --prune origin`
+6. Prune stale remote-tracking refs: `git fetch --prune origin`
 
 ## Phase 2 — Create the release PR
 
-1. **Determine the version bump.** Review commits since the last tag:
+Work inside the worktree (`/tmp/cube-ds-release`).
+
+1. **Pull latest main:**
+
+   ```bash
+   cd /tmp/cube-ds-release && git pull
+   ```
+
+2. **Determine the version bump.** Review commits since the last tag:
 
    ```
    git log $(git describe --tags --abbrev=0)..HEAD --oneline
@@ -44,14 +71,14 @@ If the user provides a PR to babysit before releasing:
 
    Ask the user to confirm the version if unsure.
 
-2. **Create the release branch and bump:**
+3. **Create the release branch and bump:**
 
-   ```
+   ```bash
    git checkout -b sj/release/v<VERSION>
    npm version <patch|minor|major> --no-git-tag-version
    ```
 
-3. **Update `CHANGELOG.md`.** Prepend a new section after `# Changelog`:
+4. **Update `CHANGELOG.md`.** Prepend a new section after `# Changelog`:
 
    ```markdown
    ## <VERSION> (<YYYY-MM-DD>)
@@ -66,9 +93,9 @@ If the user provides a PR to babysit before releasing:
    Only list user-facing changes (features, fixes, security, deprecations).
    Skip dependency bumps unless they fix a CVE worth calling out.
 
-4. **Commit, push, and open the PR:**
+5. **Commit, push, and open the PR:**
 
-   ```
+   ```bash
    git add package.json package-lock.json CHANGELOG.md
    git commit -m "chore: release v<VERSION>"
    git push -u origin HEAD
@@ -78,16 +105,17 @@ If the user provides a PR to babysit before releasing:
    PR body should include a summary table of what's included and a release
    checklist (CI, merge, tag, CD).
 
-5. **Babysit the release PR** using the same polling loop from Phase 1.
+6. **Babysit the release PR** using the same polling loop from Phase 1.
 
-6. **Merge** when green:
+7. **Merge** when green:
    `gh pr merge <PR> --repo grafana/grafana-cube-datasource --squash --delete-branch`
 
 ## Phase 3 — Tag & push
 
-After the release PR is merged:
+Still inside the worktree:
 
-```
+```bash
+cd /tmp/cube-ds-release
 git checkout main && git pull
 git tag v<VERSION>
 git push origin v<VERSION>
@@ -108,6 +136,12 @@ Then publish the draft release:
 
 ```
 gh release edit v<VERSION> --repo grafana/grafana-cube-datasource --draft=false
+```
+
+**Clean up the worktree** now that git operations are done:
+
+```bash
+git worktree remove /tmp/cube-ds-release
 ```
 
 ## Phase 4 — CD deployment
@@ -163,6 +197,5 @@ gcom-ops /instances/ops/restart -d 'reason=SamJ here- bump Cube DS to version <V
 
 ## Post-release
 
-- Clean up the local release branch: `git branch -d sj/release/v<VERSION>`
 - Verify the plugin version is live: check the
   [Grafana plugin catalog](https://grafana.com/grafana/plugins/grafana-cube-datasource/)
