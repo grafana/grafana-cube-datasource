@@ -169,70 +169,54 @@ func (d *Datasource) handleMetadata(ctx context.Context, req *backend.CallResour
 	})
 }
 
-// extractMetadataFromResponse extracts dimensions and measures from Cube metadata
+// extractMetadataFromResponse extracts dimensions and measures from views only.
+// Cubes are internal implementation; views are the public API. If no views are
+// defined, an empty response is returned so the query editor can prompt the
+// user to create views rather than silently exposing raw cubes.
 func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse) MetadataResponse {
 	var dimensions []SelectOption
 	var measures []SelectOption
 
-	// Filter to only include views from the cubes array
-	var views []CubeMeta
-	var cubes []CubeMeta
-	for _, cube := range metaResponse.Cubes {
-		if cube.Type == "view" {
-			views = append(views, cube)
-		} else {
-			cubes = append(cubes, cube)
-		}
-	}
-
-	// Use views if available (they represent the curated data model), otherwise fall back to cubes
-	var itemsToProcess []CubeMeta
-	if len(views) > 0 {
-		itemsToProcess = views
-		backend.Logger.Debug("Using views for metadata", "viewCount", len(views))
-	} else {
-		itemsToProcess = cubes
-		backend.Logger.Debug("Using cubes for metadata (no views found)", "cubeCount", len(cubes))
-	}
-
-	// Track processed items to avoid duplicates
 	processedDimensions := make(map[string]bool)
 	processedMeasures := make(map[string]bool)
 
-	// Iterate through views/cubes and collect dimensions and measures
-	for _, item := range itemsToProcess {
-		// Collect dimensions
-		for _, dimension := range item.Dimensions {
+	viewCount := 0
+	for _, cube := range metaResponse.Cubes {
+		if cube.Type != "view" {
+			continue
+		}
+		viewCount++
+
+		for _, dimension := range cube.Dimensions {
 			if !processedDimensions[dimension.Name] {
 				dimensions = append(dimensions, SelectOption{
 					Label:              dimension.Name,
 					Value:              dimension.Name,
 					Type:               dimension.Type,
 					Description:        dimension.Description,
-					Cube:               item.Name,
-					ConnectedComponent: item.ConnectedComponent,
+					Cube:               cube.Name,
+					ConnectedComponent: cube.ConnectedComponent,
 				})
 				processedDimensions[dimension.Name] = true
 			}
 		}
 
-		// Collect measures
-		for _, measure := range item.Measures {
+		for _, measure := range cube.Measures {
 			if !processedMeasures[measure.Name] {
 				measures = append(measures, SelectOption{
 					Label:              measure.Name,
 					Value:              measure.Name,
 					Type:               measure.Type,
 					Description:        measure.Description,
-					Cube:               item.Name,
-					ConnectedComponent: item.ConnectedComponent,
+					Cube:               cube.Name,
+					ConnectedComponent: cube.ConnectedComponent,
 				})
 				processedMeasures[measure.Name] = true
 			}
 		}
 	}
 
-	backend.Logger.Debug("Extracted metadata", "dimensions", len(dimensions), "measures", len(measures))
+	backend.Logger.Debug("Extracted metadata from views", "views", viewCount, "dimensions", len(dimensions), "measures", len(measures))
 
 	return MetadataResponse{
 		Dimensions: dimensions,
