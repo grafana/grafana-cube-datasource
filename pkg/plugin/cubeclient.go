@@ -232,7 +232,7 @@ type CubeMeta struct {
 	// ConnectedComponent identifies which join-graph component this cube belongs to.
 	// Cube populates this on /v1/meta from JoinGraph.connectedComponents(); cubes that
 	// share a component can be queried together, while different components cannot be joined.
-	ConnectedComponent *int            `json:"connectedComponent"`
+	ConnectedComponent int             `json:"connectedComponent"`
 	Dimensions         []CubeDimension `json:"dimensions"`
 	Measures           []CubeMeasure   `json:"measures"`
 }

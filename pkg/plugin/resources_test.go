@@ -38,10 +38,6 @@ func TestJSONErrorResponseEscapesSpecialCharacters(t *testing.T) {
 	}
 }
 
-func intPtr(value int) *int {
-	return &value
-}
-
 func TestExtractMetadataFromResponse(t *testing.T) {
 	// Test the metadata extraction logic separately
 	ds := &Datasource{}
@@ -1333,7 +1329,7 @@ func TestExtractMetadataPropagatesCubeAndConnectedComponent(t *testing.T) {
 				Name:               "order_overview",
 				Title:              "Order Overview",
 				Type:               "view",
-				ConnectedComponent: intPtr(1),
+				ConnectedComponent: 1,
 				Dimensions: []CubeDimension{
 					{Name: "order_overview.status", Type: "string"},
 				},
@@ -1345,7 +1341,7 @@ func TestExtractMetadataPropagatesCubeAndConnectedComponent(t *testing.T) {
 				Name:               "marketing_overview",
 				Title:              "Marketing Overview",
 				Type:               "view",
-				ConnectedComponent: intPtr(2),
+				ConnectedComponent: 2,
 				Dimensions: []CubeDimension{
 					{Name: "marketing_overview.channel", Type: "string"},
 				},
@@ -1457,59 +1453,6 @@ func TestExtractMetadataIgnoresCubesWithoutViews(t *testing.T) {
 	}
 	if !strings.Contains(string(body), `"measures":[]`) {
 		t.Errorf("expected measures to marshal as an empty array, got %s", body)
-	}
-}
-
-func TestExtractMetadataAssignsSyntheticComponentForViewsWithoutConnectedComponent(t *testing.T) {
-	ds := &Datasource{}
-
-	metaResponse := &CubeMetaResponse{
-		Cubes: []CubeMeta{
-			{
-				Name: "payments_only",
-				Type: "view",
-				Dimensions: []CubeDimension{
-					{Name: "payments_only.payment_method", Type: "string"},
-				},
-				Measures: []CubeMeasure{
-					{Name: "payments_only.total_amount", Type: "number"},
-				},
-			},
-			{
-				Name: "customers_only",
-				Type: "view",
-				Dimensions: []CubeDimension{
-					{Name: "customers_only.first_name", Type: "string"},
-				},
-				Measures: []CubeMeasure{
-					{Name: "customers_only.count", Type: "number"},
-				},
-			},
-		},
-	}
-
-	result := ds.extractMetadataFromResponse(metaResponse)
-
-	dimsByValue := make(map[string]SelectOption, len(result.Dimensions))
-	for _, d := range result.Dimensions {
-		dimsByValue[d.Value] = d
-	}
-	measuresByValue := make(map[string]SelectOption, len(result.Measures))
-	for _, m := range result.Measures {
-		measuresByValue[m.Value] = m
-	}
-
-	paymentsComponent := dimsByValue["payments_only.payment_method"].ConnectedComponent
-	customersComponent := dimsByValue["customers_only.first_name"].ConnectedComponent
-
-	if paymentsComponent == customersComponent {
-		t.Fatalf("expected views without connectedComponent to get distinct synthetic components, got %d", paymentsComponent)
-	}
-	if measuresByValue["payments_only.total_amount"].ConnectedComponent != paymentsComponent {
-		t.Errorf("expected payments measure to share payments view component")
-	}
-	if measuresByValue["customers_only.count"].ConnectedComponent != customersComponent {
-		t.Errorf("expected customers measure to share customers view component")
 	}
 }
 

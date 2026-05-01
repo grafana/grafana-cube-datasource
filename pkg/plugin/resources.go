@@ -186,7 +186,6 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 			continue
 		}
 		viewCount++
-		connectedComponent := connectedComponentOrDefault(cube.ConnectedComponent, -viewCount)
 
 		for _, dimension := range cube.Dimensions {
 			if !processedDimensions[dimension.Name] {
@@ -196,7 +195,7 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 					Type:               dimension.Type,
 					Description:        dimension.Description,
 					Cube:               cube.Name,
-					ConnectedComponent: connectedComponent,
+					ConnectedComponent: cube.ConnectedComponent,
 				})
 				processedDimensions[dimension.Name] = true
 			}
@@ -210,7 +209,7 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 					Type:               measure.Type,
 					Description:        measure.Description,
 					Cube:               cube.Name,
-					ConnectedComponent: connectedComponent,
+					ConnectedComponent: cube.ConnectedComponent,
 				})
 				processedMeasures[measure.Name] = true
 			}
@@ -223,13 +222,6 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 		Dimensions: dimensions,
 		Measures:   measures,
 	}
-}
-
-func connectedComponentOrDefault(component *int, fallback int) int {
-	if component != nil {
-		return *component
-	}
-	return fallback
 }
 
 // handleTagValues returns available tag values for a given tag key (dimension)
