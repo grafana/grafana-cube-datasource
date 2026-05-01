@@ -13,6 +13,7 @@ export const NOT_JOINABLE_PREFIX = 'Not joinable with';
 interface JoinabilityQuery {
   dimensions?: string[];
   measures?: string[];
+  filters?: unknown[];
 }
 
 interface JoinabilityMetadata {
@@ -51,7 +52,11 @@ export function getJoinabilityState(
     byValue.set(option.value, option);
   }
 
-  const selected = [...(query.dimensions ?? []), ...(query.measures ?? [])];
+  const selected = [
+    ...(query.dimensions ?? []),
+    ...(query.measures ?? []),
+    ...(query.filters ?? []).map(getFlatFilterMember).filter((member): member is string => member !== undefined),
+  ];
   for (const name of selected) {
     const option = byValue.get(name);
     if (option) {
@@ -60,6 +65,15 @@ export function getJoinabilityState(
     }
   }
   return { components, cubes };
+}
+
+function getFlatFilterMember(filter: unknown): string | undefined {
+  if (!filter || typeof filter !== 'object' || !('member' in filter)) {
+    return undefined;
+  }
+
+  const member = (filter as { member?: unknown }).member;
+  return typeof member === 'string' ? member : undefined;
 }
 
 /**
@@ -76,7 +90,7 @@ export function getJoinabilityState(
 export function decorateWithJoinability<T extends MetadataOption>(
   options: T[],
   state: JoinabilityState
-): Array<T & { isDisabled?: boolean; description?: string }> {
+): Array<T & { isDisabled?: boolean; description?: string; data?: Record<string, unknown> }> {
   if (state.components.size === 0) {
     return options;
   }
@@ -90,10 +104,15 @@ export function decorateWithJoinability<T extends MetadataOption>(
       return option;
     }
     const description = option.description ? `${option.description} — ${reason}` : reason;
+    const optionWithData = option as T & { data?: Record<string, unknown> };
     return {
       ...option,
       isDisabled: true,
       description,
+      data: {
+        ...optionWithData.data,
+        originalDescription: option.description,
+      },
     };
   });
 }

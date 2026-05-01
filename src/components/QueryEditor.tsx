@@ -135,7 +135,7 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
   const joinabilityState = useMemo(
     () => getJoinabilityState(query, metadata),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [query.dimensions, query.measures, metadata]
+    [query.dimensions, query.measures, query.filters, metadata]
   );
   const dimensionOptions = useMemo(
     () => decorateWithJoinability(metadata.dimensions, joinabilityState),
@@ -149,7 +149,10 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
   const filterOption = useCallback((option: SelectableValue<string>, searchQuery: string) => {
     const q = searchQuery.toLowerCase();
     const label = option.label?.toLowerCase() ?? '';
-    const desc = (option.description ?? option.data?.description ?? '').toLowerCase();
+    const originalDescription = option.data?.originalDescription;
+    const desc = (
+      typeof originalDescription === 'string' ? originalDescription : option.description ?? option.data?.description ?? ''
+    ).toLowerCase();
     return label.includes(q) || desc.includes(q);
   }, []);
 

@@ -206,6 +206,58 @@ describe('QueryEditor', () => {
     }
   });
 
+  it('should search the original description instead of injected joinability text', async () => {
+    const mockMetadata = {
+      dimensions: [
+        {
+          label: 'orders.status',
+          value: 'orders.status',
+          description: 'order status',
+          cube: 'orders',
+          connectedComponent: 1,
+        },
+        {
+          label: 'marketing_events.channel',
+          value: 'marketing_events.channel',
+          description: 'attribution channel',
+          cube: 'marketing_events',
+          connectedComponent: 2,
+        },
+      ],
+      measures: [],
+    };
+
+    const multiSelectSpy = jest.spyOn(GrafanaUI, 'MultiSelect').mockImplementation((props: any) => (
+      <div data-testid={`multiselect-${props['aria-label']}`}>{props.placeholder}</div>
+    ));
+
+    try {
+      const datasource = createMockDataSource(mockMetadata);
+      const query = createMockQuery({ dimensions: ['orders.status'] });
+
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Select dimensions...')).toBeInTheDocument();
+      });
+
+      const dimensionsProps = [...multiSelectSpy.mock.calls]
+        .reverse()
+        .map(([props]) => props)
+        .find((props) => props['aria-label'] === 'Dimensions');
+      const channel = (dimensionsProps!.options ?? []).find(
+        (option: { value?: unknown }) => option.value === 'marketing_events.channel'
+      );
+      expect(channel).toBeDefined();
+
+      expect(channel!.description).toBe('attribution channel — Not joinable with: orders');
+      expect(dimensionsProps!.filterOption!(channel!, 'orders')).toBe(false);
+      expect(dimensionsProps!.filterOption!(channel!, 'attribution')).toBe(true);
+    } finally {
+      multiSelectSpy.mockRestore();
+    }
+  });
+
   it('should handle metadata fetch errors gracefully', async () => {
     const datasource = createMockDataSource();
     datasource.getMetadata = jest.fn().mockRejectedValue(new Error('API Error'));

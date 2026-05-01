@@ -31,6 +31,18 @@ describe('getJoinabilityState', () => {
     expect([...state.cubes]).toEqual(['orders']);
   });
 
+  it('returns the components and cubes for selected flat filters', () => {
+    const state = getJoinabilityState({ filters: [{ member: 'marketing_events.channel' }] }, metadata);
+    expect([...state.components]).toEqual([2]);
+    expect([...state.cubes]).toEqual(['marketing_events']);
+  });
+
+  it('ignores non-flat filter groups when deriving joinability', () => {
+    const state = getJoinabilityState({ filters: [{ or: [{ member: 'orders.status' }] }] }, metadata);
+    expect(state.components.size).toBe(0);
+    expect(state.cubes.size).toBe(0);
+  });
+
   it('combines components and cubes across compatible selections', () => {
     const state = getJoinabilityState(
       { dimensions: ['orders.status'], measures: ['marketing_events.count'] },
@@ -101,6 +113,24 @@ describe('decorateWithJoinability', () => {
 
     expect(decorated.isDisabled).toBe(true);
     expect(decorated.description).toBe(`attribution channel — ${NOT_JOINABLE_PREFIX}: orders`);
+  });
+
+  it('preserves the original description in option data for disabled options', () => {
+    const optsWithData = [
+      {
+        ...opt('marketing_events.channel', 2, {
+          description: 'attribution channel',
+        }),
+        data: { existing: true },
+      },
+    ];
+    const state = { components: new Set([1]), cubes: new Set(['orders']) };
+    const [decorated] = decorateWithJoinability(optsWithData, state);
+
+    expect(decorated.data).toEqual({
+      existing: true,
+      originalDescription: 'attribution channel',
+    });
   });
 
   it('does not disable options when their component is in the used set', () => {
