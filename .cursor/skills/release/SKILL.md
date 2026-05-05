@@ -2,8 +2,8 @@
 name: grafana-plugin-release
 description: >-
   Release the Grafana Cube datasource plugin end-to-end: babysit a feature PR
-  until green and merge it, create and merge a release PR (version bump +
-  changelog), tag the release, and run the CD workflow through all environments.
+  until green and merge it, trigger the version-bump-changelog workflow to
+  publish a release, and run the CD workflow to deploy to Grafana Cloud.
   Use when the user mentions release, publish, ship, deploy the plugin, or
   babysit a PR.
 ---
@@ -11,30 +11,13 @@ description: >-
 # Grafana Plugin Release
 
 Full release lifecycle for `grafana/grafana-cube-datasource`. Covers babysitting
-a PR, creating a release PR, tagging, and CD deployment.
+a feature PR, cutting a release via the automated version-bump workflow, and
+deploying via the CD workflow.
 
-**Run locally.** This skill requires local credentials (GPG tag signing,
-internal post-publish tooling) that are not available in cloud agents. It is
-safe to run as a background agent -- all git operations use an isolated
-worktree so they won't interfere with the user's working tree.
-
-## Worktree setup
-
-All git operations (Phases 2–3) run in a temporary worktree to avoid disrupting
-the user's checkout. Create it at the start and clean it up at the end. Use
-`--detach` so the worktree doesn't try to claim the `main` branch (which is
-likely already checked out in the user's primary worktree — Git forbids the
-same branch being checked out twice):
-
-```bash
-git worktree add --detach /tmp/cube-ds-release main
-```
-
-Run Phase 2 and Phase 3 commands inside `/tmp/cube-ds-release`. When finished:
-
-```bash
-git worktree remove /tmp/cube-ds-release
-```
+The version bump, `CHANGELOG.md` generation and tag push all happen in CI via
+the `Version bump, changelog` workflow — there are no local `git`, `npm` or
+worktree commands to run. The only local credential needed is `gh` auth to
+trigger the workflows.
 
 ## Phase 1 — Babysit & merge the feature PR
 
@@ -46,111 +29,70 @@ If the user provides a PR to babysit before releasing:
    when you disagree.
 3. If a check **fails**, investigate the logs:
    `gh run view <run-id> --repo grafana/grafana-cube-datasource --log-failed`
-4. Once green + mergeable, merge with squash and delete the remote branch:
+4. PR titles must follow conventional commits (`feat:`, `fix:`, `chore:`, …) —
+   the `Conventional Commits` check enforces this and the prefix decides the
+   `CHANGELOG.md` section the change is filed under. Fix the title with
+   `gh pr edit <PR> --title "..."` if it fails.
+5. Once green + mergeable, merge with squash and delete the remote branch:
    `gh pr merge <PR> --repo grafana/grafana-cube-datasource --squash --delete-branch`
-5. Delete local branches for the merged PR and any predecessor PRs the user
+6. Delete local branches for the merged PR and any predecessor PRs the user
    mentions: `git branch -D <branch> ...`
-6. Prune stale remote-tracking refs: `git fetch --prune origin`
+7. Prune stale remote-tracking refs: `git fetch --prune origin`
 
-## Phase 2 — Create the release PR
+## Phase 2 — Cut the release
 
-Work inside the worktree (`/tmp/cube-ds-release`).
+Trigger the `Version bump, changelog` workflow. It bumps the version in
+`package.json` + `package-lock.json`, generates a `CHANGELOG.md` entry from
+conventional commits since the last tag, commits to `main`, and pushes the
+tag. The tag push then triggers `release.yml` to build a draft GitHub release.
 
-1. **Sync to latest main.** The worktree is detached, so `git pull` won't work
-   — fetch and re-point HEAD instead:
-
-   ```bash
-   cd /tmp/cube-ds-release && git fetch origin && git checkout --detach origin/main
-   ```
-
-2. **Determine the version bump.** Review commits since the last tag:
-
-   ```
-   git log $(git describe --tags --abbrev=0)..HEAD --oneline
-   ```
-
-   - New features → `minor`
-   - Bug fixes only → `patch`
-   - Breaking changes → `major`
-
-   Ask the user to confirm the version if unsure.
-
-3. **Create the release branch and bump:**
-
-   ```bash
-   git checkout -b release/v<VERSION>
-   npm version <patch|minor|major> --no-git-tag-version
-   ```
-
-4. **Update `CHANGELOG.md`.** Prepend a new section after `# Changelog`:
-
-   ```markdown
-   ## <VERSION> (<YYYY-MM-DD>)
-
-   ### Features | Bug Fixes | Security | Breaking Changes
-
-   - **Short bold title**: Description (#PR)
-
-   **Full Changelog**: [v<PREV>...v<VERSION>](https://github.com/grafana/grafana-cube-datasource/compare/v<PREV>...v<VERSION>)
-   ```
-
-   Only list user-facing changes (features, fixes, security, deprecations).
-   Skip dependency bumps unless they fix a CVE worth calling out.
-
-5. **Commit, push, and open the PR:**
-
-   ```bash
-   git add package.json package-lock.json CHANGELOG.md
-   git commit -m "chore: release v<VERSION>"
-   git push -u origin HEAD
-   gh pr create --title "chore: release v<VERSION>" --body "..."
-   ```
-
-   PR body should include a summary table of what's included and a release
-   checklist (CI, merge, tag, CD).
-
-6. **Babysit the release PR** using the same polling loop from Phase 1.
-
-7. **Merge** when green:
-   `gh pr merge <PR> --repo grafana/grafana-cube-datasource --squash --delete-branch`
-
-## Phase 3 — Tag & push
-
-Still inside the worktree. Re-point the detached HEAD to the freshly merged
-`main` (don't use `git checkout main` — `main` is checked out in the user's
-primary worktree):
+**Determine the version bump.** Review commits since the last tag:
 
 ```bash
-cd /tmp/cube-ds-release
-git fetch origin && git checkout --detach origin/main
-git tag v<VERSION>
-git push origin v<VERSION>
+LAST_TAG=$(gh release list --repo grafana/grafana-cube-datasource --limit 1 --json tagName --jq '.[0].tagName')
+gh api "repos/grafana/grafana-cube-datasource/compare/${LAST_TAG}...main" \
+  --jq '.commits[] | "\(.sha[:8]) \(.commit.message | split("\n")[0])"'
 ```
 
-This triggers `.github/workflows/release.yml` which:
-- Builds and signs the plugin for all platforms
-- Creates a **draft** GitHub release with artifacts and SHA checksums
-- Generates provenance attestation
+- Any `feat:` → `minor`
+- Only `fix:` / `chore:` / `docs:` / `ci:` etc. → `patch`
+- Any `feat!:` or `BREAKING CHANGE:` → `major`
 
-Verify the release workflow completes:
+Ask the user to confirm the version if unsure.
 
+**Trigger the workflow:**
+
+```bash
+gh workflow run version-bump-changelog.yml \
+  --repo grafana/grafana-cube-datasource \
+  -f version=<patch|minor|major> -f generate-changelog=true
 ```
-gh run list --workflow=release.yml --limit 1 --repo grafana/grafana-cube-datasource
+
+Wait for it to complete:
+
+```bash
+gh run list --workflow=version-bump-changelog.yml --limit 1 \
+  --repo grafana/grafana-cube-datasource \
+  --json status,conclusion,displayTitle
 ```
 
-Then publish the draft release:
+A successful run pushes a `vX.Y.Z` tag, which triggers `release.yml` to build
+a **draft** GitHub release with signed plugin artefacts, SHA checksums and
+provenance attestation. Wait for that workflow too:
 
+```bash
+gh run list --workflow=release.yml --limit 1 \
+  --repo grafana/grafana-cube-datasource \
+  --json status,conclusion,displayTitle
 ```
+
+Publish the draft release:
+
+```bash
 gh release edit v<VERSION> --repo grafana/grafana-cube-datasource --draft=false
 ```
 
-**Clean up the worktree** now that git operations are done:
-
-```bash
-git worktree remove /tmp/cube-ds-release
-```
-
-## Phase 4 — CD deployment
+## Phase 3 — CD deployment
 
 The CD workflow (`.github/workflows/publish.yaml`) publishes to the Grafana
 plugin catalog. It is triggered via `workflow_dispatch`. Each environment is
@@ -172,13 +114,15 @@ proceeding.
 
 Poll the run with:
 
-```
-gh run list --workflow=publish.yaml --limit 1 --repo grafana/grafana-cube-datasource --json status,conclusion,displayTitle
+```bash
+gh run list --workflow=publish.yaml --limit 1 \
+  --repo grafana/grafana-cube-datasource \
+  --json status,conclusion,displayTitle
 ```
 
 Wait for `"status": "completed"` and `"conclusion": "success"`.
 
-## Phase 5 — Internal post-publish steps
+## Phase 4 — Internal post-publish steps
 
 After the catalog publish completes, follow the internal post-publish runbook
 to bump the plugin on the relevant Grafana Cloud instances and restart them.
