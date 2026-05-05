@@ -290,12 +290,15 @@ A: For Grafana Cloud deployment, use the **"Plugins - CD"** workflow in the Acti
 
 ## Releasing
 
-This repository uses a **two-step release process**:
+This repository uses a **three-workflow release pipeline**:
 
-1. **GitHub Release** (via `release.yml`) — Created automatically when you push a version tag
-2. **Catalog Publishing** (via `publish.yaml`) — Manual workflow to publish to Grafana Cloud environments
+1. **`version-bump-changelog.yml`** — Manual workflow that bumps the npm version, generates a `CHANGELOG.md` entry from conventional commits since the last tag, commits to `main`, and pushes the new tag.
+2. **`release.yml`** — Triggered automatically by the tag push. Builds and signs the plugin for all platforms, creates a **draft** GitHub release with the artifacts, SHA checksums, and provenance attestation.
+3. **`publish.yaml`** ("Plugins - CD") — Manual workflow that publishes to the Grafana Cloud plugin catalog (dev / ops / prod-canary / prod).
 
-### Why Two Separate Workflows?
+The version bump and tag step happens entirely in CI — no local `git` or `npm` commands are required.
+
+### Why Separate `release.yml` from `publish.yaml`?
 
 We want GitHub releases with downloadable artifacts to be available **as soon as a version is tagged**, regardless of whether it's published to the Grafana catalog. This allows:
 
@@ -303,41 +306,29 @@ We want GitHub releases with downloadable artifacts to be available **as soon as
 - Transparency about what version exists, even if only deployed to dev/ops
 - A clear audit trail of all released versions
 
-The standard `plugin-ci-workflows` only creates GitHub releases when publishing to prod. Our custom `release.yml` fills this gap by creating releases on any tag push.
+The standard `plugin-ci-workflows` only creates GitHub releases when publishing to prod. Our `release.yml` fills this gap by creating releases on any tag push.
 
 ### Creating a Release
 
-Since `main` is protected, releases are a two-step process:
+PR titles must use conventional commit prefixes (`feat:`, `fix:`, `chore:`, …) — enforced by the `Conventional Commits` check on every PR. The prefix decides which `CHANGELOG.md` section the change is filed under, and the same convention drives the SemVer bump:
 
-**Step 1: Version bump PR**
+- Any `feat:` since the last tag → `minor`
+- Only `fix:` / `chore:` / `docs:` etc. → `patch`
+- `feat!:` or `BREAKING CHANGE:` in the body → `major`
 
-```bash
-# Create a release branch
-git checkout -b release/v1.2.3
+To cut a release:
 
-# Bump version (updates package.json and package-lock.json)
-npm version patch --no-git-tag-version  # or minor/major
+1. Go to **Actions** → **"Version bump, changelog"** → **"Run workflow"**.
+2. Pick the bump type (`patch` / `minor` / `major`) and run.
 
-# Commit the version bump
-git add package.json package-lock.json
-git commit -m "chore: release v1.2.3"
+The `grafana-plugins-platform-bot` will commit the version bump and `CHANGELOG.md` to `main` and push the new tag. The tag push triggers `release.yml`, which produces a draft GitHub release ready for review and publishing.
 
-# Push and create PR
-git push -u origin release/v1.2.3
-```
-
-Wait for CI to pass, then merge the PR.
-
-**Step 2: Tag the release**
+You can also trigger the workflow from the CLI:
 
 ```bash
-# After merging, pull main and create the tag
-git checkout main && git pull
-git tag v1.2.3
-git push origin v1.2.3
+gh workflow run version-bump-changelog.yml \
+  -f version=patch -f generate-changelog=true
 ```
-
-The tag push triggers the `release.yml` workflow, which creates a GitHub release with signed plugin artifacts. You can then publish to the catalog whenever you're ready.
 
 ## Publishing Workflow
 
