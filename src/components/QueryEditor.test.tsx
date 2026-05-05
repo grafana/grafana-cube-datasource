@@ -4,7 +4,7 @@ import * as GrafanaUI from '@grafana/ui';
 import { QueryEditor } from './QueryEditor';
 import { CubeQuery, Operator } from '../types';
 import { getTemplateSrv } from '@grafana/runtime';
-import { createMockDataSource, setup } from 'testUtils';
+import { createMockDataSource, setup } from '../testUtils';
 
 // Mock the SQLPreview component
 jest.mock('./SQLPreview', () => ({

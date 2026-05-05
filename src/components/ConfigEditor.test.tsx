@@ -1,6 +1,6 @@
 import React from 'react';
 import { screen, fireEvent } from '@testing-library/react';
-import { setup } from 'testUtils';
+import { setup } from '../testUtils';
 import { ConfigEditor } from './ConfigEditor';
 import { CubeDataSourceOptions, CubeSecureJsonData } from '../types';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';

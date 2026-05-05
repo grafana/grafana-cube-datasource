@@ -1,6 +1,6 @@
 import React from 'react';
 import { IconButton, useStyles2, Text } from '@grafana/ui';
-import { Order } from 'types';
+import { Order } from '../../types';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Draggable } from '@hello-pangea/dnd';

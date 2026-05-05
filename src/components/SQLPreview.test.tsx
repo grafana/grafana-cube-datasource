@@ -14,9 +14,9 @@ jest.mock('queries', () => ({
 
 import React from 'react';
 import { screen } from '@testing-library/react';
-import { setup } from 'testUtils';
+import { setup } from '../testUtils';
 import { SQLPreview } from './SQLPreview';
-import { useDatasourceQuery } from 'queries';
+import { useDatasourceQuery } from '../queries';
 
 const mockUseDatasourceQuery = useDatasourceQuery as jest.Mock;
 

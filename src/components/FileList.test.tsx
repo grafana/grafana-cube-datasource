@@ -7,7 +7,7 @@ jest.mock('@grafana/runtime', () => ({
 
 import React from 'react';
 import { screen } from '@testing-library/react';
-import { setup } from 'testUtils';
+import { setup } from '../testUtils';
 import { FileList } from './FileList';
 import { ModelFile } from '../types';
 

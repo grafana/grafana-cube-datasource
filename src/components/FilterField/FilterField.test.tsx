@@ -1,8 +1,8 @@
 import React from 'react';
 import { screen } from '@testing-library/react';
-import { createMockDataSource, setup } from 'testUtils';
+import { createMockDataSource, setup } from '../../testUtils';
 import { FilterField } from './FilterField';
-import { Operator } from 'types';
+import { Operator } from '../../types';
 
 describe('FilterField', () => {
   const mockOnChange = jest.fn();
