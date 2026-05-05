@@ -8,7 +8,7 @@ import (
 )
 
 type PluginSettings struct {
-	CubeApiUrl              string                `json:"cubeApiUrl"`
+	CubeApiUrl              string                `json:"-"`
 	DeploymentType          string                `json:"deploymentType"` // "cloud", "self-hosted", or "self-hosted-dev"
 	ExploreSqlDatasourceUid string                `json:"exploreSqlDatasourceUid"`
 	Secrets                 *SecretPluginSettings `json:"-"`
@@ -26,13 +26,7 @@ func LoadPluginSettings(source backend.DataSourceInstanceSettings) (*PluginSetti
 		return nil, fmt.Errorf("could not unmarshal PluginSettings json: %w", err)
 	}
 
-	// Prefer the standard top-level datasource URL over jsonData.cubeApiUrl.
-	// This makes provisioning and Terraform idiomatic (most Grafana datasources use "url"),
-	// while remaining backward-compatible with existing instances that use jsonData.cubeApiUrl.
-	if source.URL != "" {
-		settings.CubeApiUrl = source.URL
-	}
-
+	settings.CubeApiUrl = source.URL
 	settings.Secrets = loadSecretPluginSettings(source.DecryptedSecureJSONData)
 
 	return &settings, nil

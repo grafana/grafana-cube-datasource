@@ -19,8 +19,7 @@ export function ConfigEditor({ onOptionsChange, options }: ConfigEditorProps) {
   // No default - user must explicitly select deployment type
   const deploymentType = jsonData.deploymentType;
 
-  // Read from standard top-level url, falling back to legacy jsonData.cubeApiUrl
-  const cubeApiUrl = options.url || jsonData.cubeApiUrl || '';
+  const cubeApiUrl = options.url || '';
 
   // Memoized datasource options for Combobox
   const sqlDatasourceOptions = useMemo(
@@ -36,7 +35,6 @@ export function ConfigEditor({ onOptionsChange, options }: ConfigEditorProps) {
     onOptionsChange({
       ...options,
       url: value,
-      jsonData: { ...jsonData, cubeApiUrl: value },
     });
 
   const updateJsonData = (field: keyof CubeDataSourceOptions, value: string | undefined) =>

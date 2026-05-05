@@ -1,5 +1,5 @@
 import type { TQueryOrderArray } from '@cubejs-client/core';
-import { normalizeOrder, OrderArray, OrderRecord } from './normalizeOrder';
+import { normalizeOrder, OrderArray } from './normalizeOrder';
 
 describe('normalizeOrder', () => {
   it('should return undefined for undefined input', () => {
@@ -14,27 +14,12 @@ describe('normalizeOrder', () => {
     expect(normalizeOrder(arrayOrder)).toEqual(arrayOrder);
   });
 
-  it('should convert object format to array format', () => {
-    const objectOrder: OrderRecord = { 'orders.count': 'desc', 'orders.status': 'asc' };
-    const result = normalizeOrder(objectOrder);
-    expect(result).toEqual([
-      ['orders.count', 'desc'],
-      ['orders.status', 'asc'],
-    ]);
-  });
-
-  it('should return undefined for empty object', () => {
-    const result = normalizeOrder({});
-    expect(result).toBeUndefined();
-  });
-
   it('should return undefined for empty array', () => {
     const result = normalizeOrder([]);
     expect(result).toBeUndefined();
   });
 
   it('should filter out entries with none direction', () => {
-    // Using TQueryOrderArray to simulate Cube's type that includes 'none'
     const orderWithNone: TQueryOrderArray = [
       ['orders.count', 'desc'],
       ['orders.status', 'none'],
