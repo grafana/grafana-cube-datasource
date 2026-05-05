@@ -8,7 +8,7 @@ jest.mock('prismjs', () => ({
 jest.mock('prismjs/components/prism-sql', () => ({}));
 
 // Mock the useDatasourceQuery hook
-jest.mock('queries', () => ({
+jest.mock('../queries', () => ({
   useDatasourceQuery: jest.fn(),
 }));
 
