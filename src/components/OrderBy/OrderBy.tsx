@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Select, useStyles2 } from '@grafana/ui';
-import { DEFAULT_ORDER, Order } from 'types';
+import { DEFAULT_ORDER, Order } from '../../types';
 import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';

@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, useTheme2 } from '@grafana/ui';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-sql';
-import { useDatasourceQuery } from 'queries';
+import { useDatasourceQuery } from '../queries';
 
 interface SQLPreviewProps {
   sql: string;

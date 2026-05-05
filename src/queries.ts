@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient, UseQueryResult } from '@tanstack/react-query';
 import { SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { DataSource } from 'datasource';
+import { DataSource } from './datasource';
 import { fetchSqlDatasources } from './services/datasourceApi';
 import { DbSchemaResponse, GenerateSchemaRequest, ModelFilesResponse } from './types';
 

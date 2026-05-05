@@ -6,7 +6,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { DataSource } from '../datasource';
 import { CubeDataSourceOptions, CubeQuery, CubeFilter, isCubeFilter } from '../types';
 import { SQLPreview } from './SQLPreview';
-import { useMetadataQuery, useCompiledSqlQuery, MetadataOption } from 'queries';
+import { useMetadataQuery, useCompiledSqlQuery, MetadataOption } from '../queries';
 import { OrderBy } from './OrderBy/OrderBy';
 import { FilterField } from './FilterField/FilterField';
 import { useQueryEditorHandlers } from '../hooks/useQueryEditorHandlers';

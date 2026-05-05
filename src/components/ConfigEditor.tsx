@@ -2,7 +2,7 @@ import React, { ChangeEvent, useMemo } from 'react';
 import { InlineField, Input, SecretInput, RadioButtonGroup, Alert, Combobox, ComboboxOption } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { CubeDataSourceOptions, CubeSecureJsonData } from '../types';
-import { useSqlDatasourcesQuery } from 'queries';
+import { useSqlDatasourcesQuery } from '../queries';
 
 // Constants
 const FIELD_WIDTHS = {

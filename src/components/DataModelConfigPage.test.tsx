@@ -14,7 +14,7 @@ jest.mock('@grafana/ui', () => ({
 
 import React from 'react';
 import { screen, waitFor } from '@testing-library/react';
-import { setup } from 'testUtils';
+import { setup } from '../testUtils';
 import { DataModelConfigPage, extractDatasourceUid } from './DataModelConfigPage';
 import { getBackendSrv } from '@grafana/runtime';
 

@@ -4,7 +4,7 @@ import { ConfigEditor } from './components/ConfigEditor';
 import { QueryEditor } from './components/QueryEditor';
 import { DataModelConfigPage } from './components/DataModelConfigPage';
 import { CubeQuery, CubeDataSourceOptions } from './types';
-import { withQueryClient } from 'queryClient';
+import { withQueryClient } from './queryClient';
 
 export const plugin = new DataSourcePlugin<DataSource, CubeQuery, CubeDataSourceOptions>(DataSource)
   .setConfigEditor(withQueryClient(ConfigEditor))

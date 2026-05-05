@@ -1,8 +1,8 @@
 import React from 'react';
 import { screen } from '@testing-library/react';
-import { setup } from 'testUtils';
+import { setup } from '../../testUtils';
 import { OrderBy } from './OrderBy';
-import { DEFAULT_ORDER } from 'types';
+import { DEFAULT_ORDER } from '../../types';
 
 describe('OrderBy', () => {
   const mockOnAdd = jest.fn();

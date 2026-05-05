@@ -8,7 +8,7 @@ jest.mock('@grafana/runtime', () => ({
 
 import React from 'react';
 import { screen, waitFor } from '@testing-library/react';
-import { setup } from 'testUtils';
+import { setup } from '../testUtils';
 import { DatabaseTree, encodeTableKey } from './DatabaseTree';
 import { getBackendSrv } from '@grafana/runtime';
 
