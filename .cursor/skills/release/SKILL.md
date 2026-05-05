@@ -13,10 +13,10 @@ description: >-
 Full release lifecycle for `grafana/grafana-cube-datasource`. Covers babysitting
 a PR, creating a release PR, tagging, and CD deployment.
 
-**Run locally.** This skill requires local credentials (GPG tag signing via
-1Password, `gcom-ops` auth) that are not available in cloud agents. It is safe
-to run as a background agent -- all git operations use an isolated worktree so
-they won't interfere with the user's working tree.
+**Run locally.** This skill requires local credentials (GPG tag signing,
+internal post-publish tooling) that are not available in cloud agents. It is
+safe to run as a background agent -- all git operations use an isolated
+worktree so they won't interfere with the user's working tree.
 
 ## Worktree setup
 
@@ -178,28 +178,10 @@ gh run list --workflow=publish.yaml --limit 1 --repo grafana/grafana-cube-dataso
 
 Wait for `"status": "completed"` and `"conclusion": "success"`.
 
-## Phase 5 — Update internal Grafana instances
+## Phase 5 — Internal post-publish steps
 
-After the catalog publish completes, bump the plugin on the internal Grafana
-Cloud instances and restart them. Use `gcom-ops` from the sibling
-`deployment_tools` repo (`../deployment_tools/scripts/gcom/gcom-ops`), or a
-local alias if available.
-
-Update each instance to the latest catalog version:
-
-```bash
-gcom-ops /instances/bidev/plugins/grafana-cube-datasource -dversion=latest
-gcom-ops /instances/bi/plugins/grafana-cube-datasource -dversion=latest
-gcom-ops /instances/ops/plugins/grafana-cube-datasource -dversion=latest
-```
-
-Then restart each instance so the new version takes effect:
-
-```bash
-gcom-ops /instances/bidev/restart -d 'reason=bump Cube DS to version <VERSION>'
-gcom-ops /instances/bi/restart -d 'reason=bump Cube DS to version <VERSION>'
-gcom-ops /instances/ops/restart -d 'reason=bump Cube DS to version <VERSION>'
-```
+After the catalog publish completes, follow the internal post-publish runbook
+to bump the plugin on the relevant Grafana Cloud instances and restart them.
 
 ## Post-release
 
