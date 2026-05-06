@@ -292,7 +292,7 @@ A: For Grafana Cloud deployment, use the **"Plugins - CD"** workflow in the Acti
 
 This repository uses a **three-workflow release pipeline**:
 
-1. **`version-bump-changelog.yml`** — Manual workflow that bumps the npm version, generates a `CHANGELOG.md` entry from conventional commits since the last tag, commits to `main`, and pushes the new tag.
+1. **`release-please.yml`** — Runs on every push to `main`. Maintains an open "Release Please" PR that bumps the npm version and prepends a `CHANGELOG.md` entry from conventional commits since the last tag. Merging the PR creates the version commit on `main` and pushes the new tag.
 2. **`release.yml`** — Triggered automatically by the tag push. Builds and signs the plugin for all platforms, creates a **draft** GitHub release with the artifacts, SHA checksums, and provenance attestation.
 3. **`publish.yaml`** ("Plugins - CD") — Manual workflow that publishes to the Grafana Cloud plugin catalog (dev / ops / prod-canary / prod).
 
@@ -312,22 +312,18 @@ The standard `plugin-ci-workflows` only creates GitHub releases when publishing 
 
 PR titles must use conventional commit prefixes (`feat:`, `fix:`, `chore:`, …) — enforced by the `Conventional Commits` check on every PR. The prefix decides which `CHANGELOG.md` section the change is filed under, and the same convention drives the SemVer bump:
 
-- Any `feat:` since the last tag → `minor`
+While the plugin is pre-1.0, `bump-minor-pre-major` is set in `release-please-config.json`, so:
+
+- `feat!:` or `BREAKING CHANGE:` → `minor` (will be `major` once 1.0 ships)
+- `feat:` → `patch` (will be `minor` once 1.0 ships)
 - Only `fix:` / `chore:` / `docs:` etc. → `patch`
-- `feat!:` or `BREAKING CHANGE:` in the body → `major`
 
-To cut a release:
+To cut a release, merge the open **"chore(main): release X.Y.Z"** pull request that the `Release Please` workflow keeps in sync on every push to `main`. Merging it commits the version bump and updated `CHANGELOG.md` to `main` and pushes the new tag — which triggers `release.yml` to produce a draft GitHub release ready for review and publishing.
 
-1. Go to **Actions** → **"Version bump, changelog"** → **"Run workflow"**.
-2. Pick the bump type (`patch` / `minor` / `major`) and run.
-
-The `grafana-plugins-platform-bot` will commit the version bump and `CHANGELOG.md` to `main` and push the new tag. The tag push triggers `release.yml`, which produces a draft GitHub release ready for review and publishing.
-
-You can also trigger the workflow from the CLI:
+If no release PR is open (e.g. nothing release-worthy has landed since the last tag), you can re-run `Release Please` manually:
 
 ```bash
-gh workflow run version-bump-changelog.yml \
-  -f version=patch -f generate-changelog=true
+gh workflow run release-please.yml
 ```
 
 ## Publishing Workflow

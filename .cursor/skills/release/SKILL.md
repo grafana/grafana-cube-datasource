@@ -2,8 +2,8 @@
 name: grafana-plugin-release
 description: >-
   Release the Grafana Cube datasource plugin end-to-end: babysit a feature PR
-  until green and merge it, trigger the version-bump-changelog workflow to
-  publish a release, and run the CD workflow to deploy to Grafana Cloud.
+  until green and merge it, merge the release-please PR to publish a release,
+  and run the CD workflow to deploy to Grafana Cloud.
   Use when the user mentions release, publish, ship, deploy the plugin, or
   babysit a PR.
 ---
@@ -11,13 +11,14 @@ description: >-
 # Grafana Plugin Release
 
 Full release lifecycle for `grafana/grafana-cube-datasource`. Covers babysitting
-a feature PR, cutting a release via the automated version-bump workflow, and
-deploying via the CD workflow.
+a feature PR, cutting a release by merging the release-please PR, and deploying
+via the CD workflow.
 
-The version bump, `CHANGELOG.md` generation and tag push all happen in CI via
-the `Version bump, changelog` workflow — there are no local `git`, `npm` or
-worktree commands to run. The only local credential needed is `gh` auth to
-trigger the workflows.
+Version bump, `CHANGELOG.md` generation and tag push all happen in CI. A
+release PR is maintained automatically by the `Release Please` workflow on
+every push to `main` — to cut a release you just merge it. There are no local
+`git`, `npm` or worktree commands to run. The only local credential needed is
+`gh` auth to trigger workflows and merge PRs.
 
 ## Phase 1 — Babysit & merge the feature PR
 
@@ -41,44 +42,41 @@ If the user provides a PR to babysit before releasing:
 
 ## Phase 2 — Cut the release
 
-Trigger the `Version bump, changelog` workflow. It bumps the version in
-`package.json` + `package-lock.json`, generates a `CHANGELOG.md` entry from
-conventional commits since the last tag, commits to `main`, and pushes the
-tag. The tag push then triggers `release.yml` to build a draft GitHub release.
+Release-please maintains a "chore(main): release X.Y.Z" PR that is updated on
+every push to `main`. It bumps `package.json` / `package-lock.json` and
+prepends a `CHANGELOG.md` entry derived from conventional commits since the
+last tag.
 
-**Determine the version bump.** Review commits since the last tag:
+Bump rules (configured in `release-please-config.json`, with
+`bump-minor-pre-major` + `bump-patch-for-minor-pre-major` set for 0.x):
 
-```bash
-LAST_TAG=$(gh release list --repo grafana/grafana-cube-datasource --limit 1 --json tagName --jq '.[0].tagName')
-gh api "repos/grafana/grafana-cube-datasource/compare/${LAST_TAG}...main" \
-  --jq '.commits[] | "\(.sha[:8]) \(.commit.message | split("\n")[0])"'
-```
-
-- Any `feat:` → `minor`
+- Any `feat!:` or `BREAKING CHANGE:` → `minor` (would be `major` post-1.0)
+- Any `feat:` → `patch` (would be `minor` post-1.0)
 - Only `fix:` / `chore:` / `docs:` / `ci:` etc. → `patch`
-- Any `feat!:` or `BREAKING CHANGE:` → `major`
 
-Ask the user to confirm the version if unsure.
-
-**Trigger the workflow:**
+**Find the open release PR:**
 
 ```bash
-gh workflow run version-bump-changelog.yml \
-  --repo grafana/grafana-cube-datasource \
-  -f version=<patch|minor|major> -f generate-changelog=true
+gh pr list --repo grafana/grafana-cube-datasource \
+  --label 'autorelease: pending' --json number,title,headRefName
 ```
 
-Wait for it to complete:
+If none exists, run `gh workflow run release-please.yml --repo grafana/grafana-cube-datasource`
+to create one (it normally auto-runs on push to `main`).
+
+Review the PR — confirm the proposed version and changelog match your intent.
+If the version is wrong, either adjust commit messages on `main` (then push)
+or use a `Release-As: X.Y.Z` footer in a follow-up commit.
+
+**Merge the release PR** with squash:
 
 ```bash
-gh run list --workflow=version-bump-changelog.yml --limit 1 \
-  --repo grafana/grafana-cube-datasource \
-  --json status,conclusion,displayTitle
+gh pr merge <PR> --repo grafana/grafana-cube-datasource --squash --delete-branch
 ```
 
-A successful run pushes a `vX.Y.Z` tag, which triggers `release.yml` to build
-a **draft** GitHub release with signed plugin artefacts, SHA checksums and
-provenance attestation. Wait for that workflow too:
+Merging tags `vX.Y.Z`, which triggers `release.yml` to build a **draft**
+GitHub release with signed plugin artefacts, SHA checksums and provenance
+attestation. Wait for that workflow:
 
 ```bash
 gh run list --workflow=release.yml --limit 1 \
