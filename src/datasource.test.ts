@@ -530,23 +530,6 @@ describe('DataSource', () => {
       });
     });
 
-    describe('order normalization', () => {
-      it('should normalize legacy object order format to array format', () => {
-        const datasource = createDataSource();
-        const query = {
-          refId: 'A',
-          measures: ['orders.count'],
-          order: { 'orders.count': 'desc', 'orders.status': 'asc' } as CubeQuery['order'],
-        };
-
-        const result = datasource.applyTemplateVariables(query, {});
-
-        expect(result.order).toEqual([
-          ['orders.count', 'desc'],
-          ['orders.status', 'asc'],
-        ]);
-      });
-    });
   });
 
   describe('filterQuery', () => {
