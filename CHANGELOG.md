@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.6.0](https://github.com/grafana/grafana-cube-datasource/compare/v0.5.0...v0.6.0) (2026-05-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove legacy order object format and cubeApiUrl jsonData field ([#318](https://github.com/grafana/grafana-cube-datasource/issues/318))
+
+### Features
+
+* remove legacy order object format and cubeApiUrl jsonData field ([#318](https://github.com/grafana/grafana-cube-datasource/issues/318)) ([0e02222](https://github.com/grafana/grafana-cube-datasource/commit/0e02222a37ad75f5e1f5718aba3e66ecd1cbe40e))
+
+
+### Bug Fixes
+
+* **deps:** update all non-major dependencies ([#311](https://github.com/grafana/grafana-cube-datasource/issues/311)) ([906040c](https://github.com/grafana/grafana-cube-datasource/commit/906040c375e6b4455d71f9623208ee7a730842dd))
+* **deps:** update all non-major dependencies to v5.100.6 ([#308](https://github.com/grafana/grafana-cube-datasource/issues/308)) ([ea15a8a](https://github.com/grafana/grafana-cube-datasource/commit/ea15a8a9dc3f012d26119fa6567e988e36945b1e))
+* **deps:** update grafana monorepo to v13 ([#284](https://github.com/grafana/grafana-cube-datasource/issues/284)) ([35f1614](https://github.com/grafana/grafana-cube-datasource/commit/35f16141edd3e20cc278a3201781cff1d38b7e9a))
+* **deps:** update grafana monorepo to v13 ([#317](https://github.com/grafana/grafana-cube-datasource/issues/317)) ([df018ac](https://github.com/grafana/grafana-cube-datasource/commit/df018ac78c1f02f41882f413002c0d942e0e5d0d))
+
 ## 0.5.0 (2026-05-01)
 
 ### Features
