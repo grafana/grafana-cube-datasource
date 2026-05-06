@@ -22,7 +22,6 @@ const createDataSource = (options: Partial<CubeDataSourceOptions> = {}) => {
     name: 'Test Cube',
     meta: {} as any,
     jsonData: {
-      cubeApiUrl: 'http://localhost:4000',
       ...options,
     },
     readOnly: false,
