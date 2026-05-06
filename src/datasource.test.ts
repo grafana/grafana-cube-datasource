@@ -1,6 +1,6 @@
 import { DataSource } from './datasource';
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { CubeDataSourceOptions, CubeFilter, CubeQuery, Operator } from './types';
+import { CubeDataSourceOptions, CubeFilter, Operator } from './types';
 import { getTemplateSrv } from '@grafana/runtime';
 
 // Mock @grafana/runtime
@@ -22,7 +22,6 @@ const createDataSource = (options: Partial<CubeDataSourceOptions> = {}) => {
     name: 'Test Cube',
     meta: {} as any,
     jsonData: {
-      cubeApiUrl: 'http://localhost:4000',
       ...options,
     },
     readOnly: false,
@@ -530,23 +529,6 @@ describe('DataSource', () => {
       });
     });
 
-    describe('order normalization', () => {
-      it('should normalize legacy object order format to array format', () => {
-        const datasource = createDataSource();
-        const query = {
-          refId: 'A',
-          measures: ['orders.count'],
-          order: { 'orders.count': 'desc', 'orders.status': 'asc' } as CubeQuery['order'],
-        };
-
-        const result = datasource.applyTemplateVariables(query, {});
-
-        expect(result.order).toEqual([
-          ['orders.count', 'desc'],
-          ['orders.status', 'asc'],
-        ]);
-      });
-    });
   });
 
   describe('filterQuery', () => {

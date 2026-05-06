@@ -34,7 +34,7 @@ export const createMockDataSource = (mockMetadata: any = null, mockSQLResponse: 
     type: 'cube-datasource',
     name: 'Test Cube',
     meta: {} as any,
-    jsonData: { cubeApiUrl: 'http://localhost:4000' },
+    jsonData: {},
     readOnly: false,
     access: 'proxy',
   };

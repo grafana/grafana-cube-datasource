@@ -5,7 +5,8 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
 import { OrderByItem } from './OrderByItem';
-import { normalizeOrder, OrderInput } from '../../utils/normalizeOrder';
+import type { TQueryOrderArray } from '@cubejs-client/core';
+import { normalizeOrder } from '../../utils/normalizeOrder';
 
 interface OrderByProps {
   availableOptions: Array<{ label: string; value: string }>;
@@ -13,7 +14,7 @@ interface OrderByProps {
   onRemove: (field: string) => void;
   onToggleDirection: (field: string) => void;
   onReorder: (fromIndex: number, toIndex: number) => void;
-  order?: OrderInput;
+  order?: TQueryOrderArray;
 }
 
 /**
