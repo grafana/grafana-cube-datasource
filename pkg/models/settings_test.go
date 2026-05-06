@@ -20,7 +20,7 @@ func TestLoadPluginSettings(t *testing.T) {
 			deploymentType: "self-hosted-dev",
 		},
 		{
-			name:           "empty URL results in empty CubeApiUrl",
+			name:           "empty URL results in empty URL",
 			sourceURL:      "",
 			expectedURL:    "",
 			deploymentType: "self-hosted-dev",
@@ -41,8 +41,8 @@ func TestLoadPluginSettings(t *testing.T) {
 				t.Fatalf("Unexpected error: %v", err)
 			}
 
-			if settings.CubeApiUrl != tt.expectedURL {
-				t.Errorf("Expected CubeApiUrl %q, got %q", tt.expectedURL, settings.CubeApiUrl)
+			if settings.URL != tt.expectedURL {
+				t.Errorf("Expected URL %q, got %q", tt.expectedURL, settings.URL)
 			}
 		})
 	}

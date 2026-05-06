@@ -197,7 +197,7 @@ func (d *Datasource) buildAPIURL(pluginContext backend.PluginContext, endpoint s
 	}
 
 	// Get base URL with test override support
-	baseURL := config.CubeApiUrl
+	baseURL := config.URL
 	if d.BaseURL != "" {
 		// Override for testing
 		baseURL = d.BaseURL

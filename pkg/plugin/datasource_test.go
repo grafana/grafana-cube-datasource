@@ -147,8 +147,8 @@ func TestBuildAPIURL(t *testing.T) {
 				t.Fatalf("Expected config to be returned, got nil")
 			}
 
-			if apiReq.Config.CubeApiUrl != tt.sourceURL {
-				t.Fatalf("Expected config.CubeApiUrl '%s', got '%s'", tt.sourceURL, apiReq.Config.CubeApiUrl)
+			if apiReq.Config.URL != tt.sourceURL {
+				t.Fatalf("Expected config.URL '%s', got '%s'", tt.sourceURL, apiReq.Config.URL)
 			}
 		})
 	}

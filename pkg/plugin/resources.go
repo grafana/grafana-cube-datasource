@@ -493,7 +493,7 @@ func (d *Datasource) fetchCubeModelFiles(ctx context.Context, pluginContext back
 	}
 
 	// Get base URL with test override support
-	baseURL := apiReq.Config.CubeApiUrl
+	baseURL := apiReq.Config.URL
 	if d.BaseURL != "" {
 		// Override for testing
 		baseURL = d.BaseURL
@@ -597,7 +597,7 @@ func (d *Datasource) fetchCubeDbSchema(ctx context.Context, pluginContext backen
 	}
 
 	// Get base URL with test override support
-	baseURL := apiReq.Config.CubeApiUrl
+	baseURL := apiReq.Config.URL
 	if d.BaseURL != "" {
 		// Override for testing
 		baseURL = d.BaseURL
@@ -701,7 +701,7 @@ func (d *Datasource) fetchCubeGenerateSchema(ctx context.Context, pluginContext 
 	}
 
 	// Get base URL with test override support
-	baseURL := apiReq.Config.CubeApiUrl
+	baseURL := apiReq.Config.URL
 	if d.BaseURL != "" {
 		// Override for testing
 		baseURL = d.BaseURL
