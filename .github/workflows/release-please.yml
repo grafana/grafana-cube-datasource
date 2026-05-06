@@ -1,0 +1,28 @@
+# Opens (or updates) a release PR with the next version bump and CHANGELOG entries
+# based on conventional commits since the last tag.
+#
+# Merging the release PR creates a v* tag, which triggers .github/workflows/release.yml
+# (GitHub Release with signed plugin artifacts) and .github/workflows/publish.yaml
+# (publish to the Grafana plugin catalog — manual workflow_dispatch).
+#
+# For more information, see
+# https://github.com/grafana/plugin-ci-workflows/tree/main/actions/plugins/release-please
+
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run release-please
+        uses: grafana/plugin-ci-workflows/actions/plugins/release-please@plugins-release-please/v1.0.1
