@@ -15,15 +15,13 @@ import (
 func TestBuildAPIURL(t *testing.T) {
 	tests := []struct {
 		name            string
-		sourceURL       string // top-level datasource URL field (preferred)
-		legacyJsonUrl   string // legacy jsonData.cubeApiUrl (backward-compat tests only)
+		sourceURL       string
 		baseURLOverride string
 		endpoint        string
 		expectError     bool
 		expectedURL     string
 		errorContains   string
 	}{
-		// Valid URL cases (using standard top-level URL field)
 		{
 			name:        "valid HTTP URL",
 			sourceURL:   "http://localhost:4000",
@@ -66,22 +64,6 @@ func TestBuildAPIURL(t *testing.T) {
 			endpoint:        "sql",
 			expectError:     false,
 			expectedURL:     "http://test-server:3000/cubejs-api/v1/sql",
-		},
-		// Backward-compatibility: top-level URL takes precedence over legacy jsonData.cubeApiUrl
-		{
-			name:          "top-level URL preferred over legacy jsonData.cubeApiUrl",
-			legacyJsonUrl: "http://legacy:4000",
-			sourceURL:     "http://standard:4000",
-			endpoint:      "load",
-			expectError:   false,
-			expectedURL:   "http://standard:4000/cubejs-api/v1/load",
-		},
-		{
-			name:        "top-level URL used when legacy jsonData.cubeApiUrl is empty",
-			sourceURL:   "http://standard:4000",
-			endpoint:    "meta",
-			expectError: false,
-			expectedURL: "http://standard:4000/cubejs-api/v1/meta",
 		},
 		// Invalid URL cases
 		{
@@ -137,7 +119,7 @@ func TestBuildAPIURL(t *testing.T) {
 			pluginContext := backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
 					URL:      tt.sourceURL,
-					JSONData: []byte(`{"cubeApiUrl": "` + tt.legacyJsonUrl + `"}`),
+					JSONData: []byte(`{}`),
 				},
 			}
 
@@ -165,14 +147,8 @@ func TestBuildAPIURL(t *testing.T) {
 				t.Fatalf("Expected config to be returned, got nil")
 			}
 
-			// Verify config contains the resolved URL.
-			// Top-level sourceURL takes precedence over legacy jsonData.cubeApiUrl.
-			expectedConfigURL := tt.legacyJsonUrl
-			if tt.sourceURL != "" {
-				expectedConfigURL = tt.sourceURL
-			}
-			if apiReq.Config.CubeApiUrl != expectedConfigURL {
-				t.Fatalf("Expected config.CubeApiUrl '%s', got '%s'", expectedConfigURL, apiReq.Config.CubeApiUrl)
+			if apiReq.Config.CubeApiUrl != tt.sourceURL {
+				t.Fatalf("Expected config.CubeApiUrl '%s', got '%s'", tt.sourceURL, apiReq.Config.CubeApiUrl)
 			}
 		})
 	}
