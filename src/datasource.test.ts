@@ -1,6 +1,6 @@
 import { DataSource } from './datasource';
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { CubeDataSourceOptions, CubeFilter, CubeQuery, Operator } from './types';
+import { CubeDataSourceOptions, CubeFilter, Operator } from './types';
 import { getTemplateSrv } from '@grafana/runtime';
 
 // Mock @grafana/runtime
