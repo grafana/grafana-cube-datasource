@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/grafana/grafana-cube-datasource/compare/v0.6.0...v0.6.1) (2026-05-07)
+
+
+### Bug Fixes
+
+* **deps:** update all non-major dependencies ([#322](https://github.com/grafana/grafana-cube-datasource/issues/322)) ([7833059](https://github.com/grafana/grafana-cube-datasource/commit/78330595e43f4bf1210e00ef2f87c2047b920d66))
+
 ## [0.6.0](https://github.com/grafana/grafana-cube-datasource/compare/v0.5.0...v0.6.0) (2026-05-06)
 
 
