@@ -84,10 +84,39 @@ gh run list --workflow=release.yml --limit 1 \
   --json status,conclusion,displayTitle
 ```
 
-Publish the draft release:
+**Edit the draft's release notes** before publishing — the
+`grafana/plugin-actions/build-plugin` action populates the body with submission
+boilerplate that's irrelevant to consumers. Replace it with the matching
+`CHANGELOG.md` section, but **keep** the attestation link line that
+`build-plugin` adds.
+
+1. Read the new `vX.Y.Z` section from `CHANGELOG.md`.
+2. Read the current draft body and grab the line that starts with
+   `This build has been attested. You can view the attestation details [here](...)`.
+3. Tidy up the changelog markdown (issue/PR links default to `/issues/` —
+   GitHub redirects, but `/pull/` is more accurate; drop the per-line commit
+   SHA links if they feel like noise).
+4. Combine the two and update the draft:
+
+   ```bash
+   gh release edit v<VERSION> --repo grafana/grafana-cube-datasource --notes "$(cat <<'EOF'
+   ## [<VERSION>](https://github.com/grafana/grafana-cube-datasource/compare/v<PREV>...v<VERSION>) (YYYY-MM-DD)
+
+   ### Features
+   ...
+
+   ### Bug Fixes
+   ...
+
+   This build has been attested. You can view the attestation details [here](https://github.com/grafana/grafana-cube-datasource/attestations/<ID>).
+   EOF
+   )"
+   ```
+
+Then publish the draft and mark it as latest:
 
 ```bash
-gh release edit v<VERSION> --repo grafana/grafana-cube-datasource --draft=false
+gh release edit v<VERSION> --repo grafana/grafana-cube-datasource --draft=false --latest
 ```
 
 ## Phase 3 — CD deployment
