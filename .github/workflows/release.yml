@@ -12,9 +12,9 @@
 #   - Provenance attestation
 #
 # Note: build-plugin replaces the release body with submission boilerplate and
-# flips the release back to draft. The release skill
-# (.cursor/skills/release/SKILL.md) covers restoring the changelog content
-# before publishing.
+# flips the release back to draft. The final step in this workflow restores
+# the matching CHANGELOG.md section as the release body, preserves the
+# attestation link, and publishes the release as latest.
 #
 # For more information, see https://github.com/grafana/plugin-actions/blob/main/build-plugin/README.md
 
@@ -54,3 +54,41 @@ jobs:
           attestation: true
           go-version: '1.25'
           node-version: '24'
+
+      - name: Publish release with CHANGELOG.md as body
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${REF_NAME#v}"
+
+          awk -v ver="${VERSION}" '
+            BEGIN {
+              esc = ver
+              gsub(/\./, "\\.", esc)
+              pat = "^## (\\[)?" esc "(\\]| |$)"
+            }
+            /^## / {
+              if (printing) exit
+              if ($0 ~ pat) { printing = 1 }
+            }
+            printing
+          ' CHANGELOG.md > release_body.md
+
+          if [ ! -s release_body.md ]; then
+            echo "::error::No CHANGELOG.md entry found for ${VERSION}"
+            exit 1
+          fi
+
+          ATTESTATION=$(gh release view "${REF_NAME}" --json body --jq '.body' \
+            | grep -F "attestation details" || true)
+          if [ -n "${ATTESTATION}" ]; then
+            printf '\n%s\n' "${ATTESTATION}" >> release_body.md
+          fi
+
+          gh release edit "${REF_NAME}" \
+            --notes-file release_body.md \
+            --draft=false \
+            --latest

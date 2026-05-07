@@ -74,9 +74,13 @@ or use a `Release-As: X.Y.Z` footer in a follow-up commit.
 gh pr merge <PR> --repo grafana/grafana-cube-datasource --squash --delete-branch
 ```
 
-Merging tags `vX.Y.Z`, which triggers `release.yml` to build a **draft**
-GitHub release with signed plugin artefacts, SHA checksums and provenance
-attestation. Wait for that workflow:
+Merging tags `vX.Y.Z`, which triggers `release.yml`. The workflow builds
+signed plugin artefacts, SHA checksums and provenance attestation, then
+restores the matching `CHANGELOG.md` section as the release body, preserves
+the attestation link added by `build-plugin`, and publishes the release as
+latest.
+
+Wait for the workflow to finish:
 
 ```bash
 gh run list --workflow=release.yml --limit 1 \
@@ -84,36 +88,9 @@ gh run list --workflow=release.yml --limit 1 \
   --json status,conclusion,displayTitle
 ```
 
-**Edit the draft's release notes** before publishing — the
-`grafana/plugin-actions/build-plugin` action populates the body with submission
-boilerplate that's irrelevant to consumers. Replace it with the matching
-`CHANGELOG.md` section, but **keep** the attestation link line that
-`build-plugin` adds.
-
-1. Read the new `vX.Y.Z` section from `CHANGELOG.md`.
-2. Read the current draft body and grab the line that starts with
-   `This build has been attested. You can view the attestation details [here](...)`.
-3. Tidy up the changelog markdown (issue/PR links default to `/issues/` —
-   GitHub redirects, but `/pull/` is more accurate; drop the per-line commit
-   SHA links if they feel like noise).
-4. Combine the two and update the draft:
-
-   ```bash
-   gh release edit v<VERSION> --repo grafana/grafana-cube-datasource --notes "$(cat <<'EOF'
-   ## [<VERSION>](https://github.com/grafana/grafana-cube-datasource/compare/v<PREV>...v<VERSION>) (YYYY-MM-DD)
-
-   ### Features
-   ...
-
-   ### Bug Fixes
-   ...
-
-   This build has been attested. You can view the attestation details [here](https://github.com/grafana/grafana-cube-datasource/attestations/<ID>).
-   EOF
-   )"
-   ```
-
-Then publish the draft and mark it as latest:
+If the workflow fails on the publish step, the release is left as a draft
+with the build-plugin boilerplate body — fix forward by either rerunning the
+workflow or manually publishing:
 
 ```bash
 gh release edit v<VERSION> --repo grafana/grafana-cube-datasource --draft=false --latest
