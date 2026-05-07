@@ -74,9 +74,13 @@ or use a `Release-As: X.Y.Z` footer in a follow-up commit.
 gh pr merge <PR> --repo grafana/grafana-cube-datasource --squash --delete-branch
 ```
 
-Merging tags `vX.Y.Z`, which triggers `release.yml` to build a **draft**
-GitHub release with signed plugin artefacts, SHA checksums and provenance
-attestation. Wait for that workflow:
+Merging tags `vX.Y.Z`, which triggers `release.yml`. The workflow builds
+signed plugin artefacts, SHA checksums and provenance attestation, then
+restores the matching `CHANGELOG.md` section as the release body, preserves
+the attestation link added by `build-plugin`, and publishes the release as
+latest.
+
+Wait for the workflow to finish:
 
 ```bash
 gh run list --workflow=release.yml --limit 1 \
@@ -84,10 +88,12 @@ gh run list --workflow=release.yml --limit 1 \
   --json status,conclusion,displayTitle
 ```
 
-Publish the draft release:
+If the workflow fails on the publish step, the release is left as a draft
+with the build-plugin boilerplate body — fix forward by either rerunning the
+workflow or manually publishing:
 
 ```bash
-gh release edit v<VERSION> --repo grafana/grafana-cube-datasource --draft=false
+gh release edit v<VERSION> --repo grafana/grafana-cube-datasource --draft=false --latest
 ```
 
 ## Phase 3 — CD deployment
