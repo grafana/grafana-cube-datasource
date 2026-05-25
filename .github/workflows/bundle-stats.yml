@@ -10,7 +10,7 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
   actions: read
 
@@ -25,4 +25,3 @@ jobs:
           persist-credentials: false
 
       - uses: grafana/plugin-actions/bundle-size@main # zizmor: ignore[unpinned-uses] provided by grafana
-
