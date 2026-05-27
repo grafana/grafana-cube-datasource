@@ -291,12 +291,12 @@ describe('ConfigEditor', () => {
       setup(<ConfigEditor {...props} />);
 
       const apiSecretInput = screen.getByPlaceholderText('Enter your CUBEJS_API_SECRET');
-      fireEvent.change(apiSecretInput, { target: { value: 'my-api-secret-456' } });
+      fireEvent.change(apiSecretInput, { target: { value: 'test-input-value' } });
 
       expect(props.onOptionsChange).toHaveBeenCalledWith({
         ...props.options,
         secureJsonData: {
-          apiSecret: 'my-api-secret-456',
+          apiSecret: 'test-input-value',
         },
       });
     });
