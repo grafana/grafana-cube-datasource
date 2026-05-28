@@ -96,8 +96,8 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 		Description string
 		Cube        string
 	}{
-		{"order_details.status", "order_details.status", "string", "Current status of the order", "order_details"},
-		{"order_details.customer", "order_details.customer", "string", "", "order_details"},
+		{"order_details.status", "Order Status", "string", "Current status of the order", "order_details"},
+		{"order_details.customer", "Customer Name", "string", "", "order_details"},
 	}
 	for i, expected := range expectedDimensions {
 		if result.Dimensions[i].Value != expected.Value {
@@ -129,8 +129,8 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 		Description string
 		Cube        string
 	}{
-		{"order_details.count", "order_details.count", "number", "Total number of orders", "order_details"},
-		{"order_details.total", "order_details.total", "number", "", "order_details"},
+		{"order_details.count", "Orders Count", "number", "Total number of orders", "order_details"},
+		{"order_details.total", "Orders Total", "number", "", "order_details"},
 	}
 	for i, expected := range expectedMeasures {
 		if result.Measures[i].Value != expected.Value {
@@ -342,8 +342,8 @@ func TestHandleMetadata(t *testing.T) {
 		Type        string
 		Description string
 	}{
-		"order_details.status":               {"order_details.status", "string", "Current order status"},
-		"order_details.customers_first_name": {"order_details.customers_first_name", "string", ""},
+		"order_details.status":               {"Order Status", "string", "Current order status"},
+		"order_details.customers_first_name": {"Customer First Name", "string", ""},
 	}
 
 	actualDimensions := make(map[string]struct {
@@ -410,7 +410,7 @@ func TestHandleMetadata(t *testing.T) {
 		Type        string
 		Description string
 	}{
-		"count": {"count", "number", "Total number of orders"},
+		"count": {"Orders Count", "number", "Total number of orders"},
 	}
 
 	actualMeasures := make(map[string]struct {
