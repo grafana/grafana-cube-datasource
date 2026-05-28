@@ -1,7 +1,6 @@
 module github.com/grafana/cube
 
-go 1.25.7
-
+go 1.26.3
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/grafana/grafana-plugin-sdk-go v0.292.0

@@ -3,5 +3,9 @@
   "version": "0.0.1",
   "private": true,
   "createdAt": "2025-07-16T09:48:08.112Z",
-  "dependencies": {}
+  "dependencies": {},
+  "engines": {
+    "node": ">=24",
+    "npm": ">=11.15.0"
+  }
 }
