@@ -25,8 +25,6 @@ on:
     tags:
       - 'v*'
 
-permissions: read-all
-
 jobs:
   release:
     runs-on: ubuntu-latest
