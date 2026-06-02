@@ -16,13 +16,12 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: write
-  pull-requests: write
-  id-token: write
-
 jobs:
   release-please:
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
     runs-on: ubuntu-latest
     steps:
       - name: Run release-please
