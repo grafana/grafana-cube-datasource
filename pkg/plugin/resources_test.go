@@ -70,12 +70,15 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 						ShortTitle:  "Count",
 						Type:        "number",
 						Description: "Total number of orders",
+						Format:      "currency",
+						Currency:    "USD",
 					},
 					{
 						Name:       "order_details.total",
 						Title:      "Orders Total",
 						ShortTitle: "Total",
 						Type:       "number",
+						Format:     "percent_1",
 					},
 				},
 			},
@@ -127,10 +130,12 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 		Label       string
 		Type        string
 		Description string
+		Format      string
+		Currency    string
 		Cube        string
 	}{
-		{"order_details.count", "Orders Count", "number", "Total number of orders", "order_details"},
-		{"order_details.total", "Orders Total", "number", "", "order_details"},
+		{"order_details.count", "Orders Count", "number", "Total number of orders", "currency", "USD", "order_details"},
+		{"order_details.total", "Orders Total", "number", "", "percent_1", "", "order_details"},
 	}
 	for i, expected := range expectedMeasures {
 		if result.Measures[i].Value != expected.Value {
@@ -144,6 +149,12 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 		}
 		if result.Measures[i].Description != expected.Description {
 			t.Errorf("Expected measure %d description to be %q, got %q", i, expected.Description, result.Measures[i].Description)
+		}
+		if result.Measures[i].Format != expected.Format {
+			t.Errorf("Expected measure %d format to be %q, got %q", i, expected.Format, result.Measures[i].Format)
+		}
+		if result.Measures[i].Currency != expected.Currency {
+			t.Errorf("Expected measure %d currency to be %q, got %q", i, expected.Currency, result.Measures[i].Currency)
 		}
 		if result.Measures[i].Cube != expected.Cube {
 			t.Errorf("Expected measure %d cube to be %q, got %q", i, expected.Cube, result.Measures[i].Cube)
@@ -280,6 +291,8 @@ func TestHandleMetadata(t *testing.T) {
 							ShortTitle:  "Count",
 							Type:        "number",
 							Description: "Total number of orders",
+							Format:      "currency",
+							Currency:    "EUR",
 						},
 					},
 				},
@@ -409,21 +422,27 @@ func TestHandleMetadata(t *testing.T) {
 		Label       string
 		Type        string
 		Description string
+		Format      string
+		Currency    string
 	}{
-		"count": {"Orders Count", "number", "Total number of orders"},
+		"count": {"Orders Count", "number", "Total number of orders", "currency", "EUR"},
 	}
 
 	actualMeasures := make(map[string]struct {
 		Label       string
 		Type        string
 		Description string
+		Format      string
+		Currency    string
 	})
 	for _, measure := range metadata.Measures {
 		actualMeasures[measure.Value] = struct {
 			Label       string
 			Type        string
 			Description string
-		}{measure.Label, measure.Type, measure.Description}
+			Format      string
+			Currency    string
+		}{measure.Label, measure.Type, measure.Description, measure.Format, measure.Currency}
 	}
 
 	for expectedValue, expected := range expectedMeasures {
@@ -438,6 +457,42 @@ func TestHandleMetadata(t *testing.T) {
 			}
 			if actual.Description != expected.Description {
 				t.Errorf("Expected measure %s to have description %q, got %q", expectedValue, expected.Description, actual.Description)
+			}
+			if actual.Format != expected.Format {
+				t.Errorf("Expected measure %s to have format %q, got %q", expectedValue, expected.Format, actual.Format)
+			}
+			if actual.Currency != expected.Currency {
+				t.Errorf("Expected measure %s to have currency %q, got %q", expectedValue, expected.Currency, actual.Currency)
+			}
+		}
+	}
+
+	// Verify format and currency fields are present in the raw JSON for measures
+	if measures, ok := genericResponse["measures"].([]interface{}); ok {
+		for _, measure := range measures {
+			if measureObj, ok := measure.(map[string]interface{}); ok {
+				value, _ := measureObj["value"].(string)
+				format, hasFormat := measureObj["format"]
+				currency, hasCurrency := measureObj["currency"]
+				if expected, exists := expectedMeasures[value]; exists {
+					if expected.Format != "" && (!hasFormat || format != expected.Format) {
+						t.Errorf("Measure %s: expected format %q in JSON, got %v", value, expected.Format, format)
+					}
+					if expected.Currency != "" && (!hasCurrency || currency != expected.Currency) {
+						t.Errorf("Measure %s: expected currency %q in JSON, got %v", value, expected.Currency, currency)
+					}
+				}
+			}
+		}
+	}
+
+	// Verify dimensions do not include format in raw JSON
+	if dimensions, ok := genericResponse["dimensions"].([]interface{}); ok {
+		for i, dim := range dimensions {
+			if dimObj, ok := dim.(map[string]interface{}); ok {
+				if _, hasFormat := dimObj["format"]; hasFormat {
+					t.Errorf("Dimension %d should not include 'format' field in JSON response", i)
+				}
 			}
 		}
 	}

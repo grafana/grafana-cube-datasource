@@ -38,6 +38,12 @@ type SelectOption struct {
 	Value       string `json:"value"`
 	Type        string `json:"type"`
 	Description string `json:"description,omitempty"`
+	// Format is the Cube measure format (e.g. "currency", "percent_2", "abbr").
+	// See https://docs.cube.dev/reference/data-modeling/measures#format
+	Format string `json:"format,omitempty"`
+	// Currency is the ISO 4217 code paired with `format: currency` on the
+	// Cube measure. See https://docs.cube.dev/reference/data-modeling/measures#currency
+	Currency string `json:"currency,omitempty"`
 	// Cube identifies the Cube view this field originates from. The visual
 	// query builder uses this as the curated query scope.
 	Cube string `json:"cube"`
@@ -205,6 +211,8 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 					Value:       measure.Name,
 					Type:        measure.Type,
 					Description: measure.Description,
+					Format:      measure.Format.String(),
+					Currency:    measure.Currency,
 					Cube:        item.Name,
 				})
 				processedMeasures[measure.Name] = true
