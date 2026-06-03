@@ -1,6 +1,14 @@
-import { CubeFilterItem, CubeQuery, VISUAL_BUILDER_OPERATORS, isCubeFilter, isCubeAndFilter, isCubeOrFilter } from '../types';
+import { CubeFilter, CubeFilterItem, CubeQuery, VISUAL_BUILDER_OPERATORS, isCubeFilter, isCubeAndFilter, isCubeOrFilter } from '../types';
 
-const TEMPLATE_VARIABLE_PATTERN = /(?:\$(?:[a-zA-Z_]\w*|\{[a-zA-Z_]\w*(?::[^}]+)?\})|\[\[[^\]]+\]\])/;
+export const TEMPLATE_VARIABLE_PATTERN = /(?:\$(?:[a-zA-Z_]\w*|\{[a-zA-Z_]\w*(?::[^}]+)?\})|\[\[[^\]]+\]\])/;
+
+/**
+ * Returns true if the given flat CubeFilter contains a template variable
+ * (e.g. $var, ${var}, ${var:raw}, or [[var]]) in any of its values.
+ */
+export function filterHasTemplateVariables(filter: CubeFilter): boolean {
+  return filter.values?.some((v) => TEMPLATE_VARIABLE_PATTERN.test(v)) ?? false;
+}
 
 /**
  * Detects query features that the visual builder cannot represent.
