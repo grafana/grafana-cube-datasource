@@ -1,19 +1,19 @@
 import React, { useCallback, useMemo } from 'react';
-import { InlineField, Input, Alert, MultiSelect, Text, Field, TextLink, useStyles2 } from '@grafana/ui';
+import { InlineField, Input, Alert, MultiSelect, Text, Field, TextLink, Tooltip, Icon, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 import { GrafanaTheme2, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataSource } from '../datasource';
-import { CubeDataSourceOptions, CubeQuery, CubeFilter, isCubeFilter } from '../types';
+import { CubeDataSourceOptions, CubeQuery, CubeFilter, isCubeFilter, VISUAL_BUILDER_OPERATORS } from '../types';
 import { SQLPreview } from './SQLPreview';
 import { useMetadataQuery, useCompiledSqlQuery, MetadataOption } from '../queries';
 import { OrderBy } from './OrderBy/OrderBy';
 import { FilterField } from './FilterField/FilterField';
 import { useQueryEditorHandlers } from '../hooks/useQueryEditorHandlers';
 import { buildCubeQueryJson } from '../utils/buildCubeQuery';
-import { detectUnsupportedFeatures } from '../utils/detectUnsupportedFeatures';
+import { detectUnsupportedFeatures, getUnsupportedQueryKeys } from '../utils/detectUnsupportedFeatures';
 import { decorateWithViewSelection, getViewSelectionState } from '../utils/viewSelection';
-import { JsonQueryViewer } from './JsonQueryViewer';
+import { UnsupportedFieldsViewer } from './UnsupportedFieldsViewer';
 
 type Props = QueryEditorProps<DataSource, CubeQuery, CubeDataSourceOptions>;
 
@@ -42,31 +42,17 @@ function useCubeQueryJson(query: CubeQuery, datasource: DataSource): string {
   );
 }
 
+/**
+ * Top-level query editor. Always renders the visual editor, and when
+ * unsupported features are detected, additionally shows a compact
+ * read-only JSON callout for just the unsupported fields. The SQL
+ * preview is rendered once below, regardless of supported state.
+ */
 export function QueryEditor(props: Props) {
   const { query, datasource } = props;
   const unsupportedFeatures = useMemo(() => detectUnsupportedFeatures(query), [query]);
+  const unsupportedKeys = useMemo(() => getUnsupportedQueryKeys(query), [query]);
 
-  if (unsupportedFeatures.length > 0) {
-    return <UnsupportedQueryEditor query={query} datasource={datasource} reasons={unsupportedFeatures} />;
-  }
-
-  return <VisualQueryEditor {...props} />;
-}
-
-/**
- * Shown when the query contains features the visual builder cannot represent.
- * Displays the JSON viewer and SQL preview, but skips the metadata fetch
- * since the visual builder controls are not rendered.
- */
-function UnsupportedQueryEditor({
-  query,
-  datasource,
-  reasons,
-}: {
-  query: CubeQuery;
-  datasource: DataSource;
-  reasons: string[];
-}) {
   const cubeQueryJson = useCubeQueryJson(query, datasource);
   const { data: compiledSql, isLoading: compiledSqlIsLoading } = useCompiledSqlQuery({
     datasource,
@@ -75,7 +61,11 @@ function UnsupportedQueryEditor({
 
   return (
     <>
-      <JsonQueryViewer query={query} reasons={reasons} />
+      <VisualQueryEditor {...props} />
+
+      {unsupportedFeatures.length > 0 && (
+        <UnsupportedFieldsViewer query={query} unsupportedKeys={unsupportedKeys} reasons={unsupportedFeatures} />
+      )}
 
       {!compiledSql && compiledSqlIsLoading && (
         <InlineField label="" labelWidth={16}>
@@ -97,15 +87,9 @@ function UnsupportedQueryEditor({
  */
 function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
   const styles = useStyles2(getStyles);
-  const cubeQueryJson = useCubeQueryJson(query, datasource);
 
   const { data, isLoading: metadataIsLoading, isError: metadataIsError } = useMetadataQuery({ datasource });
   const metadata = data ?? { dimensions: [], measures: [] };
-
-  const { data: compiledSql, isLoading: compiledSqlIsLoading } = useCompiledSqlQuery({
-    datasource,
-    cubeQueryJson,
-  });
 
   const {
     onDimensionOrMeasureChange,
@@ -214,23 +198,31 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
         />
       </InlineField>
 
-      <Field label="Filters" description="Filter results by field values">
+      <Field
+        label={
+          <span className={styles.fieldLabelWithTooltip}>
+            Filters
+            <Tooltip
+              content="The visual builder supports equals/notEquals filters on dimensions. For comparison operators, measure filters, and AND/OR groups, use the panel JSON editor."
+              placement="top"
+            >
+              <span className={styles.tooltipIcon}>
+                <Icon name="info-circle" size="sm" />
+              </span>
+            </Tooltip>
+          </span>
+        }
+        description="Filter results by field values"
+      >
         <FilterField
-          filters={query.filters?.filter((f): f is CubeFilter => isCubeFilter(f))}
+          filters={query.filters?.filter(
+            (f): f is CubeFilter => isCubeFilter(f) && VISUAL_BUILDER_OPERATORS.has(f.operator)
+          )}
           dimensions={dimensionOptions}
           onChange={onFiltersChange}
           datasource={datasource}
         />
       </Field>
-      <div className={styles.filterHint}>
-        <Text color="secondary" italic>
-          Need advanced filters? Comparison operators, measure filters, and AND/OR groups
-          are supported via the panel JSON editor.{' '}
-          <TextLink href="https://cube.dev/docs/product/apis-integrations/rest-api/query-format#filters-format" external>
-            Cube filter docs
-          </TextLink>
-        </Text>
-      </div>
 
       <Field label="Order By" description="Order results by selected fields">
         <OrderBy
@@ -242,17 +234,6 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
           onReorder={onReorderFields}
         />
       </Field>
-
-      {!compiledSql && compiledSqlIsLoading && (
-        <InlineField label="" labelWidth={16}>
-          <Text>Compiling SQL...</Text>
-        </InlineField>
-      )}
-
-      <SQLPreview
-        sql={compiledSql?.sql ?? ''}
-        exploreSqlDatasourceUid={datasource.instanceSettings?.jsonData?.exploreSqlDatasourceUid}
-      />
     </>
   );
 }
@@ -267,10 +248,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '100%',
       minWidth: '240px',
     }),
-    filterHint: css({
-      marginTop: theme.spacing(-0.5),
-      marginBottom: theme.spacing(1),
-      paddingLeft: theme.spacing(2),
+    fieldLabelWithTooltip: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+    }),
+    tooltipIcon: css({
+      display: 'inline-flex',
+      color: theme.colors.text.secondary,
     }),
   };
 };

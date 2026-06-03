@@ -20,6 +20,11 @@ test.describe('SQLPreview Explore Integration', () => {
     await expect(firstMeasureOption).toBeVisible({ timeout: 5000 });
     await firstMeasureOption.click();
 
+    // The SQL preview is collapsed by default — expand it via the toggle
+    const sqlToggle = panelEditPage.getQueryEditorRow('A').locator('[data-testid="sql-preview-toggle"]');
+    await expect(sqlToggle).toBeVisible({ timeout: 10000 });
+    await sqlToggle.click();
+
     // Wait for SQL preview to appear
     const sqlPreview = panelEditPage.getQueryEditorRow('A').locator('[aria-label="Generated SQL query"]');
     await expect(sqlPreview.filter({ hasText: 'SELECT' })).toBeVisible({ timeout: 10000 });
@@ -135,6 +140,11 @@ test.describe('SQLPreview Explore Integration', () => {
     await dimensionsSelect.click();
     const firstDimensionOption = page.locator('[role="option"]').first();
     await firstDimensionOption.click();
+
+    // The SQL preview is collapsed by default — expand it via the toggle
+    const sqlToggle = panelEditPage.getQueryEditorRow('A').locator('[data-testid="sql-preview-toggle"]');
+    await expect(sqlToggle).toBeVisible({ timeout: 10000 });
+    await sqlToggle.click();
 
     // Wait for more complex SQL to be generated
     const sqlPreview = panelEditPage.getQueryEditorRow('A').locator('[aria-label="Generated SQL query"]');
