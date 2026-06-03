@@ -25,4 +25,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run release-please
-        uses: grafana/plugin-ci-workflows/actions/plugins/release-please@plugins-release-please/v1.0.1
+        uses: grafana/plugin-ci-workflows/actions/plugins/release-please@plugins-release-please/v2.0.1
