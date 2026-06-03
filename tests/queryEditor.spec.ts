@@ -39,6 +39,11 @@ test('should show SQL preview when measures are selected', async ({
   await expect(firstMeasureOption).toBeVisible({ timeout: 5000 });
   await firstMeasureOption.click();
 
+  // The SQL preview is collapsed by default — expand it via the toggle
+  const sqlToggle = panelEditPage.getQueryEditorRow('A').locator('[data-testid="sql-preview-toggle"]');
+  await expect(sqlToggle).toBeVisible({ timeout: 10000 });
+  await sqlToggle.click();
+
   // Wait for SQL preview to appear - look for SELECT in the generated SQL area
   await expect(
     panelEditPage.getQueryEditorRow('A').locator('[aria-label="Generated SQL query"]').filter({ hasText: 'SELECT' })
