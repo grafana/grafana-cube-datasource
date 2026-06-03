@@ -14,7 +14,7 @@ datasources:
       deploymentType: 'self-hosted'
       exploreSqlDatasourceUid: 'postgres-datasource'
     secureJsonData:
-      apiSecret: 'dd122a535ad5d703a9d8977179f118bc'
+      apiSecret: 'local-dev-only-not-a-real-secret'
   - name: 'PostgreSQL'
     type: 'postgres'
     access: proxy
