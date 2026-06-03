@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.2](https://github.com/grafana/grafana-cube-datasource/compare/v0.6.1...v0.6.2) (2026-06-03)
+
+
+### Bug Fixes
+
+* unbreak CI after re-enabling Actions (lockfile drift + node 24) ([#349](https://github.com/grafana/grafana-cube-datasource/issues/349)) ([ee206db](https://github.com/grafana/grafana-cube-datasource/commit/ee206db7577dc3c7576bdce9d8519f52f6507d8e))
+
 ## [0.6.1](https://github.com/grafana/grafana-cube-datasource/compare/v0.6.0...v0.6.1) (2026-05-07)
 
 
