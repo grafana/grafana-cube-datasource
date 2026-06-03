@@ -11,8 +11,7 @@
     "lint:fix": "npm run lint -- --fix && prettier --write --list-different .",
     "e2e": "playwright test",
     "server": "docker compose up --build",
-    "sign": "sign-plugin",
-    "postinstall": "rm -rf node_modules/flatted/golang"
+    "sign": "sign-plugin"
   },
   "author": "Grafana",
   "license": "AGPL-3.0",
@@ -20,7 +19,7 @@
     "@cubejs-client/core": "1.6.43",
     "@grafana/eslint-config": "9.0.0",
     "@grafana/plugin-e2e": "3.7.0",
-    "@grafana/sign-plugin": "^3.2.2",
+    "@grafana/sign-plugin": "3.2.2",
     "@grafana/tsconfig": "2.1.0",
     "@playwright/test": "1.59.1",
     "@stylistic/eslint-plugin-ts": "4.4.1",
