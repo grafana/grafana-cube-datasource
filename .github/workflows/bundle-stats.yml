@@ -24,4 +24,8 @@ jobs:
           persist-credentials: false
 
       - uses: grafana/plugin-actions/bundle-size@main # zizmor: ignore[unpinned-uses] provided by grafana
+        with:
+          # The action defaults to node 22, but package.json engines require
+          # node >=24 and .npmrc sets engine-strict=true, so npm hard-fails.
+          node-version: "24"
 
