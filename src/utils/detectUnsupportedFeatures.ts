@@ -1,6 +1,18 @@
-import { CubeFilterItem, CubeQuery, VISUAL_BUILDER_OPERATORS, isCubeFilter, isCubeAndFilter, isCubeOrFilter } from '../types';
+import { CubeFilter, CubeFilterItem, CubeQuery, VISUAL_BUILDER_OPERATORS, isCubeFilter, isCubeAndFilter, isCubeOrFilter } from '../types';
 
-const TEMPLATE_VARIABLE_PATTERN = /(?:\$(?:[a-zA-Z_]\w*|\{[a-zA-Z_]\w*(?::[^}]+)?\})|\[\[[^\]]+\]\])/;
+/**
+ * Matches Grafana template variable syntax in a string: $var, ${var},
+ * ${var:format}, or [[var]]. Shared so filter handling and unsupported-feature
+ * detection agree on what counts as a dashboard-variable value.
+ */
+export const TEMPLATE_VARIABLE_PATTERN = /(?:\$(?:[a-zA-Z_]\w*|\{[a-zA-Z_]\w*(?::[^}]+)?\})|\[\[[^\]]+\]\])/;
+
+/**
+ * Whether any of a flat filter's values contains a Grafana template variable.
+ */
+export function filterValuesContainTemplateVariable(filter: CubeFilter): boolean {
+  return filter.values?.some((v) => TEMPLATE_VARIABLE_PATTERN.test(v)) ?? false;
+}
 
 /**
  * Detects query features that the visual builder cannot represent.
@@ -103,7 +115,7 @@ function collectAdvancedOperators(filters: CubeFilterItem[]): string[] {
 function hasTemplateVariableInFilterValues(filters: CubeFilterItem[]): boolean {
   for (const item of filters) {
     if (isCubeFilter(item)) {
-      if (item.values?.some((v) => TEMPLATE_VARIABLE_PATTERN.test(v))) {
+      if (filterValuesContainTemplateVariable(item)) {
         return true;
       }
     } else if (isCubeAndFilter(item)) {
