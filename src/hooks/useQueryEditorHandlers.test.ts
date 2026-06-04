@@ -59,6 +59,62 @@ describe('useQueryEditorHandlers', () => {
       expect(updatedQuery.filters).toEqual([advancedFilter]);
     });
 
+    it('should preserve template-variable filters even though they use a visual operator', () => {
+      // A dashboard-variable filter uses the equals operator (a visual operator),
+      // but its $var value can't be rendered as a selectable chip, so it must be
+      // preserved here rather than relying on FilterField's callback list.
+      const templateVarFilter = { member: 'orders.status', operator: Operator.Equals, values: ['$statusVar'] };
+      const visualFilter = { member: 'orders.region', operator: Operator.Equals, values: ['US'] };
+
+      const query: CubeQuery = {
+        refId: 'A',
+        filters: [visualFilter, templateVarFilter],
+      };
+
+      const onChange = jest.fn();
+      const onRunQuery = jest.fn();
+
+      const { result } = renderHook(() => useQueryEditorHandlers(query, onChange, onRunQuery));
+
+      const updatedVisualFilter = { member: 'orders.region', operator: Operator.Equals, values: ['EU'] };
+      act(() => {
+        result.current.onFiltersChange([updatedVisualFilter]);
+      });
+
+      const updatedQuery = onChange.mock.calls[0][0];
+      expect(updatedQuery.filters).toContainEqual(updatedVisualFilter);
+      expect(updatedQuery.filters).toContainEqual(templateVarFilter);
+      expect(updatedQuery.filters).toHaveLength(2);
+    });
+
+    it('should preserve template-variable filters with ${var:format} and [[var]] syntaxes when visual filters are emptied', () => {
+      const formatVarFilter = { member: 'orders.status', operator: Operator.NotEquals, values: ['${statusVar:csv}'] };
+      const legacyVarFilter = { member: 'orders.region', operator: Operator.Equals, values: ['[[regionVar]]'] };
+
+      const query: CubeQuery = {
+        refId: 'A',
+        filters: [
+          { member: 'orders.country', operator: Operator.Equals, values: ['US'] },
+          formatVarFilter,
+          legacyVarFilter,
+        ],
+      };
+
+      const onChange = jest.fn();
+      const onRunQuery = jest.fn();
+
+      const { result } = renderHook(() => useQueryEditorHandlers(query, onChange, onRunQuery));
+
+      act(() => {
+        result.current.onFiltersChange([]);
+      });
+
+      const updatedQuery = onChange.mock.calls[0][0];
+      expect(updatedQuery.filters).toContainEqual(formatVarFilter);
+      expect(updatedQuery.filters).toContainEqual(legacyVarFilter);
+      expect(updatedQuery.filters).toHaveLength(2);
+    });
+
     it('should clear filters entirely when no filters remain', () => {
       const query: CubeQuery = {
         refId: 'A',
