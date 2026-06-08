@@ -683,6 +683,91 @@ func TestCreateNullFieldWithTimeDimension(t *testing.T) {
 	}
 }
 
+func TestQueryDataAppliesFieldUnits(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		response := CubeAPIResponse{
+			Data: []map[string]interface{}{
+				{
+					"orders.revenue": "1000.5",
+					"orders.rate":    "0.125",
+				},
+			},
+			Annotation: CubeAnnotation{
+				Measures: map[string]CubeFieldInfo{
+					"orders.revenue": {
+						Type:     "number",
+						Format:   "currency",
+						Currency: "USD",
+					},
+					"orders.rate": {
+						Type:   "number",
+						Format: "percent_1",
+					},
+				},
+				Dimensions:     map[string]CubeFieldInfo{},
+				Segments:       map[string]CubeFieldInfo{},
+				TimeDimensions: map[string]CubeFieldInfo{},
+			},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Errorf("Failed to encode response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL}
+	queryJSON, _ := json.Marshal(map[string]interface{}{
+		"refId":    "A",
+		"measures": []string{"orders.revenue", "orders.rate"},
+	})
+
+	resp, err := ds.QueryData(
+		context.Background(),
+		&backend.QueryDataRequest{
+			PluginContext: newTestPluginContext(server.URL),
+			Queries:       []backend.DataQuery{{RefID: "A", JSON: queryJSON}},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	frame := resp.Responses["A"].Frames[0]
+	units := map[string]string{}
+	for _, field := range frame.Fields {
+		if field.Config != nil {
+			units[field.Name] = field.Config.Unit
+		}
+	}
+
+	if units["orders.revenue"] != "currencyUSD" {
+		t.Fatalf("Expected orders.revenue unit currencyUSD, got %q", units["orders.revenue"])
+	}
+	if units["orders.rate"] != "percentunit" {
+		t.Fatalf("Expected orders.rate unit percentunit, got %q", units["orders.rate"])
+	}
+}
+
+func TestCreateNullFieldAppliesFieldUnit(t *testing.T) {
+	ds := Datasource{}
+	annotation := CubeAnnotation{
+		Measures: map[string]CubeFieldInfo{
+			"orders.revenue": {
+				Type:     "number",
+				Format:   "currency",
+				Currency: "EUR",
+			},
+		},
+	}
+
+	field := ds.createNullField("orders.revenue", 1, annotation)
+	if field.Config == nil || field.Config.Unit != "currencyEUR" {
+		t.Fatalf("Expected currencyEUR unit on null field, got %#v", field.Config)
+	}
+}
+
 func TestQueryDataWithOrderField(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query().Get("query")
