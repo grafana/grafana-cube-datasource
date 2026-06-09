@@ -210,7 +210,10 @@ func (e *CubeAPIError) Error() string {
 // SDK alignment: like @cubejs-client/core, the query is sent via GET with the
 // query JSON URL-encoded in the query string while the full URL stays under
 // urlLengthLimit, and via POST with a {"query": ...} JSON body otherwise.
-func (d *Datasource) doCubeLoadRequest(ctx context.Context, loadURL string, queryJSON []byte, config *models.PluginSettings) ([]byte, error) {
+//
+// pCtx carries the Grafana plugin context so grafana-cloud auth can mint a
+// per-request token via addAuthHeadersWithContext (see datasource.go).
+func (d *Datasource) doCubeLoadRequest(ctx context.Context, pCtx backend.PluginContext, loadURL string, queryJSON []byte, config *models.PluginSettings) ([]byte, error) {
 	params := url.Values{}
 	params.Add("query", string(queryJSON))
 	getURL := loadURL + "?" + params.Encode()
@@ -243,7 +246,7 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, loadURL string, quer
 			return nil, fmt.Errorf("failed to create request: %w", err)
 		}
 
-		if err := d.addAuthHeaders(req, config); err != nil {
+		if err := d.addAuthHeadersWithContext(ctx, req, config, pCtx); err != nil {
 			return nil, fmt.Errorf("failed to add auth headers: %w", err)
 		}
 		req.Header.Set("Content-Type", "application/json")
@@ -422,7 +425,7 @@ func (d *Datasource) fetchCubeMetadata(ctx context.Context, pluginContext backen
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	if err := d.addAuthHeaders(req, apiReq.Config); err != nil {
+	if err := d.addAuthHeadersWithContext(ctx, req, apiReq.Config, pluginContext); err != nil {
 		return nil, fmt.Errorf("failed to add auth headers: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")

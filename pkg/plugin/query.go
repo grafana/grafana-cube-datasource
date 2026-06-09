@@ -108,7 +108,8 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 
 	// Use shared helper to make the request with "Continue wait" polling.
 	// The helper picks GET or POST based on the encoded query size.
-	body, err := d.doCubeLoadRequest(ctx, apiReq.URL.String(), cubeAPIQueryJSON, apiReq.Config)
+	// pCtx is threaded through for grafana-cloud per-request auth.
+	body, err := d.doCubeLoadRequest(ctx, pCtx, apiReq.URL.String(), cubeAPIQueryJSON, apiReq.Config)
 	if err != nil {
 		backend.Logger.Error("Failed to fetch data from Cube API", "error", err, "url", apiReq.URL.String())
 		return loadErrorResponse(err)
