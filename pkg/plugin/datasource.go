@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/grafana/authlib/authn"
 	"github.com/grafana/cube/pkg/models"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -30,10 +31,26 @@ var (
 )
 
 // NewDatasource creates a new datasource instance.
-func NewDatasource(_ context.Context, _ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	return &Datasource{
-		jwtCache: make(map[string]jwtCacheEntry),
-	}, nil
+func NewDatasource(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	d := &Datasource{
+		jwtCache:   make(map[string]jwtCacheEntry),
+		nonceStore: make(map[string]nonceEntry),
+	}
+	cfg, err := models.LoadPluginSettings(settings)
+	if err != nil {
+		return nil, fmt.Errorf("load plugin settings: %w", err)
+	}
+	if cfg.DeploymentType == "grafana-cloud" && cfg.Secrets != nil && cfg.Secrets.CAPToken != "" {
+		exc, err := authn.NewTokenExchangeClient(authn.TokenExchangeConfig{
+			Token:            cfg.Secrets.CAPToken,
+			TokenExchangeURL: cfg.AuthServiceURL + "/v1/sign-access-token",
+		})
+		if err != nil {
+			return nil, fmt.Errorf("init token exchanger: %w", err)
+		}
+		d.exchanger = exc
+	}
+	return d, nil
 }
 
 // jwtCacheEntry represents a cached JWT token with its expiration time
@@ -47,10 +64,19 @@ type jwtCacheEntry struct {
 type Datasource struct {
 	// BaseURL allows overriding the Cube API URL for testing
 	BaseURL string
+	// authServiceURLOverride allows overriding the Cloud Auth URL for testing
+	authServiceURLOverride string
+
+	exchanger authn.TokenExchanger
 
 	// JWT cache keyed by API secret
 	jwtCache      map[string]jwtCacheEntry
 	jwtCacheMutex sync.RWMutex
+
+	// Nonce store for per-request introspect callbacks (grafana-cloud mode).
+	// Each entry is single-use and expires after 30 seconds.
+	nonceMu    sync.Mutex
+	nonceStore map[string]nonceEntry
 }
 
 // CubeAPIURL represents a fully constructed Cube API endpoint URL
@@ -93,6 +119,16 @@ func validateCredentials(config *models.PluginSettings) error {
 		}
 	case "self-hosted-dev":
 		// No credentials required for dev mode
+	case "grafana-cloud":
+		if config.Secrets.CAPToken == "" {
+			return fmt.Errorf("CAP token is required for grafana-cloud deployments")
+		}
+		if config.AuthServiceURL == "" {
+			return fmt.Errorf("auth service URL is required for grafana-cloud deployments")
+		}
+		if config.GrafanaURL == "" {
+			return fmt.Errorf("grafanaURL is required for grafana-cloud deployments")
+		}
 	default:
 		return fmt.Errorf("unknown deployment type: %s", config.DeploymentType)
 	}
@@ -122,7 +158,67 @@ func (d *Datasource) addAuthHeaders(req *http.Request, config *models.PluginSett
 	case "self-hosted-dev":
 		// Self-hosted development mode: No authentication
 		// Do nothing
+	case "grafana-cloud":
+		return fmt.Errorf("grafana-cloud deployment requires addAuthHeadersWithContext")
 	}
+	return nil
+}
+
+// addAuthHeadersWithContext supports the grafana-cloud deployment type, which uses
+// a two-layer auth approach:
+//  1. authlib JWT (namespace-scoped) for tenant isolation via the Cloud Auth API
+//  2. Per-request nonce for user context: Cube calls back to the plugin's /resources/introspect
+//     endpoint to resolve stack_id, datasource_uid, user_id, and role.
+func (d *Datasource) addAuthHeadersWithContext(ctx context.Context, req *http.Request, config *models.PluginSettings, pCtx backend.PluginContext) error {
+	if config.DeploymentType != "grafana-cloud" {
+		return d.addAuthHeaders(req, config)
+	}
+	if d.exchanger == nil {
+		return fmt.Errorf("exchanger not initialised for grafana-cloud deployment")
+	}
+
+	sid := stackID(pCtx)
+	resp, err := d.exchanger.Exchange(ctx, authn.TokenExchangeRequest{
+		Namespace: fmt.Sprintf("stacks-%d", sid),
+		Audiences: []string{"grafana-cube-datasource"},
+	})
+	if err != nil {
+		return fmt.Errorf("token exchange: %w", err)
+	}
+	token := resp.Token
+
+	nonce, err := generateNonce()
+	if err != nil {
+		return fmt.Errorf("generate nonce: %w", err)
+	}
+
+	dsUID := ""
+	dsType := ""
+	if pCtx.DataSourceInstanceSettings != nil {
+		dsUID = pCtx.DataSourceInstanceSettings.UID
+		dsType = pCtx.DataSourceInstanceSettings.Type
+	}
+	userLogin := ""
+	role := ""
+	if pCtx.User != nil {
+		userLogin = pCtx.User.Login
+		role = pCtx.User.Role
+	}
+
+	d.nonceMu.Lock()
+	d.nonceStore[nonce] = nonceEntry{
+		StackID:        sid,
+		DatasourceUID:  dsUID,
+		DatasourceType: dsType,
+		UserID:         userLogin,
+		Role:           role,
+		ExpiresAt:      time.Now().Add(30 * time.Second),
+	}
+	d.nonceMu.Unlock()
+
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("X-Grafana-Nonce", nonce)
+	req.Header.Set("X-Grafana-Introspect-URL", config.GrafanaURL+"/api/datasources/uid/"+dsUID+"/resources/introspect")
 	return nil
 }
 
@@ -271,7 +367,7 @@ func (d *Datasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRe
 	}
 
 	// Add authentication headers (validates credentials and adds headers)
-	if err := d.addAuthHeaders(metaReq, apiReq.Config); err != nil {
+	if err := d.addAuthHeadersWithContext(ctx, metaReq, apiReq.Config, req.PluginContext); err != nil {
 		res.Status = backend.HealthStatusError
 		res.Message = err.Error()
 		return res, nil

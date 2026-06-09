@@ -130,7 +130,7 @@ export interface DataSourceResponse {
  * The Cube API URL is stored in the standard top-level datasource `url` field.
  */
 export interface CubeDataSourceOptions extends DataSourceJsonData {
-  deploymentType?: 'cloud' | 'self-hosted' | 'self-hosted-dev';
+  deploymentType?: 'cloud' | 'self-hosted' | 'self-hosted-dev' | 'grafana-cloud';
   /** UID of the SQL datasource to use when clicking "Edit SQL in Explore" */
   exploreSqlDatasourceUid?: string;
 }

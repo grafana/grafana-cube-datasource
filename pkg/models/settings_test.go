@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -45,5 +46,32 @@ func TestLoadPluginSettings(t *testing.T) {
 				t.Errorf("Expected URL %q, got %q", tt.expectedURL, settings.URL)
 			}
 		})
+	}
+}
+
+func TestLoadPluginSettings_GrafanaCloud(t *testing.T) {
+	jsonData, _ := json.Marshal(map[string]string{
+		"deploymentType": "grafana-cloud",
+		"authServiceURL": "https://auth.example.com",
+	})
+	src := backend.DataSourceInstanceSettings{
+		JSONData: jsonData,
+		DecryptedSecureJSONData: map[string]string{
+			"capToken": "test-cap-token",
+		},
+	}
+
+	s, err := LoadPluginSettings(src)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if s.DeploymentType != "grafana-cloud" {
+		t.Errorf("expected grafana-cloud, got %s", s.DeploymentType)
+	}
+	if s.AuthServiceURL != "https://auth.example.com" {
+		t.Errorf("expected auth URL, got %s", s.AuthServiceURL)
+	}
+	if s.Secrets.CAPToken != "test-cap-token" {
+		t.Errorf("expected cap token, got %s", s.Secrets.CAPToken)
 	}
 }
