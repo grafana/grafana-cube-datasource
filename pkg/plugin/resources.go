@@ -815,6 +815,13 @@ func (d *Datasource) handleIntrospect(req *backend.CallResourceRequest, sender b
 		return sender.Send(&backend.CallResourceResponse{Status: 404, Body: []byte(`{"error":"nonce not found or expired"}`)})
 	}
 
+	// Bind the nonce to the datasource it was minted for: the introspect call
+	// must arrive on the same datasource instance's path
+	if req.PluginContext.DataSourceInstanceSettings == nil ||
+		req.PluginContext.DataSourceInstanceSettings.UID != entry.DatasourceUID {
+		return sender.Send(&backend.CallResourceResponse{Status: 403, Body: []byte(`{"error":"nonce not valid for this datasource"}`)})
+	}
+
 	respBody, _ := json.Marshal(struct {
 		StackID        int64  `json:"stack_id"`
 		DatasourceUID  string `json:"datasource_uid"`

@@ -56,9 +56,8 @@ func TestAddAuthHeadersWithContext_GrafanaCloud(t *testing.T) {
 	if nonce == "" {
 		t.Error("expected X-Grafana-Nonce to be set")
 	}
-	wantIntrospect := "http://grafana-1:3000/api/datasources/uid/uid/resources/introspect"
-	if req.Header.Get("X-Grafana-Introspect-URL") != wantIntrospect {
-		t.Errorf("expected %s, got %s", wantIntrospect, req.Header.Get("X-Grafana-Introspect-URL"))
+	if got := req.Header.Get("X-Grafana-Datasource-Uid"); got != "uid" {
+		t.Errorf("expected X-Grafana-Datasource-Uid=uid, got %s", got)
 	}
 	d.nonceMu.Lock()
 	_, ok := d.nonceStore[nonce]

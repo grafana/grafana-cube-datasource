@@ -2,8 +2,9 @@ package plugin
 
 import (
 	"crypto/rand"
-	"encoding/json"
 	"fmt"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -28,16 +29,12 @@ func generateNonce() (string, error) {
 	return fmt.Sprintf("%x", b), nil
 }
 
-// stackID returns the Grafana stack ID for JWT namespace claims. Reads stackId
-// from jsonData first so devenv provisioning can set the correct stack ID
-// independently of OrgID (both devenv stacks run with OrgID=1).
+// stackID returns the Grafana stack ID, must be set by the server.
+// falls back to OrgID when the env is unset (e.g. unit tests / single-stack dev).
 func stackID(pCtx backend.PluginContext) int64 {
-	if pCtx.DataSourceInstanceSettings != nil {
-		var jd struct {
-			StackID int64 `json:"stackId"`
-		}
-		if err := json.Unmarshal(pCtx.DataSourceInstanceSettings.JSONData, &jd); err == nil && jd.StackID != 0 {
-			return jd.StackID
+	if v := os.Getenv("GF_ENVIRONMENT_STACK_ID"); v != "" {
+		if id, err := strconv.ParseInt(v, 10, 64); err == nil && id != 0 {
+			return id
 		}
 	}
 	return pCtx.OrgID

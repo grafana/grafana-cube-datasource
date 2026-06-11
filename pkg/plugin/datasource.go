@@ -218,7 +218,8 @@ func (d *Datasource) addAuthHeadersWithContext(ctx context.Context, req *http.Re
 
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("X-Grafana-Nonce", nonce)
-	req.Header.Set("X-Grafana-Introspect-URL", config.GrafanaURL+"/api/datasources/uid/"+dsUID+"/resources/introspect")
+	// Cube builds the introspect URL server-side from the verified JWT's stack id
+	req.Header.Set("X-Grafana-Datasource-Uid", dsUID)
 	return nil
 }
 
@@ -422,4 +423,3 @@ func (d *Datasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRe
 		Message: message,
 	}, nil
 }
-
