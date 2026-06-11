@@ -26,8 +26,7 @@ func (m *mockExchanger) Exchange(_ context.Context, _ authn.TokenExchangeRequest
 
 func TestAddAuthHeadersWithContext_GrafanaCloud(t *testing.T) {
 	d := &Datasource{
-		exchanger:  &mockExchanger{token: "test-jwt"},
-		nonceStore: make(map[string]nonceEntry),
+		exchanger: &mockExchanger{token: "test-jwt"},
 	}
 
 	req, _ := http.NewRequest("GET", "http://cube:4000", nil)
@@ -52,19 +51,17 @@ func TestAddAuthHeadersWithContext_GrafanaCloud(t *testing.T) {
 	if req.Header.Get("Authorization") != "Bearer test-jwt" {
 		t.Errorf("expected Bearer test-jwt, got %s", req.Header.Get("Authorization"))
 	}
-	nonce := req.Header.Get("X-Grafana-Nonce")
-	if nonce == "" {
-		t.Error("expected X-Grafana-Nonce to be set")
+	if got := req.Header.Get("X-Grafana-Datasource-Uid"); got != "uid" {
+		t.Errorf("expected datasource uid header 'uid', got %q", got)
 	}
-	wantIntrospect := "http://grafana-1:3000/api/datasources/uid/uid/resources/introspect"
-	if req.Header.Get("X-Grafana-Introspect-URL") != wantIntrospect {
-		t.Errorf("expected %s, got %s", wantIntrospect, req.Header.Get("X-Grafana-Introspect-URL"))
+	if got := req.Header.Get("X-Grafana-Datasource-Type"); got != "grafana-postgresql-datasource" {
+		t.Errorf("expected datasource type header, got %q", got)
 	}
-	d.nonceMu.Lock()
-	_, ok := d.nonceStore[nonce]
-	d.nonceMu.Unlock()
-	if !ok {
-		t.Error("expected nonce to be stored in nonceStore")
+	if got := req.Header.Get("X-Grafana-User-Id"); got != "alice" {
+		t.Errorf("expected user id header 'alice', got %q", got)
+	}
+	if got := req.Header.Get("X-Grafana-Role"); got != "Viewer" {
+		t.Errorf("expected role header 'Viewer', got %q", got)
 	}
 }
 
@@ -99,15 +96,6 @@ func TestValidateCredentials_GrafanaCloud(t *testing.T) {
 			config: &models.PluginSettings{
 				DeploymentType: "grafana-cloud",
 				GrafanaURL:     "https://grafana.example.com",
-				Secrets:        &models.SecretPluginSettings{CAPToken: "tok"},
-			},
-			wantErr: true,
-		},
-		{
-			name: "missing grafana url",
-			config: &models.PluginSettings{
-				DeploymentType: "grafana-cloud",
-				AuthServiceURL: "https://auth.example.com",
 				Secrets:        &models.SecretPluginSettings{CAPToken: "tok"},
 			},
 			wantErr: true,

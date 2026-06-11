@@ -33,8 +33,7 @@ var (
 // NewDatasource creates a new datasource instance.
 func NewDatasource(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	d := &Datasource{
-		jwtCache:   make(map[string]jwtCacheEntry),
-		nonceStore: make(map[string]nonceEntry),
+		jwtCache: make(map[string]jwtCacheEntry),
 	}
 	cfg, err := models.LoadPluginSettings(settings)
 	if err != nil {
@@ -72,11 +71,6 @@ type Datasource struct {
 	// JWT cache keyed by API secret
 	jwtCache      map[string]jwtCacheEntry
 	jwtCacheMutex sync.RWMutex
-
-	// Nonce store for per-request introspect callbacks (grafana-cloud mode).
-	// Each entry is single-use and expires after 30 seconds.
-	nonceMu    sync.Mutex
-	nonceStore map[string]nonceEntry
 }
 
 // CubeAPIURL represents a fully constructed Cube API endpoint URL
@@ -126,9 +120,6 @@ func validateCredentials(config *models.PluginSettings) error {
 		if config.AuthServiceURL == "" {
 			return fmt.Errorf("auth service URL is required for grafana-cloud deployments")
 		}
-		if config.GrafanaURL == "" {
-			return fmt.Errorf("grafanaURL is required for grafana-cloud deployments")
-		}
 	default:
 		return fmt.Errorf("unknown deployment type: %s", config.DeploymentType)
 	}
@@ -166,9 +157,12 @@ func (d *Datasource) addAuthHeaders(req *http.Request, config *models.PluginSett
 
 // addAuthHeadersWithContext supports the grafana-cloud deployment type, which uses
 // a two-layer auth approach:
-//  1. authlib JWT (namespace-scoped) for tenant isolation via the Cloud Auth API
-//  2. Per-request nonce for user context: Cube calls back to the plugin's /resources/introspect
-//     endpoint to resolve stack_id, datasource_uid, user_id, and role.
+//  1. authlib JWT (namespace-scoped) for tenant isolation via the Cloud Auth API.
+//     The stack ID travels cryptographically in the JWT namespace claim (stacks-<id>),
+//     verified by Cube against JWKS.
+//  2. Trusted headers for user-level context (datasource_uid, datasource_type,
+//     user_id, role), sent over the Grafana-to-Cube channel (mTLS + NetworkPolicy)
+//     and read directly by Cube's checkAuth.
 func (d *Datasource) addAuthHeadersWithContext(ctx context.Context, req *http.Request, config *models.PluginSettings, pCtx backend.PluginContext) error {
 	if config.DeploymentType != "grafana-cloud" {
 		return d.addAuthHeaders(req, config)
@@ -187,11 +181,6 @@ func (d *Datasource) addAuthHeadersWithContext(ctx context.Context, req *http.Re
 	}
 	token := resp.Token
 
-	nonce, err := generateNonce()
-	if err != nil {
-		return fmt.Errorf("generate nonce: %w", err)
-	}
-
 	dsUID := ""
 	dsType := ""
 	if pCtx.DataSourceInstanceSettings != nil {
@@ -205,20 +194,11 @@ func (d *Datasource) addAuthHeadersWithContext(ctx context.Context, req *http.Re
 		role = pCtx.User.Role
 	}
 
-	d.nonceMu.Lock()
-	d.nonceStore[nonce] = nonceEntry{
-		StackID:        sid,
-		DatasourceUID:  dsUID,
-		DatasourceType: dsType,
-		UserID:         userLogin,
-		Role:           role,
-		ExpiresAt:      time.Now().Add(30 * time.Second),
-	}
-	d.nonceMu.Unlock()
-
 	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("X-Grafana-Nonce", nonce)
-	req.Header.Set("X-Grafana-Introspect-URL", config.GrafanaURL+"/api/datasources/uid/"+dsUID+"/resources/introspect")
+	req.Header.Set("X-Grafana-Datasource-Uid", dsUID)
+	req.Header.Set("X-Grafana-Datasource-Type", dsType)
+	req.Header.Set("X-Grafana-User-Id", userLogin)
+	req.Header.Set("X-Grafana-Role", role)
 	return nil
 }
 

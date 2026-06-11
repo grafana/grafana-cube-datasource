@@ -12,7 +12,7 @@ type PluginSettings struct {
 	DeploymentType          string                `json:"deploymentType"` // "cloud", "self-hosted", "self-hosted-dev", or "grafana-cloud"
 	ExploreSqlDatasourceUid string                `json:"exploreSqlDatasourceUid"`
 	AuthServiceURL          string                `json:"authServiceURL"` // Cloud Auth API base URL for grafana-cloud mode
-	GrafanaURL              string                `json:"grafanaURL"`     // Base URL of this Grafana instance for introspect callbacks
+	GrafanaURL              string                `json:"grafanaURL"`     // Base URL of this Grafana instance (currently unused; retained for provisioning compatibility)
 	Secrets                 *SecretPluginSettings `json:"-"`
 }
 

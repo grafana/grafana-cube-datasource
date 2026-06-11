@@ -104,8 +104,6 @@ func (d *Datasource) CallResource(ctx context.Context, req *backend.CallResource
 			return sender.Send(accessDeniedResponse())
 		}
 		return d.handleGenerateSchema(ctx, req, sender)
-	case "introspect":
-		return d.handleIntrospect(req, sender)
 	case "jwks":
 		return d.handleJWKS(ctx, req, sender)
 	default:
@@ -791,49 +789,6 @@ func (d *Datasource) fetchCubeGenerateSchema(ctx context.Context, pluginContext 
 	return &GenerateSchemaResponse{
 		Files: generatedFiles,
 	}, nil
-}
-
-// handleIntrospect resolves a per-request nonce into user context for Cube's checkAuth.
-// No auth check is required: the nonce is random, server-side only, single-use, 30s TTL,
-// and never exposed to the browser — the nonce itself is the proof of legitimacy.
-func (d *Datasource) handleIntrospect(req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	var body struct {
-		Nonce string `json:"nonce"`
-	}
-	if err := json.Unmarshal(req.Body, &body); err != nil || body.Nonce == "" {
-		return sender.Send(&backend.CallResourceResponse{Status: 400, Body: []byte(`{"error":"nonce required"}`)})
-	}
-
-	d.nonceMu.Lock()
-	entry, ok := d.nonceStore[body.Nonce]
-	if ok {
-		delete(d.nonceStore, body.Nonce)
-	}
-	d.nonceMu.Unlock()
-
-	if !ok || time.Now().After(entry.ExpiresAt) {
-		return sender.Send(&backend.CallResourceResponse{Status: 404, Body: []byte(`{"error":"nonce not found or expired"}`)})
-	}
-
-	respBody, _ := json.Marshal(struct {
-		StackID        int64  `json:"stack_id"`
-		DatasourceUID  string `json:"datasource_uid"`
-		DatasourceType string `json:"datasource_type"`
-		UserID         string `json:"user_id"`
-		Role           string `json:"role"`
-	}{
-		StackID:        entry.StackID,
-		DatasourceUID:  entry.DatasourceUID,
-		DatasourceType: entry.DatasourceType,
-		UserID:         entry.UserID,
-		Role:           entry.Role,
-	})
-
-	return sender.Send(&backend.CallResourceResponse{
-		Status:  200,
-		Headers: map[string][]string{"Content-Type": {"application/json"}},
-		Body:    respBody,
-	})
 }
 
 // jwksHTTPClient is used exclusively by handleJWKS to avoid holding no timeout on the
