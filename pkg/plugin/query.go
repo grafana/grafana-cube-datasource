@@ -149,6 +149,9 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 	// Convert time dimension strings to proper time.Time values for better UI display
 	d.convertTimeDimensions(frame, apiResponse.Annotation)
 
+	// Map Cube measure formats to Grafana field units
+	d.applyFieldUnits(frame, apiResponse.Annotation)
+
 	// add the frames to the response.
 	response.Frames = append(response.Frames, frame)
 
@@ -203,32 +206,65 @@ func (d *Datasource) reorderFrameFields(frame *data.Frame, query CubeQuery, anno
 // createNullField creates a nullable field with nil values for columns that were omitted
 // from the Cube API response (because all values were null).
 func (d *Datasource) createNullField(fieldName string, rowCount int, annotation CubeAnnotation) *data.Field {
-	// Determine the field type from annotation
-	// Check all annotation maps: Dimensions, Measures, and TimeDimensions
-	fieldType := "string" // default
+	fieldInfo := CubeFieldInfo{Type: "string"}
 	if info, ok := annotation.Dimensions[fieldName]; ok {
-		fieldType = info.Type
+		fieldInfo = info
 	} else if info, ok := annotation.Measures[fieldName]; ok {
-		fieldType = info.Type
+		fieldInfo = info
 	} else if info, ok := annotation.TimeDimensions[fieldName]; ok {
-		fieldType = info.Type
+		fieldInfo = info
+	}
+
+	fieldType := fieldInfo.Type
+	if fieldType == "" {
+		fieldType = "string"
 	}
 
 	// Create a nullable field with nil values based on type
+	var field *data.Field
 	switch fieldType {
 	case "number":
 		values := make([]*float64, rowCount)
-		return data.NewField(fieldName, nil, values)
+		field = data.NewField(fieldName, nil, values)
 	case "time":
 		values := make([]*time.Time, rowCount)
-		return data.NewField(fieldName, nil, values)
+		field = data.NewField(fieldName, nil, values)
 	case "boolean":
 		values := make([]*bool, rowCount)
-		return data.NewField(fieldName, nil, values)
+		field = data.NewField(fieldName, nil, values)
 	default:
 		// Default to nullable string
 		values := make([]*string, rowCount)
-		return data.NewField(fieldName, nil, values)
+		field = data.NewField(fieldName, nil, values)
+	}
+
+	if unit := fieldInfoUnit(fieldInfo); unit != "" {
+		field.Config = &data.FieldConfig{Unit: unit}
+	}
+
+	return field
+}
+
+// applyFieldUnits sets Grafana field units from Cube format annotations.
+func (d *Datasource) applyFieldUnits(frame *data.Frame, annotation CubeAnnotation) {
+	for _, field := range frame.Fields {
+		info, ok := annotation.Measures[field.Name]
+		if !ok {
+			info, ok = annotation.Dimensions[field.Name]
+		}
+		if !ok {
+			continue
+		}
+
+		unit := fieldInfoUnit(info)
+		if unit == "" {
+			continue
+		}
+
+		if field.Config == nil {
+			field.Config = &data.FieldConfig{}
+		}
+		field.Config.Unit = unit
 	}
 }
 

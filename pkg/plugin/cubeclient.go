@@ -162,9 +162,11 @@ type CubeAnnotation struct {
 
 // CubeFieldInfo represents the metadata for a field
 type CubeFieldInfo struct {
-	Title      string `json:"title"`
-	ShortTitle string `json:"shortTitle"`
-	Type       string `json:"type"`
+	Title      string     `json:"title"`
+	ShortTitle string     `json:"shortTitle"`
+	Type       string     `json:"type"`
+	Format     CubeFormat `json:"format,omitempty"`
+	Currency   string     `json:"currency,omitempty"`
 }
 
 // fetchCubeMetadata fetches metadata from Cube's /v1/meta endpoint
@@ -249,4 +251,6 @@ type CubeMeasure struct {
 	Type        string `json:"type"`
 	ShortTitle  string `json:"shortTitle"`
 	Description string `json:"description"`
+	Format      CubeFormat `json:"format,omitempty"`
+	Currency    string     `json:"currency,omitempty"`
 }
