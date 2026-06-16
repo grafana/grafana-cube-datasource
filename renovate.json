@@ -5,6 +5,11 @@
     "github>grafana/grafana-renovate-config//presets/plugin-ci-workflows"
   ],
   "platformAutomerge": true,
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true,
+    "minimumReleaseAgeBehaviour": "timestamp-optional"
+  },
   "packageRules": [
     {
       "groupName": "All non-major dependencies",
