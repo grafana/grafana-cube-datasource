@@ -12,7 +12,6 @@
   },
   "packageRules": [
     {
-      "groupName": "All non-major dependencies",
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "automerge": true,
       "labels": ["automerge"]
