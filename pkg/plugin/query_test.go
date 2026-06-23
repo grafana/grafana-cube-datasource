@@ -1206,6 +1206,123 @@ func TestConvertTimeDimensionsRegularDimensionWithTimeType(t *testing.T) {
 	}
 }
 
+func TestQueryDataWithTimeDimensionGranularity(t *testing.T) {
+	// When a query uses timeDimensions with granularity (no raw dimension in the
+	// dimensions array), Cube returns a granularity-specific field name such as
+	// "orders.created_at.month". reorderFrameFields must include that field in the
+	// output frame so the time axis is available for Grafana time-series panels.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		response := CubeAPIResponse{
+			Data: []map[string]interface{}{
+				{"orders.created_at.month": "2024-01-01T00:00:00.000Z", "orders.count": "42"},
+				{"orders.created_at.month": "2024-02-01T00:00:00.000Z", "orders.count": "37"},
+				{"orders.created_at.month": "2024-03-01T00:00:00.000Z", "orders.count": "55"},
+			},
+			Annotation: CubeAnnotation{
+				Measures: map[string]CubeFieldInfo{
+					"orders.count": {Title: "Orders Count", ShortTitle: "Count", Type: "number"},
+				},
+				Dimensions: map[string]CubeFieldInfo{},
+				Segments:   map[string]CubeFieldInfo{},
+				TimeDimensions: map[string]CubeFieldInfo{
+					"orders.created_at.month": {Title: "Created At (Month)", ShortTitle: "Created At", Type: "time"},
+				},
+			},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(response)
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL}
+
+	// No "dimensions" key — matches the fixed grafana-data-app query shape.
+	query := map[string]interface{}{
+		"refId":    "A",
+		"measures": []string{"orders.count"},
+		"timeDimensions": []map[string]interface{}{
+			{
+				"dimension":   "orders.created_at",
+				"granularity": "month",
+				"dateRange":   []string{"2024-01-01", "2024-12-31"},
+			},
+		},
+		"order": [][]string{{"orders.created_at", "asc"}},
+	}
+	queryJSON, _ := json.Marshal(query)
+
+	resp, err := ds.QueryData(
+		context.Background(),
+		&backend.QueryDataRequest{
+			PluginContext: newTestPluginContext(server.URL),
+			Queries: []backend.DataQuery{
+				{RefID: "A", JSON: queryJSON},
+			},
+		},
+	)
+	if err != nil {
+		t.Fatalf("QueryData failed: %v", err)
+	}
+
+	response := resp.Responses["A"]
+	if response.Error != nil {
+		t.Fatalf("Response had error: %v", response.Error)
+	}
+	if len(response.Frames) != 1 {
+		t.Fatalf("Expected 1 frame, got %d", len(response.Frames))
+	}
+
+	frame := response.Frames[0]
+
+	// The granularity-specific time field must be present in the output frame.
+	var timeField *data.Field
+	for _, f := range frame.Fields {
+		if f.Name == "orders.created_at.month" {
+			timeField = f
+			break
+		}
+	}
+	if timeField == nil {
+		t.Fatal("granularity time field 'orders.created_at.month' not found in response frame")
+	}
+
+	// It must be the first field so Grafana timeseries panels find the time axis.
+	if frame.Fields[0].Name != "orders.created_at.month" {
+		t.Errorf("expected time field to be first; got %s", frame.Fields[0].Name)
+	}
+
+	// It must have been converted to a proper time type.
+	if timeField.Type() != data.FieldTypeNullableTime {
+		t.Errorf("expected NullableTime field type, got %s", timeField.Type())
+	}
+
+	// Spot-check the first bucket is 2024-01-01.
+	val := timeField.At(0)
+	if tv, ok := val.(*time.Time); ok && tv != nil {
+		expected := "2024-01-01T00:00:00Z"
+		if actual := tv.UTC().Format(time.RFC3339); actual != expected {
+			t.Errorf("expected first bucket %s, got %s", expected, actual)
+		}
+	} else {
+		t.Errorf("expected *time.Time at index 0, got %T", val)
+	}
+
+	// The measure field must also be present.
+	var countField *data.Field
+	for _, f := range frame.Fields {
+		if f.Name == "orders.count" {
+			countField = f
+			break
+		}
+	}
+	if countField == nil {
+		t.Fatal("measure field 'orders.count' not found in response frame")
+	}
+	if frame.Fields[0].Len() != 3 {
+		t.Errorf("expected 3 rows (one per month), got %d", frame.Fields[0].Len())
+	}
+}
+
 func TestConvertTimeDimensionsIntegration(t *testing.T) {
 	// Create a mock server that returns data with time dimensions
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
