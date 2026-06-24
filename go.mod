@@ -4,11 +4,9 @@ go 1.26.3
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
-	github.com/grafana/authlib v0.0.0-00010101000000-000000000000
+	github.com/grafana/authlib v0.0.0-20250219100139-6a3b1bbb50e7
 	github.com/grafana/grafana-plugin-sdk-go v0.292.0
 )
-
-replace github.com/grafana/authlib => ../authlib
 
 require (
 	github.com/BurntSushi/toml v1.5.0 // indirect
