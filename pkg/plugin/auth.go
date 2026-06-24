@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
@@ -30,12 +31,21 @@ func generateNonce() (string, error) {
 }
 
 // stackID returns the Grafana stack ID, must be set by the server.
-// falls back to OrgID when the env is unset (e.g. unit tests / single-stack dev).
+// falls back to the namespace's stack/org ID when the env is unset
+// (e.g. unit tests / single-stack dev).
 func stackID(pCtx backend.PluginContext) int64 {
 	if v := os.Getenv("GF_ENVIRONMENT_STACK_ID"); v != "" {
 		if id, err := strconv.ParseInt(v, 10, 64); err == nil && id != 0 {
 			return id
 		}
 	}
-	return pCtx.OrgID
+	if info, err := types.ParseNamespace(pCtx.Namespace); err == nil {
+		if info.StackID != 0 {
+			return info.StackID
+		}
+		if info.OrgID > 0 {
+			return info.OrgID
+		}
+	}
+	return 0
 }
