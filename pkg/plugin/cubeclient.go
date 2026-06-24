@@ -30,7 +30,7 @@ func (e *CubeAPIError) Error() string {
 // when query results aren't cached yet (e.g. the upstream warehouse is still computing).
 // This method retries immediately until actual data arrives or the context is cancelled, matching the
 // behavior of the official @cubejs-client/core SDK.
-func (d *Datasource) doCubeLoadRequest(ctx context.Context, requestURL string, config *models.PluginSettings) ([]byte, error) {
+func (d *Datasource) doCubeLoadRequest(ctx context.Context, pCtx backend.PluginContext, requestURL string, config *models.PluginSettings) ([]byte, error) {
 	pollStart := time.Now()
 	pollRetries := 0
 	var lastContinueWaitProgress continueWaitProgress
@@ -41,7 +41,7 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, requestURL string, c
 			return nil, fmt.Errorf("failed to create request: %w", err)
 		}
 
-		if err := d.addAuthHeaders(req, config); err != nil {
+		if err := d.addAuthHeadersWithContext(ctx, req, config, pCtx); err != nil {
 			return nil, fmt.Errorf("failed to add auth headers: %w", err)
 		}
 		req.Header.Set("Content-Type", "application/json")
@@ -183,7 +183,7 @@ func (d *Datasource) fetchCubeMetadata(ctx context.Context, pluginContext backen
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	if err := d.addAuthHeaders(req, apiReq.Config); err != nil {
+	if err := d.addAuthHeadersWithContext(ctx, req, apiReq.Config, pluginContext); err != nil {
 		return nil, fmt.Errorf("failed to add auth headers: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")

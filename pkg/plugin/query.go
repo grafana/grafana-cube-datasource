@@ -117,7 +117,7 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 	backend.Logger.Debug("Making API request", "url", u.String(), "cubeQuery", string(cubeAPIQueryJSON))
 
 	// Use shared helper to make the request with "Continue wait" polling
-	body, err := d.doCubeLoadRequest(ctx, u.String(), apiReq.Config)
+	body, err := d.doCubeLoadRequest(ctx, pCtx, u.String(), apiReq.Config)
 	if err != nil {
 		backend.Logger.Error("Failed to fetch data from Cube API", "error", err, "url", u.String())
 		return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
@@ -180,15 +180,33 @@ func (d *Datasource) reorderFrameFields(frame *data.Frame, query CubeQuery, anno
 		rowCount = frame.Fields[0].Len()
 	}
 
+	// Track which fields have been added to avoid duplicates
+	added := make(map[string]bool)
+
+	// Time dimension fields first — these come from timeDimensions with granularity
+	// (e.g. "payments.created_at.month") and live in annotation.TimeDimensions.
+	// They must appear before other fields so Grafana timeseries panels pick up
+	// the time axis, and they are not listed in query.Dimensions.
+	for fieldName := range annotation.TimeDimensions {
+		if pos, exists := fieldPositions[fieldName]; exists {
+			newFrame.Fields = append(newFrame.Fields, frame.Fields[pos])
+			added[fieldName] = true
+		}
+	}
+
 	// Reorder the fields according to the query specification
 	// If a field doesn't exist (all null values), create it as a nullable field
 	for _, fieldName := range query.Dimensions {
+		if added[fieldName] {
+			continue // already included as a time dimension field
+		}
 		if pos, exists := fieldPositions[fieldName]; exists {
 			newFrame.Fields = append(newFrame.Fields, frame.Fields[pos])
 		} else {
 			// Field missing (all null values) - create a nullable field
 			newFrame.Fields = append(newFrame.Fields, d.createNullField(fieldName, rowCount, annotation))
 		}
+		added[fieldName] = true
 	}
 
 	for _, fieldName := range query.Measures {

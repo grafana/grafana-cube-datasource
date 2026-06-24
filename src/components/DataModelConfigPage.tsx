@@ -4,7 +4,7 @@ import { GrafanaTheme2, PluginConfigPageProps, PluginMeta } from '@grafana/data'
 import { useStyles2, Button, Alert, CodeEditor, Icon, Badge } from '@grafana/ui';
 import { DatabaseTree, decodeTableKey } from './DatabaseTree';
 import { FileList, sortFiles } from './FileList';
-import { useDbSchemaQuery, useGenerateSchemaMutation, useModelFilesQuery } from '../queries';
+import { useDbSchemaQuery, useGenerateSchemaMutation, useDatasourceQuery, useModelFilesQuery } from '../queries';
 import { ModelFile } from '../types';
 
 /**
@@ -26,12 +26,22 @@ export function DataModelConfigPage(_props: PluginConfigPageProps<PluginMeta>) {
   const [selectedFile, setSelectedFile] = useState<ModelFile | null>(null);
   const [generationComplete, setGenerationComplete] = useState(false);
 
+  const { data: datasourceSettings } = useDatasourceQuery(datasourceUid || undefined);
   const dbSchemaQuery = useDbSchemaQuery(datasourceUid || '');
   const modelFilesQuery = useModelFilesQuery(datasourceUid || '');
   const generateMutation = useGenerateSchemaMutation(datasourceUid || '');
 
   if (!datasourceUid) {
     return <Alert severity="error" title="Unable to determine datasource" />;
+  }
+
+  if (datasourceSettings?.deploymentType === 'grafana-cloud') {
+    return (
+      <Alert severity="info" title="Data Model tab not available for Grafana Cloud deployments">
+        Schema introspection requires direct database access, which is not supported in the Grafana Cloud
+        deployment model. To manage your Cube data models, use the Cube Cloud interface directly.
+      </Alert>
+    );
   }
 
   const handleGenerate = async () => {

@@ -32,14 +32,15 @@ interface DatasourceInfo {
   type: string;
   uid: string;
   name?: string;
+  deploymentType?: string;
 }
 
 export const useDatasourceQuery = (datasourceUid?: string) => {
   const result = useQuery({
     queryKey: ['datasource', datasourceUid],
     queryFn: async (): Promise<DatasourceInfo> => {
-      const { type, uid, name } = await getBackendSrv().get(`/api/datasources/uid/${datasourceUid}`);
-      return { type, uid, name };
+      const { type, uid, name, jsonData } = await getBackendSrv().get(`/api/datasources/uid/${datasourceUid}`);
+      return { type, uid, name, deploymentType: jsonData?.deploymentType };
     },
     enabled: !!datasourceUid,
   });

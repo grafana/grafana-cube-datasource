@@ -162,7 +162,9 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 	}
 }
 
-func TestExtractMetadataIgnoresCubesWithoutViews(t *testing.T) {
+func TestExtractMetadataExposesCubesFallback(t *testing.T) {
+	// When no views are present, cubes are exposed directly so that
+	// SemanticModel-sourced data (which produces cubes, not views) is queryable.
 	ds := &Datasource{}
 
 	metaResponse := &CubeMetaResponse{
@@ -182,22 +184,11 @@ func TestExtractMetadataIgnoresCubesWithoutViews(t *testing.T) {
 
 	result := ds.extractMetadataFromResponse(metaResponse)
 
-	if len(result.Dimensions) != 0 {
-		t.Errorf("expected 0 dimensions when only cubes are present, got %d", len(result.Dimensions))
+	if len(result.Dimensions) != 1 {
+		t.Errorf("expected 1 dimension (cube fallback), got %d", len(result.Dimensions))
 	}
-	if len(result.Measures) != 0 {
-		t.Errorf("expected 0 measures when only cubes are present, got %d", len(result.Measures))
-	}
-
-	body, err := json.Marshal(result)
-	if err != nil {
-		t.Fatalf("failed to marshal metadata response: %v", err)
-	}
-	if !strings.Contains(string(body), `"dimensions":[]`) {
-		t.Errorf("expected dimensions to marshal as an empty array, got %s", body)
-	}
-	if !strings.Contains(string(body), `"measures":[]`) {
-		t.Errorf("expected measures to marshal as an empty array, got %s", body)
+	if len(result.Measures) != 1 {
+		t.Errorf("expected 1 measure (cube fallback), got %d", len(result.Measures))
 	}
 }
 
