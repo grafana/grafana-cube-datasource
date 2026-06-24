@@ -879,7 +879,7 @@ func (d *Datasource) handleJWKS(ctx context.Context, req *backend.CallResourceRe
 	if err != nil {
 		return sender.Send(&backend.CallResourceResponse{Status: 502, Body: []byte(err.Error())})
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	const maxJWKSBytes = 1 << 20 // 1 MiB — far more than any real JWKS response
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, maxJWKSBytes))

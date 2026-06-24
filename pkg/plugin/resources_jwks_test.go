@@ -16,7 +16,7 @@ func TestCallResource_JWKS(t *testing.T) {
 			t.Errorf("unexpected path: %s", r.URL.Path)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"keys":[]}`))
+		_, _ = w.Write([]byte(`{"keys":[]}`))
 	}))
 	defer authSrv.Close()
 
@@ -73,7 +73,9 @@ func TestCallResource_JWKS_NoAuthServiceURL(t *testing.T) {
 		resp = r
 		return nil
 	})
-	d.CallResource(context.Background(), req, sender)
+	if err := d.CallResource(context.Background(), req, sender); err != nil {
+		t.Fatalf("CallResource returned error: %v", err)
+	}
 
 	if resp == nil {
 		t.Fatal("sender.Send was never called")

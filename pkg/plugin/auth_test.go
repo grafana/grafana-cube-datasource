@@ -6,11 +6,26 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-func TestStackID_FallsBackToOrgID(t *testing.T) {
+func TestStackID_FallsBackToNamespace(t *testing.T) {
 	t.Setenv("GF_ENVIRONMENT_STACK_ID", "")
-	pCtx := backend.PluginContext{OrgID: 7}
-	if got := stackID(pCtx); got != 7 {
-		t.Errorf("expected OrgID 7 as fallback, got %d", got)
+
+	tests := []struct {
+		name      string
+		namespace string
+		want      int64
+	}{
+		{"cloud stack", "stacks-42", 42},
+		{"on-prem org", "org-7", 7},
+		{"default org", "default", 1},
+		{"unparseable", "", 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pCtx := backend.PluginContext{Namespace: tt.namespace}
+			if got := stackID(pCtx); got != tt.want {
+				t.Errorf("namespace %q: expected %d, got %d", tt.namespace, tt.want, got)
+			}
+		})
 	}
 }
 
