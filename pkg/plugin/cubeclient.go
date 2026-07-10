@@ -1,17 +1,27 @@
 package plugin
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/grafana/cube/pkg/models"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
+
+// urlLengthLimit mirrors URL_LENGTH_LIMIT in @cubejs-client/core's HttpTransport.
+// The SDK sends /v1/load requests via GET with the query URL-encoded in the
+// query string, but switches to POST (query in a JSON body) once the full URL
+// reaches this length. Without the fallback, large queries (e.g. a filter with
+// hundreds of values) blow past server-side URL/header limits — Node.js rejects
+// request lines + headers over ~16KB with "431 Request Header Fields Too Large".
+const urlLengthLimit = 2000
 
 // CubeAPIError represents a non-200 HTTP response from the Cube API.
 // It preserves the original status code and body so callers (e.g. handleTagValues)
@@ -25,18 +35,42 @@ func (e *CubeAPIError) Error() string {
 	return fmt.Sprintf("API request failed with status %d: %s", e.StatusCode, string(e.Body))
 }
 
-// doCubeLoadRequest makes a GET request to Cube's /v1/load endpoint, handling the
+// doCubeLoadRequest sends a query to Cube's /v1/load endpoint, handling the
 // "Continue wait" polling protocol. Cube returns {"error": "Continue wait"} (HTTP 200)
 // when query results aren't cached yet (e.g. the upstream warehouse is still computing).
 // This method retries immediately until actual data arrives or the context is cancelled, matching the
 // behavior of the official @cubejs-client/core SDK.
-func (d *Datasource) doCubeLoadRequest(ctx context.Context, pCtx backend.PluginContext, requestURL string, config *models.PluginSettings) ([]byte, error) {
+//
+// SDK alignment: like @cubejs-client/core, the query is sent via GET with the
+// query JSON URL-encoded in the query string while the full URL stays under
+// urlLengthLimit, and via POST with a {"query": ...} JSON body otherwise.
+func (d *Datasource) doCubeLoadRequest(ctx context.Context, pCtx backend.PluginContext, loadURL string, queryJSON []byte, config *models.PluginSettings) ([]byte, error) {
+	params := url.Values{}
+	params.Add("query", string(queryJSON))
+	getURL := loadURL + "?" + params.Encode()
+
+	usePost := len(getURL) >= urlLengthLimit
+	var postBody []byte
+	if usePost {
+		var err error
+		postBody, err = json.Marshal(map[string]json.RawMessage{"query": queryJSON})
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal request body: %w", err)
+		}
+	}
+
 	pollStart := time.Now()
 	pollRetries := 0
 	var lastContinueWaitProgress continueWaitProgress
 	haveContinueWaitProgress := false
 	for {
-		req, err := http.NewRequestWithContext(ctx, "GET", requestURL, nil)
+		var req *http.Request
+		var err error
+		if usePost {
+			req, err = http.NewRequestWithContext(ctx, "POST", loadURL, bytes.NewReader(postBody))
+		} else {
+			req, err = http.NewRequestWithContext(ctx, "GET", getURL, nil)
+		}
 		if err != nil {
 			return nil, fmt.Errorf("failed to create request: %w", err)
 		}
@@ -87,11 +121,11 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, pCtx backend.PluginC
 			haveContinueWaitProgress = true
 
 			if pollRetries == 0 {
-				backend.Logger.Info("Cube query not yet ready, polling for results", "url", requestURL)
+				backend.Logger.Info("Cube query not yet ready, polling for results", "url", loadURL)
 			}
 			pollRetries++
 			backend.Logger.Debug("Cube returned 'Continue wait', polling again",
-				"url", requestURL, "attempt", pollRetries,
+				"url", loadURL, "attempt", pollRetries,
 				"stage", progress.Stage, "cubeTimeElapsed", progress.TimeElapsed)
 			select {
 			case <-ctx.Done():
@@ -111,7 +145,7 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, pCtx backend.PluginC
 		}
 
 		if pollRetries > 0 {
-			backend.Logger.Info("Cube query results ready after polling", "url", requestURL, "retries", pollRetries, "duration", time.Since(pollStart).Round(time.Millisecond))
+			backend.Logger.Info("Cube query results ready after polling", "url", loadURL, "retries", pollRetries, "duration", time.Since(pollStart).Round(time.Millisecond))
 		}
 
 		return body, nil

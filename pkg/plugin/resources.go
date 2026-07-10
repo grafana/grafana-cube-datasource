@@ -288,18 +288,9 @@ func (d *Datasource) handleTagValues(ctx context.Context, req *backend.CallResou
 		return sender.Send(jsonErrorResponse(500, fmt.Errorf("failed to build API URL: %w", err)))
 	}
 
-	// Add query parameter
-	u, err := url.Parse(apiReq.URL.String())
-	if err != nil {
-		return sender.Send(jsonErrorResponse(500, errors.New("failed to parse API URL")))
-	}
-
-	params := url.Values{}
-	params.Add("query", string(cubeQueryJSON))
-	u.RawQuery = params.Encode()
-
-	// Use shared helper to make the request with "Continue wait" polling
-	body, err := d.doCubeLoadRequest(ctx, req.PluginContext, u.String(), apiReq.Config)
+	// Use shared helper to make the request with "Continue wait" polling.
+	// The helper picks GET or POST based on the encoded query size.
+	body, err := d.doCubeLoadRequest(ctx, req.PluginContext, apiReq.URL.String(), cubeQueryJSON, apiReq.Config)
 	if err != nil {
 		backend.Logger.Error("Failed to fetch tag values from Cube API", "error", err)
 		// If this is a Cube API error (non-200), forward the original status code and body

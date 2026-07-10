@@ -189,6 +189,171 @@ func TestQueryDataWithCubeQuery(t *testing.T) {
 	}
 }
 
+// TestQueryDataMethodSelection verifies SDK-aligned method selection: queries
+// are sent via GET while the URL stays under the SDK's 2000-char limit, and
+// via POST with a {"query": ...} JSON body otherwise (matching
+// @cubejs-client/core's HttpTransport). Without the POST fallback, servers
+// reject large GET URLs (e.g. Node.js responds 431 past its header limit).
+func TestQueryDataMethodSelection(t *testing.T) {
+	manyValues := make([]string, 200)
+	for i := range manyValues {
+		manyValues[i] = fmt.Sprintf("005%015d", i)
+	}
+
+	tests := []struct {
+		name           string
+		filterValues   []string
+		expectedMethod string
+	}{
+		{name: "small query uses GET", filterValues: []string{"26"}, expectedMethod: "GET"},
+		{name: "large query falls back to POST", filterValues: manyValues, expectedMethod: "POST"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != tt.expectedMethod {
+					t.Errorf("Expected %s request, got %s", tt.expectedMethod, r.Method)
+				}
+
+				// Extract the Cube query from wherever the method carries it
+				var queryJSON string
+				if r.Method == "GET" {
+					queryJSON = r.URL.Query().Get("query")
+				} else {
+					var body struct {
+						Query json.RawMessage `json:"query"`
+					}
+					if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+						t.Errorf("Failed to decode POST body: %v", err)
+					}
+					queryJSON = string(body.Query)
+				}
+
+				var cubeQuery CubeQuery
+				if err := json.Unmarshal([]byte(queryJSON), &cubeQuery); err != nil {
+					t.Errorf("Failed to parse cube query: %v", err)
+				}
+				if len(cubeQuery.Filters) != 1 {
+					t.Errorf("Expected 1 filter, got %d", len(cubeQuery.Filters))
+				}
+
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(CubeAPIResponse{
+					Data: []map[string]interface{}{{"orders.count": "42"}},
+					Annotation: CubeAnnotation{
+						Measures: map[string]CubeFieldInfo{"orders.count": {Title: "Count", ShortTitle: "Count", Type: "number"}},
+					},
+				})
+			}))
+			defer server.Close()
+
+			ds := Datasource{BaseURL: server.URL}
+
+			queryJSON, _ := json.Marshal(map[string]interface{}{
+				"refId":    "A",
+				"measures": []string{"orders.count"},
+				"filters": []map[string]interface{}{
+					{"member": "orders.user_id", "operator": "equals", "values": tt.filterValues},
+				},
+			})
+
+			resp, err := ds.QueryData(
+				context.Background(),
+				&backend.QueryDataRequest{
+					PluginContext: newTestPluginContext(server.URL),
+					Queries: []backend.DataQuery{
+						{RefID: "A", JSON: queryJSON},
+					},
+				},
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			result := resp.Responses["A"]
+			if result.Error != nil {
+				t.Fatalf("Expected no error, got: %v", result.Error)
+			}
+			if len(result.Frames) != 1 || result.Frames[0].Fields[0].Len() != 1 {
+				t.Fatalf("Expected 1 frame with 1 row")
+			}
+		})
+	}
+}
+
+// TestQueryDataLargeQueryContinueWaitRepostsBody verifies that the POST body
+// is re-sent on every "Continue wait" polling retry (each retry needs a fresh
+// body reader).
+func TestQueryDataLargeQueryContinueWaitRepostsBody(t *testing.T) {
+	manyValues := make([]string, 200)
+	for i := range manyValues {
+		manyValues[i] = fmt.Sprintf("005%015d", i)
+	}
+
+	requestCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount++
+		if r.Method != "POST" {
+			t.Errorf("Expected POST request, got %s", r.Method)
+		}
+
+		var body struct {
+			Query CubeQuery `json:"query"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Errorf("Request %d: failed to decode POST body: %v", requestCount, err)
+		}
+		if len(body.Query.Measures) != 1 {
+			t.Errorf("Request %d: expected 1 measure in re-sent body, got %d", requestCount, len(body.Query.Measures))
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if requestCount == 1 {
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{"error": "Continue wait"})
+			return
+		}
+		_ = json.NewEncoder(w).Encode(CubeAPIResponse{
+			Data: []map[string]interface{}{{"orders.count": "42"}},
+			Annotation: CubeAnnotation{
+				Measures: map[string]CubeFieldInfo{"orders.count": {Title: "Count", ShortTitle: "Count", Type: "number"}},
+			},
+		})
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL}
+
+	queryJSON, _ := json.Marshal(map[string]interface{}{
+		"refId":    "A",
+		"measures": []string{"orders.count"},
+		"filters": []map[string]interface{}{
+			{"member": "orders.user_id", "operator": "equals", "values": manyValues},
+		},
+	})
+
+	resp, err := ds.QueryData(
+		context.Background(),
+		&backend.QueryDataRequest{
+			PluginContext: newTestPluginContext(server.URL),
+			Queries: []backend.DataQuery{
+				{RefID: "A", JSON: queryJSON},
+			},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result := resp.Responses["A"]
+	if result.Error != nil {
+		t.Fatalf("Expected no error, got: %v", result.Error)
+	}
+	if requestCount != 2 {
+		t.Fatalf("Expected 2 requests (1 continue-wait + 1 success), got %d", requestCount)
+	}
+}
+
 func TestQueryDataContinueWaitThenSuccess(t *testing.T) {
 	// Cube returns {"error": "Continue wait"} (HTTP 200) when query results
 	// aren't cached yet. The plugin must poll until data is ready.
