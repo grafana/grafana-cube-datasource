@@ -8,15 +8,18 @@ import (
 )
 
 type PluginSettings struct {
-	URL              string                `json:"-"`
-	DeploymentType          string                `json:"deploymentType"` // "cloud", "self-hosted", or "self-hosted-dev"
+	URL                     string                `json:"-"`
+	DeploymentType          string                `json:"deploymentType"` // "cloud", "self-hosted", "self-hosted-dev", or "grafana-cloud"
 	ExploreSqlDatasourceUid string                `json:"exploreSqlDatasourceUid"`
+	AuthServiceURL          string                `json:"authServiceURL"` // Cloud Auth API base URL for grafana-cloud mode
+	GrafanaURL              string                `json:"grafanaURL"`     // Base URL of this Grafana instance for introspect callbacks
 	Secrets                 *SecretPluginSettings `json:"-"`
 }
 
 type SecretPluginSettings struct {
 	ApiKey    string `json:"apiKey"`    // For Cube Cloud
-	ApiSecret string `json:"apiSecret"` // For self-hosted Cube (JWT generation)
+	ApiSecret string `json:"apiSecret"` // For self-hosted Cube (HS256 JWT generation)
+	CAPToken  string `json:"capToken"`  // Cloud Access Policy token for grafana-cloud mode
 }
 
 func LoadPluginSettings(source backend.DataSourceInstanceSettings) (*PluginSettings, error) {
@@ -36,5 +39,6 @@ func loadSecretPluginSettings(source map[string]string) *SecretPluginSettings {
 	return &SecretPluginSettings{
 		ApiKey:    source["apiKey"],
 		ApiSecret: source["apiSecret"],
+		CAPToken:  source["capToken"],
 	}
 }

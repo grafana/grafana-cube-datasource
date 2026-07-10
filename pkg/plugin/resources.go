@@ -9,7 +9,9 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
+	"github.com/grafana/cube/pkg/models"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
@@ -38,6 +40,12 @@ type SelectOption struct {
 	Value       string `json:"value"`
 	Type        string `json:"type"`
 	Description string `json:"description,omitempty"`
+	// Format is the Cube measure format (e.g. "currency", "percent_2", "abbr").
+	// See https://docs.cube.dev/reference/data-modeling/measures#format
+	Format string `json:"format,omitempty"`
+	// Currency is the ISO 4217 code paired with `format: currency` on the
+	// Cube measure. See https://docs.cube.dev/reference/data-modeling/measures#currency
+	Currency string `json:"currency,omitempty"`
 	// Cube identifies the Cube view this field originates from. The visual
 	// query builder uses this as the curated query scope.
 	Cube string `json:"cube"`
@@ -102,6 +110,10 @@ func (d *Datasource) CallResource(ctx context.Context, req *backend.CallResource
 			return sender.Send(accessDeniedResponse())
 		}
 		return d.handleGenerateSchema(ctx, req, sender)
+	case "introspect":
+		return d.handleIntrospect(req, sender)
+	case "jwks":
+		return d.handleJWKS(ctx, req, sender)
 	default:
 		return sender.Send(&backend.CallResourceResponse{
 			Status: 404,
@@ -167,10 +179,10 @@ func (d *Datasource) handleMetadata(ctx context.Context, req *backend.CallResour
 	})
 }
 
-// extractMetadataFromResponse extracts dimensions and measures from views only.
-// Cubes are implementation details; views are the public API for the visual
-// query builder. If no views are defined, return empty arrays so the UI can
-// explain that views are required instead of exposing raw cubes.
+// extractMetadataFromResponse extracts dimensions and measures from views and cubes.
+// Views are preferred (they are the public API); if none exist, cubes are exposed
+// directly so that SemanticModel-sourced data (which produces cubes, not views)
+// is still queryable in Explore.
 func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse) MetadataResponse {
 	dimensions := make([]SelectOption, 0)
 	measures := make([]SelectOption, 0)
@@ -178,17 +190,23 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 	processedDimensions := make(map[string]bool)
 	processedMeasures := make(map[string]bool)
 
+	// First pass: count views
 	viewCount := 0
 	for _, item := range metaResponse.Cubes {
-		if item.Type != "view" {
+		if item.Type == "view" {
+			viewCount++
+		}
+	}
+
+	for _, item := range metaResponse.Cubes {
+		// If there are views, only expose views; otherwise expose cubes directly.
+		if viewCount > 0 && item.Type != "view" {
 			continue
 		}
-		viewCount++
-
 		for _, dimension := range item.Dimensions {
 			if !processedDimensions[dimension.Name] {
 				dimensions = append(dimensions, SelectOption{
-					Label:       dimension.Name,
+					Label:       dimension.Title,
 					Value:       dimension.Name,
 					Type:        dimension.Type,
 					Description: dimension.Description,
@@ -201,10 +219,12 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 		for _, measure := range item.Measures {
 			if !processedMeasures[measure.Name] {
 				measures = append(measures, SelectOption{
-					Label:       measure.Name,
+					Label:       measure.Title,
 					Value:       measure.Name,
 					Type:        measure.Type,
 					Description: measure.Description,
+					Format:      measure.Format.String(),
+					Currency:    measure.Currency,
 					Cube:        item.Name,
 				})
 				processedMeasures[measure.Name] = true
@@ -212,7 +232,11 @@ func (d *Datasource) extractMetadataFromResponse(metaResponse *CubeMetaResponse)
 		}
 	}
 
-	backend.Logger.Debug("Extracted metadata from views", "views", viewCount, "dimensions", len(dimensions), "measures", len(measures))
+	source := "cubes"
+	if viewCount > 0 {
+		source = "views"
+	}
+	backend.Logger.Debug("Extracted metadata", "source", source, "views", viewCount, "dimensions", len(dimensions), "measures", len(measures))
 
 	return MetadataResponse{
 		Dimensions: dimensions,
@@ -264,18 +288,9 @@ func (d *Datasource) handleTagValues(ctx context.Context, req *backend.CallResou
 		return sender.Send(jsonErrorResponse(500, fmt.Errorf("failed to build API URL: %w", err)))
 	}
 
-	// Add query parameter
-	u, err := url.Parse(apiReq.URL.String())
-	if err != nil {
-		return sender.Send(jsonErrorResponse(500, errors.New("failed to parse API URL")))
-	}
-
-	params := url.Values{}
-	params.Add("query", string(cubeQueryJSON))
-	u.RawQuery = params.Encode()
-
-	// Use shared helper to make the request with "Continue wait" polling
-	body, err := d.doCubeLoadRequest(ctx, u.String(), apiReq.Config)
+	// Use shared helper to make the request with "Continue wait" polling.
+	// The helper picks GET or POST based on the encoded query size.
+	body, err := d.doCubeLoadRequest(ctx, req.PluginContext, apiReq.URL.String(), cubeQueryJSON, apiReq.Config)
 	if err != nil {
 		backend.Logger.Error("Failed to fetch tag values from Cube API", "error", err)
 		// If this is a Cube API error (non-200), forward the original status code and body
@@ -412,7 +427,7 @@ func (d *Datasource) fetchCubeSQL(ctx context.Context, pluginContext backend.Plu
 	}
 
 	// Add authentication headers
-	if err := d.addAuthHeaders(req, apiReq.Config); err != nil {
+	if err := d.addAuthHeadersWithContext(ctx, req, apiReq.Config, pluginContext); err != nil {
 		return "", fmt.Errorf("failed to add auth headers: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -509,7 +524,7 @@ func (d *Datasource) fetchCubeModelFiles(ctx context.Context, pluginContext back
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	if err := d.addAuthHeaders(req, apiReq.Config); err != nil {
+	if err := d.addAuthHeadersWithContext(ctx, req, apiReq.Config, pluginContext); err != nil {
 		return nil, fmt.Errorf("failed to add auth headers: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -613,7 +628,7 @@ func (d *Datasource) fetchCubeDbSchema(ctx context.Context, pluginContext backen
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	if err := d.addAuthHeaders(req, apiReq.Config); err != nil {
+	if err := d.addAuthHeadersWithContext(ctx, req, apiReq.Config, pluginContext); err != nil {
 		return nil, fmt.Errorf("failed to add auth headers: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -723,7 +738,7 @@ func (d *Datasource) fetchCubeGenerateSchema(ctx context.Context, pluginContext 
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	if err := d.addAuthHeaders(req, apiReq.Config); err != nil {
+	if err := d.addAuthHeadersWithContext(ctx, req, apiReq.Config, pluginContext); err != nil {
 		return nil, fmt.Errorf("failed to add auth headers: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -775,4 +790,101 @@ func (d *Datasource) fetchCubeGenerateSchema(ctx context.Context, pluginContext 
 	return &GenerateSchemaResponse{
 		Files: generatedFiles,
 	}, nil
+}
+
+// handleIntrospect resolves a per-request nonce into user context for Cube's checkAuth.
+// No auth check is required: the nonce is random, server-side only, single-use, 30s TTL,
+// and never exposed to the browser — the nonce itself is the proof of legitimacy.
+func (d *Datasource) handleIntrospect(req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	var body struct {
+		Nonce string `json:"nonce"`
+	}
+	if err := json.Unmarshal(req.Body, &body); err != nil || body.Nonce == "" {
+		return sender.Send(&backend.CallResourceResponse{Status: 400, Body: []byte(`{"error":"nonce required"}`)})
+	}
+
+	d.nonceMu.Lock()
+	entry, ok := d.nonceStore[body.Nonce]
+	if ok {
+		delete(d.nonceStore, body.Nonce)
+	}
+	d.nonceMu.Unlock()
+
+	if !ok || time.Now().After(entry.ExpiresAt) {
+		return sender.Send(&backend.CallResourceResponse{Status: 404, Body: []byte(`{"error":"nonce not found or expired"}`)})
+	}
+
+	// Bind the nonce to the datasource it was minted for: the introspect call
+	// must arrive on the same datasource instance's path
+	if req.PluginContext.DataSourceInstanceSettings == nil ||
+		req.PluginContext.DataSourceInstanceSettings.UID != entry.DatasourceUID {
+		return sender.Send(&backend.CallResourceResponse{Status: 403, Body: []byte(`{"error":"nonce not valid for this datasource"}`)})
+	}
+
+	respBody, _ := json.Marshal(struct {
+		StackID        int64  `json:"stack_id"`
+		DatasourceUID  string `json:"datasource_uid"`
+		DatasourceType string `json:"datasource_type"`
+		UserID         string `json:"user_id"`
+		Role           string `json:"role"`
+	}{
+		StackID:        entry.StackID,
+		DatasourceUID:  entry.DatasourceUID,
+		DatasourceType: entry.DatasourceType,
+		UserID:         entry.UserID,
+		Role:           entry.Role,
+	})
+
+	return sender.Send(&backend.CallResourceResponse{
+		Status:  200,
+		Headers: map[string][]string{"Content-Type": {"application/json"}},
+		Body:    respBody,
+	})
+}
+
+// jwksHTTPClient is used exclusively by handleJWKS to avoid holding no timeout on the
+// shared http.DefaultClient transport.
+var jwksHTTPClient = &http.Client{Timeout: 10 * time.Second}
+
+// handleJWKS proxies GET /v1/keys from the Cloud Auth API.
+// Cube verifies JWTs against JWKS but cannot reach the auth service directly
+// (NetworkPolicy restricts it to Grafana-only egress). This endpoint bridges the gap.
+func (d *Datasource) handleJWKS(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	if req.PluginContext.DataSourceInstanceSettings == nil {
+		return sender.Send(&backend.CallResourceResponse{Status: 400, Body: []byte(`{"error":"missing datasource context"}`)})
+	}
+	config, err := models.LoadPluginSettings(*req.PluginContext.DataSourceInstanceSettings)
+	if err != nil {
+		return sender.Send(&backend.CallResourceResponse{Status: 500, Body: []byte(err.Error())})
+	}
+
+	authURL := config.AuthServiceURL
+	if d.authServiceURLOverride != "" {
+		authURL = d.authServiceURLOverride
+	}
+	if authURL == "" {
+		return sender.Send(&backend.CallResourceResponse{
+			Status: 400,
+			Body:   []byte(`{"error":"authServiceURL not configured"}`),
+		})
+	}
+
+	jwksReq, err := http.NewRequestWithContext(ctx, http.MethodGet, authURL+"/v1/keys", nil)
+	if err != nil {
+		return sender.Send(&backend.CallResourceResponse{Status: 500, Body: []byte(err.Error())})
+	}
+
+	resp, err := jwksHTTPClient.Do(jwksReq)
+	if err != nil {
+		return sender.Send(&backend.CallResourceResponse{Status: 502, Body: []byte(err.Error())})
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	const maxJWKSBytes = 1 << 20 // 1 MiB — far more than any real JWKS response
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, maxJWKSBytes))
+	return sender.Send(&backend.CallResourceResponse{
+		Status:  resp.StatusCode,
+		Headers: map[string][]string{"Content-Type": {"application/json"}},
+		Body:    body,
+	})
 }

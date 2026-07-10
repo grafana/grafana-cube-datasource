@@ -1,8 +1,9 @@
 import type { TQueryOrderArray } from '@cubejs-client/core';
 import { ChangeEvent } from 'react';
-import { CubeQuery, CubeFilter, Order, DEFAULT_ORDER } from '../types';
+import { CubeQuery, CubeFilter, CubeFilterItem, Order, DEFAULT_ORDER, VISUAL_BUILDER_OPERATORS, isCubeFilter } from '../types';
 import { SelectableValue } from '@grafana/data';
 import { normalizeOrder } from '../utils/normalizeOrder';
+import { filterValuesContainTemplateVariable } from '../utils/detectUnsupportedFeatures';
 
 export function useQueryEditorHandlers(query: CubeQuery, onChange: (query: CubeQuery) => void, onRunQuery: () => void) {
   const updateQueryAndRun = (updates: Partial<CubeQuery>) => {
@@ -87,7 +88,17 @@ export function useQueryEditorHandlers(query: CubeQuery, onChange: (query: CubeQ
   };
 
   const onFiltersChange = (filters: CubeFilter[]) => {
-    updateQueryAndRun({ filters: filters.length > 0 ? filters : undefined });
+    // The visual FilterField only edits equals/notEquals filters. Preserve any
+    // non-visual-builder filters (advanced operators, AND/OR groups) so editing
+    // in the visual builder doesn't drop them. Template-variable filters use a
+    // visual operator (e.g. equals) but their $var value can't be represented as
+    // a selectable chip, so FilterField may drop them on edit — keep those too.
+    const nonVisualFilters = (query.filters ?? []).filter(
+      (f: CubeFilterItem) =>
+        !isCubeFilter(f) || !VISUAL_BUILDER_OPERATORS.has(f.operator) || filterValuesContainTemplateVariable(f)
+    );
+    const merged = [...filters, ...nonVisualFilters];
+    updateQueryAndRun({ filters: merged.length > 0 ? merged : undefined });
   };
 
   return {

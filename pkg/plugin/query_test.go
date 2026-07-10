@@ -189,6 +189,171 @@ func TestQueryDataWithCubeQuery(t *testing.T) {
 	}
 }
 
+// TestQueryDataMethodSelection verifies SDK-aligned method selection: queries
+// are sent via GET while the URL stays under the SDK's 2000-char limit, and
+// via POST with a {"query": ...} JSON body otherwise (matching
+// @cubejs-client/core's HttpTransport). Without the POST fallback, servers
+// reject large GET URLs (e.g. Node.js responds 431 past its header limit).
+func TestQueryDataMethodSelection(t *testing.T) {
+	manyValues := make([]string, 200)
+	for i := range manyValues {
+		manyValues[i] = fmt.Sprintf("005%015d", i)
+	}
+
+	tests := []struct {
+		name           string
+		filterValues   []string
+		expectedMethod string
+	}{
+		{name: "small query uses GET", filterValues: []string{"26"}, expectedMethod: "GET"},
+		{name: "large query falls back to POST", filterValues: manyValues, expectedMethod: "POST"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != tt.expectedMethod {
+					t.Errorf("Expected %s request, got %s", tt.expectedMethod, r.Method)
+				}
+
+				// Extract the Cube query from wherever the method carries it
+				var queryJSON string
+				if r.Method == "GET" {
+					queryJSON = r.URL.Query().Get("query")
+				} else {
+					var body struct {
+						Query json.RawMessage `json:"query"`
+					}
+					if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+						t.Errorf("Failed to decode POST body: %v", err)
+					}
+					queryJSON = string(body.Query)
+				}
+
+				var cubeQuery CubeQuery
+				if err := json.Unmarshal([]byte(queryJSON), &cubeQuery); err != nil {
+					t.Errorf("Failed to parse cube query: %v", err)
+				}
+				if len(cubeQuery.Filters) != 1 {
+					t.Errorf("Expected 1 filter, got %d", len(cubeQuery.Filters))
+				}
+
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(CubeAPIResponse{
+					Data: []map[string]interface{}{{"orders.count": "42"}},
+					Annotation: CubeAnnotation{
+						Measures: map[string]CubeFieldInfo{"orders.count": {Title: "Count", ShortTitle: "Count", Type: "number"}},
+					},
+				})
+			}))
+			defer server.Close()
+
+			ds := Datasource{BaseURL: server.URL}
+
+			queryJSON, _ := json.Marshal(map[string]interface{}{
+				"refId":    "A",
+				"measures": []string{"orders.count"},
+				"filters": []map[string]interface{}{
+					{"member": "orders.user_id", "operator": "equals", "values": tt.filterValues},
+				},
+			})
+
+			resp, err := ds.QueryData(
+				context.Background(),
+				&backend.QueryDataRequest{
+					PluginContext: newTestPluginContext(server.URL),
+					Queries: []backend.DataQuery{
+						{RefID: "A", JSON: queryJSON},
+					},
+				},
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			result := resp.Responses["A"]
+			if result.Error != nil {
+				t.Fatalf("Expected no error, got: %v", result.Error)
+			}
+			if len(result.Frames) != 1 || result.Frames[0].Fields[0].Len() != 1 {
+				t.Fatalf("Expected 1 frame with 1 row")
+			}
+		})
+	}
+}
+
+// TestQueryDataLargeQueryContinueWaitRepostsBody verifies that the POST body
+// is re-sent on every "Continue wait" polling retry (each retry needs a fresh
+// body reader).
+func TestQueryDataLargeQueryContinueWaitRepostsBody(t *testing.T) {
+	manyValues := make([]string, 200)
+	for i := range manyValues {
+		manyValues[i] = fmt.Sprintf("005%015d", i)
+	}
+
+	requestCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount++
+		if r.Method != "POST" {
+			t.Errorf("Expected POST request, got %s", r.Method)
+		}
+
+		var body struct {
+			Query CubeQuery `json:"query"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Errorf("Request %d: failed to decode POST body: %v", requestCount, err)
+		}
+		if len(body.Query.Measures) != 1 {
+			t.Errorf("Request %d: expected 1 measure in re-sent body, got %d", requestCount, len(body.Query.Measures))
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if requestCount == 1 {
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{"error": "Continue wait"})
+			return
+		}
+		_ = json.NewEncoder(w).Encode(CubeAPIResponse{
+			Data: []map[string]interface{}{{"orders.count": "42"}},
+			Annotation: CubeAnnotation{
+				Measures: map[string]CubeFieldInfo{"orders.count": {Title: "Count", ShortTitle: "Count", Type: "number"}},
+			},
+		})
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL}
+
+	queryJSON, _ := json.Marshal(map[string]interface{}{
+		"refId":    "A",
+		"measures": []string{"orders.count"},
+		"filters": []map[string]interface{}{
+			{"member": "orders.user_id", "operator": "equals", "values": manyValues},
+		},
+	})
+
+	resp, err := ds.QueryData(
+		context.Background(),
+		&backend.QueryDataRequest{
+			PluginContext: newTestPluginContext(server.URL),
+			Queries: []backend.DataQuery{
+				{RefID: "A", JSON: queryJSON},
+			},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	result := resp.Responses["A"]
+	if result.Error != nil {
+		t.Fatalf("Expected no error, got: %v", result.Error)
+	}
+	if requestCount != 2 {
+		t.Fatalf("Expected 2 requests (1 continue-wait + 1 success), got %d", requestCount)
+	}
+}
+
 func TestQueryDataContinueWaitThenSuccess(t *testing.T) {
 	// Cube returns {"error": "Continue wait"} (HTTP 200) when query results
 	// aren't cached yet. The plugin must poll until data is ready.
@@ -680,6 +845,91 @@ func TestCreateNullFieldWithTimeDimension(t *testing.T) {
 	field := ds.createNullField("orders.created_at", rowCount, annotation)
 	if reflect.TypeOf(field.At(0)).String() != "*time.Time" {
 		t.Fatalf("Expected '*time.Time', got '%s'", reflect.TypeOf(field.At(0)).String())
+	}
+}
+
+func TestQueryDataAppliesFieldUnits(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		response := CubeAPIResponse{
+			Data: []map[string]interface{}{
+				{
+					"orders.revenue": "1000.5",
+					"orders.rate":    "0.125",
+				},
+			},
+			Annotation: CubeAnnotation{
+				Measures: map[string]CubeFieldInfo{
+					"orders.revenue": {
+						Type:     "number",
+						Format:   "currency",
+						Currency: "USD",
+					},
+					"orders.rate": {
+						Type:   "number",
+						Format: "percent_1",
+					},
+				},
+				Dimensions:     map[string]CubeFieldInfo{},
+				Segments:       map[string]CubeFieldInfo{},
+				TimeDimensions: map[string]CubeFieldInfo{},
+			},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Errorf("Failed to encode response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL}
+	queryJSON, _ := json.Marshal(map[string]interface{}{
+		"refId":    "A",
+		"measures": []string{"orders.revenue", "orders.rate"},
+	})
+
+	resp, err := ds.QueryData(
+		context.Background(),
+		&backend.QueryDataRequest{
+			PluginContext: newTestPluginContext(server.URL),
+			Queries:       []backend.DataQuery{{RefID: "A", JSON: queryJSON}},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	frame := resp.Responses["A"].Frames[0]
+	units := map[string]string{}
+	for _, field := range frame.Fields {
+		if field.Config != nil {
+			units[field.Name] = field.Config.Unit
+		}
+	}
+
+	if units["orders.revenue"] != "currencyUSD" {
+		t.Fatalf("Expected orders.revenue unit currencyUSD, got %q", units["orders.revenue"])
+	}
+	if units["orders.rate"] != "percentunit" {
+		t.Fatalf("Expected orders.rate unit percentunit, got %q", units["orders.rate"])
+	}
+}
+
+func TestCreateNullFieldAppliesFieldUnit(t *testing.T) {
+	ds := Datasource{}
+	annotation := CubeAnnotation{
+		Measures: map[string]CubeFieldInfo{
+			"orders.revenue": {
+				Type:     "number",
+				Format:   "currency",
+				Currency: "EUR",
+			},
+		},
+	}
+
+	field := ds.createNullField("orders.revenue", 1, annotation)
+	if field.Config == nil || field.Config.Unit != "currencyEUR" {
+		t.Fatalf("Expected currencyEUR unit on null field, got %#v", field.Config)
 	}
 }
 
@@ -1203,6 +1453,123 @@ func TestConvertTimeDimensionsRegularDimensionWithTimeType(t *testing.T) {
 		}
 	} else {
 		t.Errorf("Expected *time.Time value, got %T", val)
+	}
+}
+
+func TestQueryDataWithTimeDimensionGranularity(t *testing.T) {
+	// When a query uses timeDimensions with granularity (no raw dimension in the
+	// dimensions array), Cube returns a granularity-specific field name such as
+	// "orders.created_at.month". reorderFrameFields must include that field in the
+	// output frame so the time axis is available for Grafana time-series panels.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		response := CubeAPIResponse{
+			Data: []map[string]interface{}{
+				{"orders.created_at.month": "2024-01-01T00:00:00.000Z", "orders.count": "42"},
+				{"orders.created_at.month": "2024-02-01T00:00:00.000Z", "orders.count": "37"},
+				{"orders.created_at.month": "2024-03-01T00:00:00.000Z", "orders.count": "55"},
+			},
+			Annotation: CubeAnnotation{
+				Measures: map[string]CubeFieldInfo{
+					"orders.count": {Title: "Orders Count", ShortTitle: "Count", Type: "number"},
+				},
+				Dimensions: map[string]CubeFieldInfo{},
+				Segments:   map[string]CubeFieldInfo{},
+				TimeDimensions: map[string]CubeFieldInfo{
+					"orders.created_at.month": {Title: "Created At (Month)", ShortTitle: "Created At", Type: "time"},
+				},
+			},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(response)
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL}
+
+	// No "dimensions" key — matches the fixed grafana-data-app query shape.
+	query := map[string]interface{}{
+		"refId":    "A",
+		"measures": []string{"orders.count"},
+		"timeDimensions": []map[string]interface{}{
+			{
+				"dimension":   "orders.created_at",
+				"granularity": "month",
+				"dateRange":   []string{"2024-01-01", "2024-12-31"},
+			},
+		},
+		"order": [][]string{{"orders.created_at", "asc"}},
+	}
+	queryJSON, _ := json.Marshal(query)
+
+	resp, err := ds.QueryData(
+		context.Background(),
+		&backend.QueryDataRequest{
+			PluginContext: newTestPluginContext(server.URL),
+			Queries: []backend.DataQuery{
+				{RefID: "A", JSON: queryJSON},
+			},
+		},
+	)
+	if err != nil {
+		t.Fatalf("QueryData failed: %v", err)
+	}
+
+	response := resp.Responses["A"]
+	if response.Error != nil {
+		t.Fatalf("Response had error: %v", response.Error)
+	}
+	if len(response.Frames) != 1 {
+		t.Fatalf("Expected 1 frame, got %d", len(response.Frames))
+	}
+
+	frame := response.Frames[0]
+
+	// The granularity-specific time field must be present in the output frame.
+	var timeField *data.Field
+	for _, f := range frame.Fields {
+		if f.Name == "orders.created_at.month" {
+			timeField = f
+			break
+		}
+	}
+	if timeField == nil {
+		t.Fatal("granularity time field 'orders.created_at.month' not found in response frame")
+	}
+
+	// It must be the first field so Grafana timeseries panels find the time axis.
+	if frame.Fields[0].Name != "orders.created_at.month" {
+		t.Errorf("expected time field to be first; got %s", frame.Fields[0].Name)
+	}
+
+	// It must have been converted to a proper time type.
+	if timeField.Type() != data.FieldTypeNullableTime {
+		t.Errorf("expected NullableTime field type, got %s", timeField.Type())
+	}
+
+	// Spot-check the first bucket is 2024-01-01.
+	val := timeField.At(0)
+	if tv, ok := val.(*time.Time); ok && tv != nil {
+		expected := "2024-01-01T00:00:00Z"
+		if actual := tv.UTC().Format(time.RFC3339); actual != expected {
+			t.Errorf("expected first bucket %s, got %s", expected, actual)
+		}
+	} else {
+		t.Errorf("expected *time.Time at index 0, got %T", val)
+	}
+
+	// The measure field must also be present.
+	var countField *data.Field
+	for _, f := range frame.Fields {
+		if f.Name == "orders.count" {
+			countField = f
+			break
+		}
+	}
+	if countField == nil {
+		t.Fatal("measure field 'orders.count' not found in response frame")
+	}
+	if frame.Fields[0].Len() != 3 {
+		t.Errorf("expected 3 rows (one per month), got %d", frame.Fields[0].Len())
 	}
 }
 
