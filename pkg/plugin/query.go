@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"strconv"
 	"time"
 
@@ -103,23 +102,14 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 		return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
 	}
 
-	// Add query parameter
-	u, err := url.Parse(apiReq.URL.String())
-	if err != nil {
-		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("Failed to parse API URL: %v", err))
-	}
-
-	params := url.Values{}
-	params.Add("query", string(cubeAPIQueryJSON))
-	u.RawQuery = params.Encode()
-
 	// Debug: Log what we're sending to the API
-	backend.Logger.Debug("Making API request", "url", u.String(), "cubeQuery", string(cubeAPIQueryJSON))
+	backend.Logger.Debug("Making API request", "url", apiReq.URL.String(), "cubeQuery", string(cubeAPIQueryJSON))
 
-	// Use shared helper to make the request with "Continue wait" polling
-	body, err := d.doCubeLoadRequest(ctx, u.String(), apiReq.Config)
+	// Use shared helper to make the request with "Continue wait" polling.
+	// The helper picks GET or POST based on the encoded query size.
+	body, err := d.doCubeLoadRequest(ctx, apiReq.URL.String(), cubeAPIQueryJSON, apiReq.Config)
 	if err != nil {
-		backend.Logger.Error("Failed to fetch data from Cube API", "error", err, "url", u.String())
+		backend.Logger.Error("Failed to fetch data from Cube API", "error", err, "url", apiReq.URL.String())
 		return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
 	}
 
