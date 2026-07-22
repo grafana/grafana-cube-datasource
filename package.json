@@ -85,7 +85,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
-  "packageManager": "npm@11.16.0",
+  "packageManager": "npm@11.18.0",
   "volta": {
     "node": "24.15.0"
   },
