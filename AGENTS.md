@@ -36,7 +36,7 @@ mapping, method selection, or progress fields, you **must**:
 1. Check all three sources of truth (the Cube monorepo is cloned at `../cube`):
    - JS client: `../cube/packages/cubejs-client-core/src/index.ts` and `.../HttpTransport.ts`
    - Server contract: `../cube/packages/cubejs-api-gateway/src/gateway.ts`
-   - REST docs: `../cube/docs/pages/product/apis-integrations/rest-api.mdx`
+   - REST docs: `../cube/docs/content/product/apis-integrations/core-data-apis/rest-api/`
 2. Mirror the SDK by default; only diverge for a clear Grafana/backend reason.
 3. For any intentional divergence, document rationale + user impact + tests in the
    divergence log in `docs/sdk-parity.md`.

@@ -40,7 +40,7 @@ sources of truth (the Cube monorepo is cloned alongside this repo at `../cube`):
 |--------|----------|
 | JS client core (query/polling/retry, `RequestError`, transport categories) | `../cube/packages/cubejs-client-core/src/index.ts`, `.../HttpTransport.ts` |
 | Server contract (`/v1/load`, status codes, error shapes, continue-wait) | `../cube/packages/cubejs-api-gateway/src/gateway.ts` |
-| REST API docs | `../cube/docs/pages/product/apis-integrations/rest-api.mdx` |
+| REST API docs | `../cube/docs/content/product/apis-integrations/core-data-apis/rest-api/` (`index.mdx`, `reference.mdx`) |
 | Existing plugin behavior + tests | `pkg/plugin/*.go`, `pkg/plugin/*_test.go` |
 
 ## Testing expectations
@@ -58,29 +58,69 @@ sources of truth (the Cube monorepo is cloned alongside this repo at `../cube`):
 Behaviors where the Go backend intentionally differs from `@cubejs-client/core`.
 Everything not listed here is expected to mirror the SDK.
 
-### 1. Transient network / HTTP 502 retries are enabled by default
+### How the SDK actually retries (precedence matters)
 
-- **SDK behavior:** `networkErrorRetries` defaults to `0` — the SDK only retries
-  transient failures (transport "network error" or HTTP `502`) if the embedding
-  app opts in.
-- **Divergence:** the backend enables a small bounded number of retries by
-  default (see `defaultNetworkErrorRetries` in `pkg/plugin/cubeclient.go`) with
-  short backoff between attempts.
+The divergences below hinge on one subtlety in `cubejs-client-core`'s
+`loadMethod` (`index.ts`, ~L363). Because JavaScript `&&` binds tighter than
+`||`, the retry condition parses as:
+
+```js
+(response.status === 502) || (response.error === 'network error' && --networkRetries >= 0)
+```
+
+So the SDK:
+
+- retries **HTTP 502 unconditionally** — even when `networkErrorRetries` is `0`,
+  and without ever decrementing the budget; and
+- retries a transport **"network error"** only while `networkErrorRetries`
+  (default `0`) has budget left.
+
+Both wait `pollInterval` between attempts. `Continue wait` responses, by
+contrast, are retried **immediately** (`continueWait()` is called with
+`wait=false`); the pacing comes from the server long-poll (Cube's query queue
+blocks up to `continueWaitTimeout`, default 10s, before returning `Continue
+wait`). The Go backend mirrors this immediate-retry cadence — this is
+SDK-aligned, **not** a divergence, so it is not listed below.
+
+### 1. Network-error retries are enabled by default
+
+- **SDK behavior:** the transport "network error" retry is gated by
+  `networkErrorRetries`, which defaults to `0` (opt-in).
+- **Divergence:** the backend enables a small bounded number of network-error
+  retries by default (`defaultNetworkErrorRetries` in
+  `pkg/plugin/cubeclient.go`) with short exponential backoff.
 - **Rationale:** a Grafana backend datasource has no application layer above it
-  to configure `networkErrorRetries`, and dashboards issue many concurrent
+  to opt into `networkErrorRetries`, and dashboards issue many concurrent
   queries. Transparently surviving brief upstream blips (load-balancer
-  restarts, momentary `502`s) is a better default than surfacing a hard error
-  to every panel.
-- **User impact:** a query that hits a transient network error or `502` is
-  retried a few times before failing; on success the user sees data instead of
-  an error. Non-transient failures are **not** retried and are surfaced
-  immediately.
-- **Tests:** `TestDoCubeLoadRequestRetriesOn502`,
-  `TestDoCubeLoadRequestRetriesOnNetworkError`,
-  `TestDoCubeLoadRequestDoesNotRetryNonRetryableStatus` in
-  `pkg/plugin/cubeclient_test.go`.
+  restarts) beats surfacing a hard error to every panel.
+- **User impact:** a query that hits a transient network error is retried a few
+  times before failing. Operators can restore SDK-exact behavior (or tune it)
+  via the `networkErrorRetries` datasource jsonData setting — `0` disables
+  retries entirely, matching the SDK default.
+- **Tests:** `TestDoCubeLoadRequestRetriesOnNetworkError`,
+  `TestDoCubeLoadRequestNetworkErrorRetriesDisabled`,
+  `TestNetworkErrorRetriesResolution`, `TestDoCubeLoadRequestTimeoutNotRetried`
+  in `pkg/plugin/cubeclient_retry_test.go`.
 
-### 2. Continue-wait progress is not surfaced as a live progress stream
+### 2. HTTP 502 retries are bounded (not unconditional)
+
+- **SDK behavior:** retries `502` **unconditionally / unbounded** (a side effect
+  of the `&&`/`||` precedence above), which can loop forever against a
+  permanently-502 upstream.
+- **Divergence:** the backend retries `502` too, but caps it with the same
+  bounded budget as network-error retries.
+- **Rationale:** an unbounded retry loop is undesirable in a backend; a
+  persistently failing gateway should surface as an error (with the upstream
+  `502` status + body preserved) rather than hang.
+- **User impact:** transient `502`s are retried and usually succeed; a sustained
+  `502` fails after the budget with the upstream status/body preserved.
+- **Tests:** `TestDoCubeLoadRequestRetriesOn502`,
+  `TestDoCubeLoadRequestExhaustsRetriesReturns502`,
+  `TestDoCubeLoadRequestDoesNotRetryNonRetryableStatus`,
+  `TestDoCubeLoadRequestCancelledDuring502Backoff` in
+  `pkg/plugin/cubeclient_retry_test.go`.
+
+### 3. Continue-wait progress is not surfaced as a live progress stream
 
 - **SDK behavior:** exposes a `progressCallback(ProgressResult)` invoked on each
   `Continue wait` message so an app can render live `stage` / `timeElapsed`.
@@ -97,7 +137,7 @@ Everything not listed here is expected to mirror the SDK.
 - **Tests:** `TestQueryDataContinueWaitCancelledIncludesElapsedTime`,
   `TestQueryDataHTTPTimeoutWrapped` in `pkg/plugin/query_test.go`.
 
-### 3. Subscribe / continuous-fetch mode is not implemented
+### 4. Subscribe / continuous-fetch mode is not implemented
 
 - **SDK behavior:** supports `subscribe` for continuous polling and a WebSocket
   transport.
@@ -108,5 +148,3 @@ Everything not listed here is expected to mirror the SDK.
   duplicate Grafana's refresh mechanism.
 - **User impact:** none for standard dashboards; real-time streaming panels are
   not supported by this datasource.
-</content>
-</invoke>
