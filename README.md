@@ -159,8 +159,17 @@ behavior, timeout/cancellation semantics, status/error mapping, progress fields)
 - Check Cube JS SDK behavior first (local path: `../cube/packages/cubejs-client-core/src/index.ts`)
 - Check Cube REST docs (local path: `../cube/docs/pages/product/apis-integrations/rest-api.mdx`)
 - Mirror SDK behavior by default unless there is a clear Grafana/backend reason to diverge
+- Also check the server contract in `@cubejs-api-gateway` (local path:
+  `../cube/packages/cubejs-api-gateway/src/gateway.ts`) for status codes and error shapes
+- Mirror the SDK by default unless there is a clear Grafana/backend reason to diverge
 - If intentionally diverging, document rationale and user impact in the PR and add tests
-  that explicitly cover the divergence
+  that explicitly cover the divergence, and record it in the divergence log
+
+The full policy — including the required PR checklist and the log of intentional
+divergences — lives in [`docs/sdk-parity.md`](docs/sdk-parity.md). It is mirrored for
+AI agents in [`.cursor/rules/sdk-parity.mdc`](.cursor/rules/sdk-parity.mdc) and
+[`AGENTS.md`](AGENTS.md). See issue
+[#118](https://github.com/grafana/grafana-cube-datasource/issues/118) for background.
 
 ### Development Workflow (Recommended)
 
