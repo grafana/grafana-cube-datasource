@@ -23,6 +23,120 @@ import (
 // request lines + headers over ~16KB with "431 Request Header Fields Too Large".
 const urlLengthLimit = 2000
 
+// Bounded retry configuration for transient transport failures on the /v1/load
+// path. This mirrors @cubejs-client/core's networkErrorRetries option, which
+// retries the request when the transport reports a "network error" or the
+// server returns HTTP 502.
+//
+// INTENTIONAL DIVERGENCE: the SDK defaults networkErrorRetries to 0 (opt-in).
+// We enable a small bounded retry by default because a Grafana backend
+// datasource has no embedding app to configure retries, and dashboards issue
+// many concurrent queries; transparently surviving brief upstream blips
+// (load-balancer restarts, momentary 502s) is a better default than surfacing a
+// hard error to every panel. See docs/sdk-parity.md (divergence log).
+const (
+	defaultNetworkErrorRetries = 3
+	defaultNetworkRetryBackoff = 500 * time.Millisecond
+	maxNetworkRetryBackoff     = 5 * time.Second
+)
+
+// transportErrorKind classifies a transport-level failure from client.Do,
+// mirroring the timeout/aborted/network-error categories the SDK's HttpTransport
+// distinguishes (AbortSignal timeout vs. manual abort vs. everything else).
+type transportErrorKind int
+
+const (
+	// transportNetworkError is a generic, typically transient transport failure
+	// (connection refused, reset, DNS, EOF). Retryable, like the SDK's
+	// "network error" category.
+	transportNetworkError transportErrorKind = iota
+	// transportTimeout is a context-deadline timeout. Not retryable (the
+	// deadline has already passed). Mirrors the SDK's "timeout" category.
+	transportTimeout
+	// transportAborted is an explicit cancellation. Not retryable. Mirrors the
+	// SDK's "aborted" category.
+	transportAborted
+)
+
+// classifyTransportError maps a client.Do error to a transportErrorKind.
+func classifyTransportError(err error) transportErrorKind {
+	switch {
+	case errors.Is(err, context.DeadlineExceeded):
+		return transportTimeout
+	case errors.Is(err, context.Canceled):
+		return transportAborted
+	default:
+		return transportNetworkError
+	}
+}
+
+// networkErrorRetries returns the configured bounded retry count for transient
+// transport failures, falling back to defaultNetworkErrorRetries.
+func (d *Datasource) networkErrorRetries() int {
+	if d.maxNetworkRetries != nil {
+		if *d.maxNetworkRetries < 0 {
+			return 0
+		}
+		return *d.maxNetworkRetries
+	}
+	return defaultNetworkErrorRetries
+}
+
+// retryBackoff returns the backoff duration before the given (zero-based) retry
+// attempt, using exponential growth from the base interval capped at
+// maxNetworkRetryBackoff.
+func (d *Datasource) retryBackoff(attempt int) time.Duration {
+	base := d.networkRetryBackoffBase
+	if base <= 0 {
+		base = defaultNetworkRetryBackoff
+	}
+	backoff := base
+	for i := 0; i < attempt; i++ {
+		backoff *= 2
+		if backoff >= maxNetworkRetryBackoff {
+			return maxNetworkRetryBackoff
+		}
+	}
+	return backoff
+}
+
+// sleepWithContext waits for d, returning the context error if the context is
+// cancelled first. A non-positive duration still honours cancellation.
+func sleepWithContext(ctx context.Context, d time.Duration) error {
+	if d <= 0 {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			return nil
+		}
+	}
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
+}
+
+// interruptedWaitError builds a user-friendly error for when the context is
+// cancelled or times out while waiting on Cube (during polling or retry
+// backoff), enriched with the last known Continue-wait progress when available.
+func interruptedWaitError(ctxErr error, progress continueWaitProgress, haveProgress bool) error {
+	var msg string
+	if errors.Is(ctxErr, context.DeadlineExceeded) {
+		msg = "Cube API request timed out while waiting for results to be computed"
+	} else {
+		msg = "query cancelled while waiting for Cube to compute results"
+	}
+	if haveProgress && (progress.Stage != "" || progress.TimeElapsed > 0) {
+		msg = fmt.Sprintf("%s (stage: %s, Cube timeElapsed: %ds)", msg, progress.Stage, int(progress.TimeElapsed))
+	}
+	return fmt.Errorf("%s", msg)
+}
+
 // CubeAPIError represents a non-200 HTTP response from the Cube API.
 // It preserves the original status code and body so callers (e.g. handleTagValues)
 // can forward them to the frontend instead of collapsing everything to 500.
@@ -61,6 +175,8 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, loadURL string, quer
 
 	pollStart := time.Now()
 	pollRetries := 0
+	networkRetriesLeft := d.networkErrorRetries()
+	networkAttempt := 0
 	var lastContinueWaitProgress continueWaitProgress
 	haveContinueWaitProgress := false
 	for {
@@ -83,27 +199,56 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, loadURL string, quer
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		if err != nil {
-			if errors.Is(err, context.DeadlineExceeded) {
+			switch classifyTransportError(err) {
+			case transportTimeout:
 				elapsed := time.Since(pollStart).Round(time.Millisecond)
 				msg := fmt.Sprintf("request to Cube API timed out after %s (the upstream warehouse may still be computing)", elapsed)
 				if haveContinueWaitProgress && (lastContinueWaitProgress.Stage != "" || lastContinueWaitProgress.TimeElapsed > 0) {
 					msg = fmt.Sprintf("%s (stage: %s, Cube timeElapsed: %ds)", msg, lastContinueWaitProgress.Stage, int(lastContinueWaitProgress.TimeElapsed))
 				}
 				return nil, fmt.Errorf("%s", msg)
-			}
-			if errors.Is(err, context.Canceled) {
+			case transportAborted:
 				msg := "query cancelled while waiting for Cube to compute results"
 				if haveContinueWaitProgress && (lastContinueWaitProgress.Stage != "" || lastContinueWaitProgress.TimeElapsed > 0) {
 					msg = fmt.Sprintf("%s (stage: %s, Cube timeElapsed: %ds)", msg, lastContinueWaitProgress.Stage, int(lastContinueWaitProgress.TimeElapsed))
 				}
 				return nil, fmt.Errorf("%s", msg)
+			default: // transportNetworkError
+				// Bounded retry for transient network failures, mirroring the
+				// SDK's networkErrorRetries ("network error" category).
+				if networkRetriesLeft > 0 {
+					networkRetriesLeft--
+					backoff := d.retryBackoff(networkAttempt)
+					networkAttempt++
+					backend.Logger.Warn("Cube API request failed with transient network error, retrying",
+						"url", loadURL, "backoff", backoff, "error", err)
+					if waitErr := sleepWithContext(ctx, backoff); waitErr != nil {
+						return nil, interruptedWaitError(waitErr, lastContinueWaitProgress, haveContinueWaitProgress)
+					}
+					continue
+				}
+				return nil, fmt.Errorf("failed to make API request: %w", err)
 			}
-			return nil, fmt.Errorf("failed to make API request: %w", err)
 		}
 
 		if resp.StatusCode != http.StatusOK {
 			errorBody, _ := io.ReadAll(resp.Body)
 			_ = resp.Body.Close()
+			// Bounded retry for transient HTTP 502 responses, mirroring the SDK
+			// (status === 502 is retried under networkErrorRetries). Other
+			// non-200 statuses are surfaced immediately with their upstream
+			// status + body preserved.
+			if resp.StatusCode == http.StatusBadGateway && networkRetriesLeft > 0 {
+				networkRetriesLeft--
+				backoff := d.retryBackoff(networkAttempt)
+				networkAttempt++
+				backend.Logger.Warn("Cube API returned 502 Bad Gateway, retrying",
+					"url", loadURL, "backoff", backoff)
+				if waitErr := sleepWithContext(ctx, backoff); waitErr != nil {
+					return nil, &CubeAPIError{StatusCode: resp.StatusCode, Body: errorBody}
+				}
+				continue
+			}
 			return nil, &CubeAPIError{StatusCode: resp.StatusCode, Body: errorBody}
 		}
 

@@ -3,6 +3,7 @@ package plugin
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -110,7 +111,7 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 	body, err := d.doCubeLoadRequest(ctx, apiReq.URL.String(), cubeAPIQueryJSON, apiReq.Config)
 	if err != nil {
 		backend.Logger.Error("Failed to fetch data from Cube API", "error", err, "url", apiReq.URL.String())
-		return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
+		return loadErrorResponse(err)
 	}
 
 	// Parse the API response
@@ -143,6 +144,35 @@ func (d *Datasource) query(ctx context.Context, pCtx backend.PluginContext, quer
 	response.Frames = append(response.Frames, frame)
 
 	return response
+}
+
+// backendStatusFromHTTP maps a Cube API HTTP status code to the closest Grafana
+// backend.Status, mirroring how @cubejs-client/core preserves response.status
+// on its RequestError. Any valid HTTP status code (100-599) is preserved as-is;
+// out-of-range codes fall back to StatusInternal.
+func backendStatusFromHTTP(code int) backend.Status {
+	if s := backend.Status(code); s.IsValid() {
+		return s
+	}
+	return backend.StatusInternal
+}
+
+// loadErrorResponse converts an error from doCubeLoadRequest into a DataResponse.
+// For a non-200 Cube API response it preserves the upstream status code and body
+// (parity with the SDK's RequestError and with how handleTagValues forwards the
+// upstream status). Previously the query path collapsed every load failure to
+// StatusBadRequest, hiding auth (401/403), rate-limit (429), and server (5xx)
+// distinctions from the frontend. Transport failures (timeout/cancel/network)
+// keep their already-formatted message and map to StatusBadRequest.
+func loadErrorResponse(err error) backend.DataResponse {
+	var cubeErr *CubeAPIError
+	if errors.As(err, &cubeErr) {
+		return backend.ErrDataResponse(
+			backendStatusFromHTTP(cubeErr.StatusCode),
+			fmt.Sprintf("Cube API request failed with status %d: %s", cubeErr.StatusCode, string(cubeErr.Body)),
+		)
+	}
+	return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
 }
 
 // reorderFrameFields reorders the fields of a DataFrame according to the query specification.
