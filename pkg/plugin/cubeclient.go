@@ -24,21 +24,55 @@ import (
 const urlLengthLimit = 2000
 
 // Bounded retry configuration for transient transport failures on the /v1/load
-// path. This mirrors @cubejs-client/core's networkErrorRetries option, which
-// retries the request when the transport reports a "network error" or the
-// server returns HTTP 502.
+// path.
 //
-// INTENTIONAL DIVERGENCE: the SDK defaults networkErrorRetries to 0 (opt-in).
-// We enable a small bounded retry by default because a Grafana backend
-// datasource has no embedding app to configure retries, and dashboards issue
-// many concurrent queries; transparently surviving brief upstream blips
-// (load-balancer restarts, momentary 502s) is a better default than surfacing a
-// hard error to every panel. See docs/sdk-parity.md (divergence log).
+// Parity note — this covers two distinct behaviors in @cubejs-client/core's
+// loadMethod (index.ts ~L363). Because JS `&&` binds tighter than `||`, that
+// condition parses as:
+//
+//	(status === 502) || (error === 'network error' && --networkRetries >= 0)
+//
+// i.e. the SDK retries HTTP 502 UNCONDITIONALLY (even when networkErrorRetries
+// is 0), and retries transport "network error" only while the retry budget
+// lasts. Both wait pollInterval between attempts.
+//
+// This backend deliberately does NOT copy that split:
+//   - Network-error retries: enabled by default (INTENTIONAL DIVERGENCE from the
+//     SDK's opt-in default of 0) because a Grafana backend has no embedding app
+//     to configure networkErrorRetries and dashboards fan out many queries.
+//     Configurable via the `networkErrorRetries` jsonData setting (0 = SDK default).
+//   - 502 retries: also bounded by the same budget (INTENTIONAL DIVERGENCE from
+//     the SDK's unbounded 502 retry, which stems from the `&&`/`||` precedence
+//     above). A permanently-502 upstream should surface as an error rather than
+//     loop forever.
+//
+// See docs/sdk-parity.md (divergence log).
 const (
 	defaultNetworkErrorRetries = 3
 	defaultNetworkRetryBackoff = 500 * time.Millisecond
 	maxNetworkRetryBackoff     = 5 * time.Second
 )
+
+// loadRequestError carries a user-facing message together with the Grafana
+// backend status that best represents a transport-level failure, so the query
+// path can preserve status fidelity instead of collapsing every failure to 400.
+type loadRequestError struct {
+	status backend.Status
+	msg    string
+}
+
+func (e *loadRequestError) Error() string { return e.msg }
+
+// statusForContextErr maps a context error to a backend status. A deadline is a
+// gateway timeout; a cancellation (or anything else) has no server-fault status,
+// so we follow the SDK's statusFromError convention of treating unclassified
+// errors as Internal.
+func statusForContextErr(err error) backend.Status {
+	if errors.Is(err, context.DeadlineExceeded) {
+		return backend.StatusTimeout
+	}
+	return backend.StatusInternal
+}
 
 // transportErrorKind classifies a transport-level failure from client.Do,
 // mirroring the timeout/aborted/network-error categories the SDK's HttpTransport
@@ -70,16 +104,25 @@ func classifyTransportError(err error) transportErrorKind {
 	}
 }
 
-// networkErrorRetries returns the configured bounded retry count for transient
-// transport failures, falling back to defaultNetworkErrorRetries.
-func (d *Datasource) networkErrorRetries() int {
+// networkErrorRetriesFor returns the bounded retry count for transient transport
+// failures. Precedence: a test-only override on the Datasource, then the
+// operator-configured `networkErrorRetries` jsonData setting (0 mirrors the SDK
+// default), then defaultNetworkErrorRetries.
+func (d *Datasource) networkErrorRetriesFor(config *models.PluginSettings) int {
 	if d.maxNetworkRetries != nil {
-		if *d.maxNetworkRetries < 0 {
-			return 0
-		}
-		return *d.maxNetworkRetries
+		return clampRetries(*d.maxNetworkRetries)
+	}
+	if config != nil && config.NetworkErrorRetries != nil {
+		return clampRetries(*config.NetworkErrorRetries)
 	}
 	return defaultNetworkErrorRetries
+}
+
+func clampRetries(n int) int {
+	if n < 0 {
+		return 0
+	}
+	return n
 }
 
 // retryBackoff returns the backoff duration before the given (zero-based) retry
@@ -134,7 +177,7 @@ func interruptedWaitError(ctxErr error, progress continueWaitProgress, haveProgr
 	if haveProgress && (progress.Stage != "" || progress.TimeElapsed > 0) {
 		msg = fmt.Sprintf("%s (stage: %s, Cube timeElapsed: %ds)", msg, progress.Stage, int(progress.TimeElapsed))
 	}
-	return fmt.Errorf("%s", msg)
+	return &loadRequestError{status: statusForContextErr(ctxErr), msg: msg}
 }
 
 // CubeAPIError represents a non-200 HTTP response from the Cube API.
@@ -154,6 +197,15 @@ func (e *CubeAPIError) Error() string {
 // when query results aren't cached yet (e.g. the upstream warehouse is still computing).
 // This method retries immediately until actual data arrives or the context is cancelled, matching the
 // behavior of the official @cubejs-client/core SDK.
+//
+// Continue-wait polling cadence: the SDK retries Continue-wait immediately too
+// (index.ts loadMethod calls continueWait() with wait=false; only network-error
+// retries pass wait=true and sleep pollInterval). The pacing comes from the
+// server: Cube's query queue long-polls up to continueWaitTimeout seconds
+// (default 10s, see cubejs-query-orchestrator QueryQueue) before returning
+// {"error":"Continue wait"}, so each HTTP round-trip already blocks server-side.
+// Adding a client-side delay would double-pace and add latency, so we mirror the
+// SDK and retry immediately. This is SDK-aligned, not a divergence.
 //
 // SDK alignment: like @cubejs-client/core, the query is sent via GET with the
 // query JSON URL-encoded in the query string while the full URL stays under
@@ -175,7 +227,7 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, loadURL string, quer
 
 	pollStart := time.Now()
 	pollRetries := 0
-	networkRetriesLeft := d.networkErrorRetries()
+	networkRetriesLeft := d.networkErrorRetriesFor(config)
 	networkAttempt := 0
 	var lastContinueWaitProgress continueWaitProgress
 	haveContinueWaitProgress := false
@@ -206,13 +258,13 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, loadURL string, quer
 				if haveContinueWaitProgress && (lastContinueWaitProgress.Stage != "" || lastContinueWaitProgress.TimeElapsed > 0) {
 					msg = fmt.Sprintf("%s (stage: %s, Cube timeElapsed: %ds)", msg, lastContinueWaitProgress.Stage, int(lastContinueWaitProgress.TimeElapsed))
 				}
-				return nil, fmt.Errorf("%s", msg)
+				return nil, &loadRequestError{status: backend.StatusTimeout, msg: msg}
 			case transportAborted:
 				msg := "query cancelled while waiting for Cube to compute results"
 				if haveContinueWaitProgress && (lastContinueWaitProgress.Stage != "" || lastContinueWaitProgress.TimeElapsed > 0) {
 					msg = fmt.Sprintf("%s (stage: %s, Cube timeElapsed: %ds)", msg, lastContinueWaitProgress.Stage, int(lastContinueWaitProgress.TimeElapsed))
 				}
-				return nil, fmt.Errorf("%s", msg)
+				return nil, &loadRequestError{status: backend.StatusInternal, msg: msg}
 			default: // transportNetworkError
 				// Bounded retry for transient network failures, mirroring the
 				// SDK's networkErrorRetries ("network error" category).
@@ -227,15 +279,18 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, loadURL string, quer
 					}
 					continue
 				}
-				return nil, fmt.Errorf("failed to make API request: %w", err)
+				// Network connectivity failure (not a client error): map to 502.
+				return nil, &loadRequestError{status: backend.StatusBadGateway, msg: fmt.Sprintf("failed to make API request: %v", err)}
 			}
 		}
 
 		if resp.StatusCode != http.StatusOK {
 			errorBody, _ := io.ReadAll(resp.Body)
 			_ = resp.Body.Close()
-			// Bounded retry for transient HTTP 502 responses, mirroring the SDK
-			// (status === 502 is retried under networkErrorRetries). Other
+			// Bounded retry for transient HTTP 502 responses. INTENTIONAL
+			// DIVERGENCE: the SDK retries 502 UNCONDITIONALLY (see precedence note
+			// on the retry constants); we cap it with the same budget so a
+			// permanently-502 upstream fails instead of looping forever. Other
 			// non-200 statuses are surfaced immediately with their upstream
 			// status + body preserved.
 			if resp.StatusCode == http.StatusBadGateway && networkRetriesLeft > 0 {
@@ -245,7 +300,9 @@ func (d *Datasource) doCubeLoadRequest(ctx context.Context, loadURL string, quer
 				backend.Logger.Warn("Cube API returned 502 Bad Gateway, retrying",
 					"url", loadURL, "backoff", backoff)
 				if waitErr := sleepWithContext(ctx, backoff); waitErr != nil {
-					return nil, &CubeAPIError{StatusCode: resp.StatusCode, Body: errorBody}
+					// Cancelled/timed out during backoff: surface the
+					// cancellation/timeout, consistent with the network-error path.
+					return nil, interruptedWaitError(waitErr, lastContinueWaitProgress, haveContinueWaitProgress)
 				}
 				continue
 			}

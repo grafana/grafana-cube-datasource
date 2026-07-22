@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -227,11 +228,147 @@ func TestRetryBackoffGrowsAndCaps(t *testing.T) {
 	}
 }
 
-// TestDoCubeLoadRequestDefaultRetryCount documents the intentional divergence:
-// retries are enabled by default (unlike the SDK's default of 0).
-func TestDoCubeLoadRequestDefaultRetryCount(t *testing.T) {
+// TestNetworkErrorRetriesResolution documents the intentional divergence and the
+// jsonData wiring: retries default to defaultNetworkErrorRetries (unlike the
+// SDK's default of 0), the operator-facing config overrides it (0 = SDK
+// default), and the test-only field takes highest precedence.
+func TestNetworkErrorRetriesResolution(t *testing.T) {
 	ds := &Datasource{}
-	if got := ds.networkErrorRetries(); got != defaultNetworkErrorRetries {
-		t.Fatalf("expected default %d retries, got %d", defaultNetworkErrorRetries, got)
+	if got := ds.networkErrorRetriesFor(nil); got != defaultNetworkErrorRetries {
+		t.Fatalf("nil config: expected default %d, got %d", defaultNetworkErrorRetries, got)
+	}
+	if got := ds.networkErrorRetriesFor(&models.PluginSettings{}); got != defaultNetworkErrorRetries {
+		t.Fatalf("unset config: expected default %d, got %d", defaultNetworkErrorRetries, got)
+	}
+	if got := ds.networkErrorRetriesFor(&models.PluginSettings{NetworkErrorRetries: intPtr(0)}); got != 0 {
+		t.Fatalf("config 0 (SDK default): expected 0, got %d", got)
+	}
+	if got := ds.networkErrorRetriesFor(&models.PluginSettings{NetworkErrorRetries: intPtr(7)}); got != 7 {
+		t.Fatalf("config 7: expected 7, got %d", got)
+	}
+	// Test-only override wins over config.
+	ds.maxNetworkRetries = intPtr(1)
+	if got := ds.networkErrorRetriesFor(&models.PluginSettings{NetworkErrorRetries: intPtr(7)}); got != 1 {
+		t.Fatalf("override: expected 1, got %d", got)
+	}
+	// Negative values clamp to 0.
+	if got := ds.networkErrorRetriesFor(&models.PluginSettings{NetworkErrorRetries: intPtr(-5)}); got != 1 {
+		t.Fatalf("override still wins: expected 1, got %d", got)
+	}
+	ds.maxNetworkRetries = nil
+	if got := ds.networkErrorRetriesFor(&models.PluginSettings{NetworkErrorRetries: intPtr(-5)}); got != 0 {
+		t.Fatalf("negative config clamps to 0, got %d", got)
+	}
+}
+
+// TestDoCubeLoadRequestTimeoutNotRetried verifies that a context-deadline
+// timeout is NOT retried (retrying can't beat an already-expired deadline) and
+// is surfaced as a timeout with StatusTimeout. Mirrors the SDK's "timeout"
+// category, which is not part of networkErrorRetries.
+func TestDoCubeLoadRequestTimeoutNotRetried(t *testing.T) {
+	requestCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount++
+		time.Sleep(200 * time.Millisecond) // outlast the context deadline
+		_, _ = w.Write(successBody(t))
+	}))
+	defer server.Close()
+
+	// Generous retry budget; a timeout must still not consume it.
+	ds := &Datasource{BaseURL: server.URL, maxNetworkRetries: intPtr(5), networkRetryBackoffBase: time.Millisecond}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancel()
+
+	_, err := ds.doCubeLoadRequest(ctx, server.URL+"/cubejs-api/v1/load", []byte(`{}`), devConfig())
+	if err == nil {
+		t.Fatal("expected timeout error")
+	}
+	var reqErr *loadRequestError
+	if !errors.As(err, &reqErr) {
+		t.Fatalf("expected *loadRequestError, got %T: %v", err, err)
+	}
+	if reqErr.status != 504 { // backend.StatusTimeout
+		t.Fatalf("expected StatusTimeout (504), got %d", reqErr.status)
+	}
+	if requestCount != 1 {
+		t.Fatalf("timeout must not be retried; expected 1 request, got %d", requestCount)
+	}
+}
+
+// TestDoCubeLoadRequestCancelledDuringNetworkBackoff verifies that cancelling
+// the context while sleeping between transient network-error retries surfaces a
+// cancellation error (not a stale/generic error).
+func TestDoCubeLoadRequestCancelledDuringNetworkBackoff(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hj, ok := w.(http.Hijacker)
+		if !ok {
+			t.Error("no hijack support")
+			return
+		}
+		conn, _, err := hj.Hijack()
+		if err != nil {
+			t.Errorf("hijack: %v", err)
+			return
+		}
+		_ = conn.Close()
+	}))
+	defer server.Close()
+
+	// Long backoff so the cancellation lands during the sleep, not between requests.
+	ds := &Datasource{BaseURL: server.URL, maxNetworkRetries: intPtr(5), networkRetryBackoffBase: 10 * time.Second}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Millisecond)
+	defer cancel()
+
+	_, err := ds.doCubeLoadRequest(ctx, server.URL+"/cubejs-api/v1/load", []byte(`{}`), devConfig())
+	if err == nil {
+		t.Fatal("expected cancellation/timeout error")
+	}
+	var reqErr *loadRequestError
+	if !errors.As(err, &reqErr) {
+		t.Fatalf("expected *loadRequestError from interrupted backoff, got %T: %v", err, err)
+	}
+	if !strings.Contains(reqErr.Error(), "timed out") && !strings.Contains(reqErr.Error(), "cancelled") {
+		t.Fatalf("expected timeout/cancel message, got: %s", reqErr.Error())
+	}
+}
+
+// TestDoCubeLoadRequestCancelledDuring502Backoff verifies the 502 backoff path
+// is consistent with the network path: cancellation during the sleep surfaces a
+// cancellation/timeout error, not the stale CubeAPIError{502}.
+func TestDoCubeLoadRequestCancelledDuring502Backoff(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "bad gateway", http.StatusBadGateway)
+	}))
+	defer server.Close()
+
+	ds := &Datasource{BaseURL: server.URL, maxNetworkRetries: intPtr(5), networkRetryBackoffBase: 10 * time.Second}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Millisecond)
+	defer cancel()
+
+	_, err := ds.doCubeLoadRequest(ctx, server.URL+"/cubejs-api/v1/load", []byte(`{}`), devConfig())
+	if err == nil {
+		t.Fatal("expected cancellation/timeout error")
+	}
+	var cubeErr *CubeAPIError
+	if errors.As(err, &cubeErr) {
+		t.Fatalf("cancellation during 502 backoff should not return stale CubeAPIError, got %v", err)
+	}
+	var reqErr *loadRequestError
+	if !errors.As(err, &reqErr) {
+		t.Fatalf("expected *loadRequestError, got %T: %v", err, err)
+	}
+}
+
+// TestClassifiedTransportStatuses verifies the status mapping for transport
+// failures (not client 400s).
+func TestClassifiedTransportStatuses(t *testing.T) {
+	if got := statusForContextErr(context.DeadlineExceeded); got != 504 {
+		t.Fatalf("deadline should map to StatusTimeout (504), got %d", got)
+	}
+	if got := statusForContextErr(context.Canceled); got != 500 {
+		t.Fatalf("cancel should map to StatusInternal (500), got %d", got)
 	}
 }

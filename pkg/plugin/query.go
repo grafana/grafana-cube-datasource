@@ -162,8 +162,9 @@ func backendStatusFromHTTP(code int) backend.Status {
 // (parity with the SDK's RequestError and with how handleTagValues forwards the
 // upstream status). Previously the query path collapsed every load failure to
 // StatusBadRequest, hiding auth (401/403), rate-limit (429), and server (5xx)
-// distinctions from the frontend. Transport failures (timeout/cancel/network)
-// keep their already-formatted message and map to StatusBadRequest.
+// distinctions from the frontend. Transport failures carry an explicit status
+// via *loadRequestError (timeout -> 504, network -> 502, cancel/other -> 500)
+// so connectivity/timeout problems are not mislabeled as client 400s.
 func loadErrorResponse(err error) backend.DataResponse {
 	var cubeErr *CubeAPIError
 	if errors.As(err, &cubeErr) {
@@ -172,7 +173,13 @@ func loadErrorResponse(err error) backend.DataResponse {
 			fmt.Sprintf("Cube API request failed with status %d: %s", cubeErr.StatusCode, string(cubeErr.Body)),
 		)
 	}
-	return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
+	var reqErr *loadRequestError
+	if errors.As(err, &reqErr) {
+		return backend.ErrDataResponse(reqErr.status, reqErr.msg)
+	}
+	// Unclassified errors (e.g. request construction / auth generation) are
+	// treated as internal rather than client errors.
+	return backend.ErrDataResponse(backend.StatusInternal, err.Error())
 }
 
 // reorderFrameFields reorders the fields of a DataFrame according to the query specification.
