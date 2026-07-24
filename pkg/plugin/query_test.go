@@ -556,6 +556,65 @@ func TestQueryDataContinueWaitCancelledIncludesElapsedTime(t *testing.T) {
 	}
 }
 
+// TestQueryDataForwardsUpstreamStatus verifies that a non-200 Cube /v1/load
+// response has its upstream HTTP status preserved on the query path (parity
+// with the SDK's RequestError). Previously every load failure was collapsed to
+// StatusBadRequest (400), hiding auth/rate-limit/server distinctions. See #118
+// and docs/sdk-parity.md.
+func TestQueryDataForwardsUpstreamStatus(t *testing.T) {
+	cases := []struct {
+		name       string
+		httpStatus int
+		body       string
+		wantStatus backend.Status
+	}{
+		{"unauthorized", http.StatusUnauthorized, `{"error":"Invalid token"}`, backend.StatusUnauthorized},
+		{"forbidden", http.StatusForbidden, `{"error":"forbidden"}`, backend.StatusForbidden},
+		{"rate limited", http.StatusTooManyRequests, `{"error":"slow down"}`, backend.StatusTooManyRequests},
+		{"user error", http.StatusBadRequest, `{"error":"bad query"}`, backend.StatusBadRequest},
+		{"internal", http.StatusInternalServerError, `{"error":"boom"}`, backend.StatusInternal},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(tc.httpStatus)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer server.Close()
+
+			// Disable transient retries so 5xx/502 isn't retried in this test.
+			ds := Datasource{BaseURL: server.URL, maxNetworkRetries: intPtr(0)}
+
+			queryJSON, _ := json.Marshal(map[string]interface{}{
+				"refId":    "A",
+				"measures": []string{"orders.count"},
+			})
+
+			resp, err := ds.QueryData(context.Background(), &backend.QueryDataRequest{
+				PluginContext: newTestPluginContext(server.URL),
+				Queries:       []backend.DataQuery{{RefID: "A", JSON: queryJSON}},
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			result := resp.Responses["A"]
+			if result.Error == nil {
+				t.Fatalf("expected an error for upstream status %d", tc.httpStatus)
+			}
+			if result.Status != tc.wantStatus {
+				t.Fatalf("expected backend status %d, got %d", tc.wantStatus, result.Status)
+			}
+			// The upstream body should be preserved in the error message.
+			if !strings.Contains(result.Error.Error(), tc.body) {
+				t.Errorf("expected error to include upstream body %q, got: %s", tc.body, result.Error.Error())
+			}
+		})
+	}
+}
+
 func TestQueryDataWithMultipleDimensions(t *testing.T) {
 	// Create a mock server that returns expected test data with multiple dimensions
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

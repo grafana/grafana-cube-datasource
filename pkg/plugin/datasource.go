@@ -51,6 +51,15 @@ type Datasource struct {
 	// JWT cache keyed by API secret
 	jwtCache      map[string]jwtCacheEntry
 	jwtCacheMutex sync.RWMutex
+
+	// maxNetworkRetries overrides the number of bounded retries for transient
+	// transport failures (network errors / HTTP 502) in doCubeLoadRequest.
+	// nil means use defaultNetworkErrorRetries. Set by tests for determinism.
+	maxNetworkRetries *int
+	// networkRetryBackoffBase overrides the base backoff between transient
+	// retries. Zero means use defaultNetworkRetryBackoff. Set by tests to keep
+	// them fast.
+	networkRetryBackoffBase time.Duration
 }
 
 // CubeAPIURL represents a fully constructed Cube API endpoint URL
