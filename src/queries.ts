@@ -154,6 +154,10 @@ function readAdhocFilters(datasourceName: string): AdHocFilter[] {
     const templateSrv = getTemplateSrv() as ReturnType<typeof getTemplateSrv> & {
       getAdhocFilters?: (name: string) => AdHocFilter[] | undefined;
     };
+    // NOTE: getAdhocFilters is deprecated. This mirrors the existing usage in
+    // src/utils/normalizeCubeQuery.ts; both call sites should migrate together to
+    // a supported UI-context API once one exists. Tracked by #129 (which currently
+    // only covers the query-execution path, not this getTagValues lookup).
     return templateSrv.getAdhocFilters?.(datasourceName) ?? [];
   } catch {
     return [];

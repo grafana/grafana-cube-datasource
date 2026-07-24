@@ -1,8 +1,17 @@
 import React from 'react';
 import { screen, waitFor } from '@testing-library/react';
+import { getTemplateSrv } from '@grafana/runtime';
 import { createMockDataSource, setup } from '../../testUtils';
 import { FilterField } from './FilterField';
 import { Operator } from '../../types';
+
+// Override only getTemplateSrv so we can exercise the AdHoc-filter lookup wiring
+// (issue #32) without touching DataSourceWithBackend / getBackendSrv.
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: jest.fn(),
+}));
+const mockGetTemplateSrv = getTemplateSrv as jest.Mock;
 
 describe('FilterField', () => {
   const mockOnChange = jest.fn();
@@ -15,6 +24,8 @@ describe('FilterField', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default: no active AdHoc filters.
+    mockGetTemplateSrv.mockReturnValue({ getAdhocFilters: jest.fn(() => []) });
   });
 
   it('should render filter inputs with existing filter', async () => {
@@ -155,6 +166,48 @@ describe('FilterField', () => {
       expect(mockDataSource.getTagValues).toHaveBeenCalledWith({
         key: 'orders.customer',
         filters: undefined,
+      })
+    );
+  });
+
+  it('should thread active AdHoc filters (with preceding filters) through to getTagValues (issue #32 wiring)', async () => {
+    const getAdhocFilters = jest.fn(() => [
+      { key: 'orders.last_name', operator: '=', value: 'M.', values: ['M.'] },
+    ]);
+    mockGetTemplateSrv.mockReturnValue({ getAdhocFilters });
+
+    setup(
+      <FilterField
+        dimensions={mockOptions}
+        filters={[
+          { member: 'orders.status', operator: Operator.Equals, values: ['completed'] },
+          { member: 'orders.customer', operator: Operator.Equals, values: [] },
+        ]}
+        onChange={mockOnChange}
+        datasource={mockDataSource}
+      />
+    );
+
+    await screen.findByText('completed');
+
+    // The AdHoc filter lookup is wired to the datasource name.
+    expect(getAdhocFilters).toHaveBeenCalledWith('Test Cube');
+
+    // First row: scoped by the active AdHoc filter alone (no preceding filters).
+    expect(mockDataSource.getTagValues).toHaveBeenCalledWith({
+      key: 'orders.status',
+      filters: [{ key: 'orders.last_name', operator: '=', value: 'M.', values: ['M.'] }],
+    });
+
+    // Second row: scoped by the AdHoc filter AND the preceding complete filter
+    // (adhoc listed first, then preceding).
+    await waitFor(() =>
+      expect(mockDataSource.getTagValues).toHaveBeenCalledWith({
+        key: 'orders.customer',
+        filters: [
+          { key: 'orders.last_name', operator: '=', value: 'M.', values: ['M.'] },
+          { key: 'orders.status', operator: '=', value: 'completed', values: ['completed'] },
+        ],
       })
     );
   });
