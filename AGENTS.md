@@ -22,6 +22,26 @@ Docker daemon must be running first: `sudo dockerd &` (then `sudo chmod 666 /var
 
 Both frontend (`npm run build`) and backend (`mage -v`) must be built **before** `docker compose up`, because `dist/` is volume-mounted into the Grafana container. Without it the plugin won't load.
 
+### Cube SDK parity policy (read before changing Cube API behavior)
+
+This backend is Go, but Cube's protocol semantics are defined by the JavaScript
+SDK (`@cubejs-client/core`) and the server (`@cubejs-api-gateway`). **Mirror the
+SDK by default.** The full policy and the log of intentional divergences live in
+[`docs/sdk-parity.md`](docs/sdk-parity.md); the agent-facing rule is
+[`.cursor/rules/sdk-parity.mdc`](.cursor/rules/sdk-parity.mdc). Tracked by issue #118.
+
+When touching `/v1/load` handling, retries, timeout/cancellation, status/error
+mapping, method selection, or progress fields, you **must**:
+
+1. Check all three sources of truth (the Cube monorepo is cloned at `../cube`):
+   - JS client: `../cube/packages/cubejs-client-core/src/index.ts` and `.../HttpTransport.ts`
+   - Server contract: `../cube/packages/cubejs-api-gateway/src/gateway.ts`
+   - REST docs: `../cube/docs/content/product/apis-integrations/core-data-apis/rest-api/`
+2. Mirror the SDK by default; only diverge for a clear Grafana/backend reason.
+3. For any intentional divergence, document rationale + user impact + tests in the
+   divergence log in `docs/sdk-parity.md`.
+4. State the parity decision (mirror or divergence) in the PR description.
+
 ### Non-obvious notes
 
 - Playwright E2E tests (`npm run e2e`) require services to be up first. Use `--reporter=list` to avoid the interactive HTML report blocking the terminal.

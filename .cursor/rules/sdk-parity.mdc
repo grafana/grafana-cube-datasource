@@ -23,7 +23,7 @@ timeouts, cancellation, status/error handling, progress fields):
 
 1. Check current behavior in:
    - Cube JS SDK (`packages/cubejs-client-core/src/index.ts` in `../cube`)
-   - Cube REST API docs (`../cube/docs/pages/product/apis-integrations/rest-api.mdx`)
+   - Cube REST API docs (`../cube/docs/content/product/apis-integrations/core-data-apis/rest-api/`)
 2. Compare existing plugin behavior in `pkg/plugin/datasource.go`.
 3. If intentionally diverging from SDK behavior, document:
    - why divergence is needed,
