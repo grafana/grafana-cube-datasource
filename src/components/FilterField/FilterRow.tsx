@@ -1,6 +1,6 @@
 import React from 'react';
 import { MultiSelect, Select, useStyles2 } from '@grafana/ui';
-import { Operator } from '../../types';
+import { CubeFilter, Operator } from '../../types';
 import { AccessoryButton, InputGroup } from '@grafana/plugin-ui';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { DataSource } from '../../datasource';
@@ -25,13 +25,24 @@ interface FilterRowProps {
   onUpdate: (index: number, updates: Partial<FilterState>) => void;
   onRemove: (index: number) => void;
   datasource: DataSource;
+  /** Complete filters positioned before this row, used to scope value options (issue #32). */
+  precedingFilters?: CubeFilter[];
 }
 
-export function FilterRow({ filter, index, dimensions, onUpdate, onRemove, datasource }: FilterRowProps) {
+export function FilterRow({
+  filter,
+  index,
+  dimensions,
+  onUpdate,
+  onRemove,
+  datasource,
+  precedingFilters,
+}: FilterRowProps) {
   const styles = useStyles2(getStyles);
   const { data: tagValues = [], isLoading } = useMemberValuesQuery({
     datasource,
     member: filter.member,
+    precedingFilters,
   });
 
   const valueOptions = tagValues.map((tagValue) => ({

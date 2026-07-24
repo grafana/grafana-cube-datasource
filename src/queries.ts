@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient, UseQueryResult } from '@tanstack/react-query';
 import { SelectableValue } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 import { DataSource } from './datasource';
 import { fetchSqlDatasources } from './services/datasourceApi';
-import { DbSchemaResponse, GenerateSchemaRequest, ModelFilesResponse } from './types';
+import { CubeFilter, DbSchemaResponse, GenerateSchemaRequest, ModelFilesResponse, Operator } from './types';
 
 export interface MetadataOption {
   label: string;
@@ -91,20 +91,100 @@ interface TagValue {
   text: string;
 }
 
+/** Filter shape accepted by DataSource.getTagValues (Grafana AdHoc-style). */
+export interface TagValueScopingFilter {
+  key: string;
+  operator: string;
+  value: string;
+  values?: string[];
+}
+
+interface AdHocFilter {
+  key: string;
+  operator: string;
+  value: string;
+  values?: string[];
+}
+
+/**
+ * Build the scoping filters passed to getTagValues so the query-builder value
+ * dropdown is progressively narrowed, matching AdHoc-filter behavior (issue #32).
+ *
+ * Two sources are combined:
+ * - `adhocFilters`: active dashboard AdHoc filters (already in getTagValues shape).
+ * - `precedingFilters`: complete query-builder filters that appear before the
+ *   current row. Only equals/notEquals with a non-empty value set scope values;
+ *   the query builder only supports those operators. The Cube operator enum is
+ *   mapped back to the `=`/`!=` symbols getTagValues understands.
+ *
+ * Exported for unit testing.
+ */
+export function buildScopingTagFilters(
+  precedingFilters: CubeFilter[] | undefined,
+  adhocFilters: AdHocFilter[]
+): TagValueScopingFilter[] {
+  const fromAdhoc: TagValueScopingFilter[] = adhocFilters.map((f) => ({
+    key: f.key,
+    operator: f.operator,
+    value: f.value,
+    values: f.values,
+  }));
+
+  const fromPreceding: TagValueScopingFilter[] = (precedingFilters ?? [])
+    .filter(
+      (f): f is CubeFilter & { values: string[] } =>
+        Boolean(f.member) &&
+        Array.isArray(f.values) &&
+        f.values.length > 0 &&
+        (f.operator === Operator.Equals || f.operator === Operator.NotEquals)
+    )
+    .map((f) => ({
+      key: f.member,
+      operator: f.operator === Operator.NotEquals ? '!=' : '=',
+      value: f.values[0],
+      values: f.values,
+    }));
+
+  return [...fromAdhoc, ...fromPreceding];
+}
+
+/** Read active AdHoc filters for a datasource, defensively (templateSrv may be absent in tests). */
+function readAdhocFilters(datasourceName: string): AdHocFilter[] {
+  try {
+    const templateSrv = getTemplateSrv() as ReturnType<typeof getTemplateSrv> & {
+      getAdhocFilters?: (name: string) => AdHocFilter[] | undefined;
+    };
+    return templateSrv.getAdhocFilters?.(datasourceName) ?? [];
+  } catch {
+    return [];
+  }
+}
+
 export const useMemberValuesQuery = ({
   datasource,
   member,
+  precedingFilters,
 }: {
   datasource: DataSource;
   member: string | null;
+  /** Complete query-builder filters positioned before this row, used to scope values. */
+  precedingFilters?: CubeFilter[];
 }): UseQueryResult<TagValue[]> => {
+  // Combine dashboard AdHoc filters with the builder's preceding filters so the
+  // dropdown is scoped like AdHoc filters (issue #32). Snapshotting into the
+  // query key keeps results reactive to filter changes and avoids stale caches.
+  const scopingFilters = buildScopingTagFilters(precedingFilters, readAdhocFilters(datasource.name));
+
   return useQuery<TagValue[]>({
-    queryKey: ['memberValues', datasource.uid, member],
+    queryKey: ['memberValues', datasource.uid, member, scopingFilters],
     queryFn: async (): Promise<TagValue[]> => {
       if (!member) {
         return [];
       }
-      return await datasource.getTagValues({ key: member });
+      return await datasource.getTagValues({
+        key: member,
+        filters: scopingFilters.length > 0 ? scopingFilters : undefined,
+      });
     },
     enabled: !!member,
   });

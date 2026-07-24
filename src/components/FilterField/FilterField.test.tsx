@@ -1,5 +1,5 @@
 import React from 'react';
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { createMockDataSource, setup } from '../../testUtils';
 import { FilterField } from './FilterField';
 import { Operator } from '../../types';
@@ -106,6 +106,57 @@ describe('FilterField', () => {
     expect(mockOnChange).toHaveBeenLastCalledWith([
       { member: 'orders.status', operator: Operator.Equals, values: ['completed'] },
     ]);
+  });
+
+  it('should scope a later filter row by the preceding complete filters (issue #32)', async () => {
+    setup(
+      <FilterField
+        dimensions={mockOptions}
+        filters={[
+          { member: 'orders.status', operator: Operator.Equals, values: ['completed'] },
+          { member: 'orders.customer', operator: Operator.Equals, values: [] },
+        ]}
+        onChange={mockOnChange}
+        datasource={mockDataSource}
+      />
+    );
+
+    // Wait for the value dropdowns to resolve so both rows have queried.
+    await screen.findByText('completed');
+
+    // First row has no preceding filters -> no scoping filters.
+    expect(mockDataSource.getTagValues).toHaveBeenCalledWith({
+      key: 'orders.status',
+      filters: undefined,
+    });
+
+    // Second row is scoped by the first (complete) filter.
+    expect(mockDataSource.getTagValues).toHaveBeenCalledWith({
+      key: 'orders.customer',
+      filters: [{ key: 'orders.status', operator: '=', value: 'completed', values: ['completed'] }],
+    });
+  });
+
+  it('should not scope a filter row by an incomplete preceding filter (issue #32)', async () => {
+    setup(
+      <FilterField
+        dimensions={mockOptions}
+        filters={[
+          // Preceding row has a member but no selected values -> must not scope.
+          { member: 'orders.status', operator: Operator.Equals, values: [] },
+          { member: 'orders.customer', operator: Operator.Equals, values: [] },
+        ]}
+        onChange={mockOnChange}
+        datasource={mockDataSource}
+      />
+    );
+
+    await waitFor(() =>
+      expect(mockDataSource.getTagValues).toHaveBeenCalledWith({
+        key: 'orders.customer',
+        filters: undefined,
+      })
+    );
   });
 
   it('should call onChange when selecting a field for a new filter', async () => {

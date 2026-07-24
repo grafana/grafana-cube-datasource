@@ -58,17 +58,28 @@ export function FilterField({ dimensions, filters = [], onChange, datasource }: 
 
   return (
     <Stack direction="column" gap={0.5}>
-      {filterStates.map((filter, index) => (
-        <FilterRow
-          key={index}
-          filter={filter}
-          index={index}
-          dimensions={dimensions}
-          onUpdate={handleUpdate}
-          onRemove={handleRemove}
-          datasource={datasource}
-        />
-      ))}
+      {filterStates.map((filter, index) => {
+        // Scope this row's value dropdown by the complete filters that precede it
+        // (issue #32), mirroring how AdHoc filters progressively narrow options.
+        // Incomplete rows (no member or no selected values) are excluded.
+        const precedingFilters: CubeFilter[] = filterStates
+          .slice(0, index)
+          .filter((f): f is FilterState & { member: string } => f.member !== null && f.values.length > 0)
+          .map((f) => ({ member: f.member, operator: f.operator, values: f.values }));
+
+        return (
+          <FilterRow
+            key={index}
+            filter={filter}
+            index={index}
+            dimensions={dimensions}
+            onUpdate={handleUpdate}
+            onRemove={handleRemove}
+            datasource={datasource}
+            precedingFilters={precedingFilters}
+          />
+        );
+      })}
       <div>
         <Button onClick={handleAddNew} icon="plus" variant="secondary" size="sm" aria-label="Add filter">
           Add Filter
