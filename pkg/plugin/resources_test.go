@@ -836,6 +836,57 @@ func TestHandleTagValuesInvalidTimeDimensionsIgnored(t *testing.T) {
 	}
 }
 
+func TestHandleTagValuesTimeDimensionsEdgeCasesIgnored(t *testing.T) {
+	// Well-formed JSON that is not a non-empty array of objects must be ignored
+	// (no timeDimensions in the outgoing query) without failing the request.
+	// Mirrors the trust model of the existing filters passthrough.
+	cases := []struct {
+		name  string
+		input string
+	}{
+		{"null", `null`},
+		{"empty array", `[]`},
+		{"array of non-objects", `["orders.order_date"]`},
+		{"object not array", `{"dimension":"orders.order_date"}`},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var capturedQuery string
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				capturedQuery = r.URL.Query().Get("query")
+				response := CubeAPIResponse{Data: []map[string]interface{}{{"orders.customer_name": "Alice"}}}
+				w.Header().Set("Content-Type", "application/json")
+				if err := json.NewEncoder(w).Encode(response); err != nil {
+					t.Errorf("Failed to encode response: %v", err)
+				}
+			}))
+			defer server.Close()
+
+			ds := Datasource{BaseURL: server.URL}
+			req := &backend.CallResourceRequest{
+				Path:          "tag-values",
+				Method:        "GET",
+				URL:           "/tag-values?key=orders.customer_name&timeDimensions=" + url.QueryEscape(tc.input),
+				PluginContext: newTestPluginContext(server.URL),
+			}
+
+			resp := callHandler(t, ds.handleTagValues, req)
+			if resp.Status != 200 {
+				t.Fatalf("Expected status 200 for %q, got %d. Response: %s", tc.input, resp.Status, string(resp.Body))
+			}
+
+			var queryObj map[string]interface{}
+			if err := json.Unmarshal([]byte(capturedQuery), &queryObj); err != nil {
+				t.Fatalf("Failed to parse captured query: %v", err)
+			}
+			if _, ok := queryObj["timeDimensions"]; ok {
+				t.Errorf("Did not expect timeDimensions in query for input %q. Query: %s", tc.input, capturedQuery)
+			}
+		})
+	}
+}
+
 func TestHandleTagValuesEmptyResponse(t *testing.T) {
 	// Create a mock server that returns an empty data array
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
