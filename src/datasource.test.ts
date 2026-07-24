@@ -157,6 +157,91 @@ describe('DataSource', () => {
       expect(mockGetResource).toHaveBeenCalledWith('tag-values', { key: 'orders.status', filters: undefined });
       expect(result).toEqual(mockValues);
     });
+
+    describe('time-range scoping ($cubeTimeDimension) — issue #35', () => {
+      const makeTimeRange = () => ({
+        from: { toISOString: () => '2018-03-01T00:00:00.000Z' },
+        to: { toISOString: () => '2018-03-31T23:59:59.000Z' },
+      });
+
+      it('should pass timeDimensions when $cubeTimeDimension is set and timeRange is provided', async () => {
+        mockGetResource.mockResolvedValue([]);
+        mockGetTemplateSrv.mockReturnValue({
+          replace: (str: string) => (str === '$cubeTimeDimension' ? 'orders.order_date' : str),
+        });
+        const datasource = createDataSource();
+
+        await datasource.getTagValues({ key: 'orders.customer', timeRange: makeTimeRange() as any });
+
+        expect(mockGetResource).toHaveBeenCalledWith('tag-values', {
+          key: 'orders.customer',
+          filters: undefined,
+          timeDimensions: JSON.stringify([
+            {
+              dimension: 'orders.order_date',
+              dateRange: ['2018-03-01T00:00:00.000Z', '2018-03-31T23:59:59.000Z'],
+            },
+          ]),
+        });
+      });
+
+      it('should combine time dimensions with existing scoping filters', async () => {
+        mockGetResource.mockResolvedValue([]);
+        mockGetTemplateSrv.mockReturnValue({
+          replace: (str: string) => (str === '$cubeTimeDimension' ? 'orders.order_date' : str),
+        });
+        const datasource = createDataSource();
+
+        await datasource.getTagValues({
+          key: 'orders.customer',
+          filters: [{ key: 'orders.status', operator: '=', value: 'completed' }],
+          timeRange: makeTimeRange() as any,
+        });
+
+        expect(mockGetResource).toHaveBeenCalledWith('tag-values', {
+          key: 'orders.customer',
+          filters: JSON.stringify([{ member: 'orders.status', operator: 'equals', values: ['completed'] }]),
+          timeDimensions: JSON.stringify([
+            {
+              dimension: 'orders.order_date',
+              dateRange: ['2018-03-01T00:00:00.000Z', '2018-03-31T23:59:59.000Z'],
+            },
+          ]),
+        });
+      });
+
+      it('should NOT pass timeDimensions when $cubeTimeDimension is not set (unchanged behavior)', async () => {
+        mockGetResource.mockResolvedValue([]);
+        // replace returns the token unchanged => variable not configured
+        mockGetTemplateSrv.mockReturnValue({ replace: (str: string) => str });
+        const datasource = createDataSource();
+
+        await datasource.getTagValues({ key: 'orders.customer', timeRange: makeTimeRange() as any });
+
+        expect(mockGetResource).toHaveBeenCalledWith('tag-values', {
+          key: 'orders.customer',
+          filters: undefined,
+          timeDimensions: undefined,
+        });
+      });
+
+      it('should NOT pass timeDimensions when Grafana provides no timeRange', async () => {
+        mockGetResource.mockResolvedValue([]);
+        const replace = jest.fn((str: string) => 'orders.order_date');
+        mockGetTemplateSrv.mockReturnValue({ replace });
+        const datasource = createDataSource();
+
+        await datasource.getTagValues({ key: 'orders.customer' });
+
+        expect(mockGetResource).toHaveBeenCalledWith('tag-values', {
+          key: 'orders.customer',
+          filters: undefined,
+          timeDimensions: undefined,
+        });
+        // templateSrv must not even be consulted when there is no timeRange.
+        expect(replace).not.toHaveBeenCalled();
+      });
+    });
   });
 
   describe('applyTemplateVariables', () => {
