@@ -1,5 +1,5 @@
-import { DataSourceInstanceSettings, CoreApp, ScopedVars } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
+import { DataSourceInstanceSettings, CoreApp, ScopedVars, TimeRange } from '@grafana/data';
+import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 
 import { CubeQuery, CubeDataSourceOptions, DEFAULT_QUERY, Operator } from './types';
 import { normalizeCubeQuery } from './utils/normalizeCubeQuery';
@@ -70,10 +70,14 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
   }
 
   // Get available tag values for a specific key for AdHoc filtering
-  // Scopes results by any existing AdHoc filters (like Prometheus does)
+  // Scopes results by any existing AdHoc filters (like Prometheus does) and,
+  // when $cubeTimeDimension is configured, by the dashboard time range Grafana
+  // provides in options.timeRange (parity with Prometheus/Loki/Elasticsearch).
   getTagValues(options: {
     key: string;
     filters?: Array<{ key: string; operator: string; value: string; values?: string[] }>;
+    // Context time range Grafana passes to getTagValues since v10.3.
+    timeRange?: TimeRange;
   }) {
     // Convert existing filters to Cube format for scoping
     const scopingFilters = options.filters?.length
@@ -84,10 +88,37 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
         }))
       : undefined;
 
+    const timeDimensions = this.buildTagValueTimeDimensions(options.timeRange);
+
     return this.getResource('tag-values', {
       key: options.key,
       filters: scopingFilters ? JSON.stringify(scopingFilters) : undefined,
+      timeDimensions: timeDimensions ? JSON.stringify(timeDimensions) : undefined,
     });
+  }
+
+  // Build a Cube time dimension filter for tag-value lookups from the dashboard
+  // time range. Requires BOTH a configured $cubeTimeDimension dashboard variable
+  // (Cube needs to know WHICH dimension carries time, unlike Prometheus/Loki) and
+  // a timeRange from Grafana. Returns undefined when either is missing, so
+  // behavior is unchanged when the variable is not set (issue #35).
+  private buildTagValueTimeDimensions(timeRange?: TimeRange): Array<{ dimension: string; dateRange: [string, string] }> | undefined {
+    if (!timeRange) {
+      return undefined;
+    }
+
+    const dimension = getTemplateSrv().replace('$cubeTimeDimension');
+    if (!dimension || dimension === '$cubeTimeDimension') {
+      return undefined;
+    }
+
+    const from = timeRange.from?.toISOString?.();
+    const to = timeRange.to?.toISOString?.();
+    if (!from || !to) {
+      return undefined;
+    }
+
+    return [{ dimension, dateRange: [from, to] }];
   }
 
   // Get available dimensions and measures for the query builder
