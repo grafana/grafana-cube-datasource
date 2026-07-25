@@ -267,9 +267,13 @@ func (d *Datasource) createNullField(fieldName string, rowCount int, annotation 
 		field = data.NewField(fieldName, nil, values)
 	}
 
-	// Apply a Grafana unit from the Cube format annotation, if any (issue #246).
-	if unit := fieldInfoUnit(fieldInfo); unit != "" {
-		field.Config = &data.FieldConfig{Unit: unit}
+	// Apply a Grafana unit from the Cube format annotation, but only for numeric
+	// fields — currency/percent/short units are meaningless on time/string/boolean
+	// fields and would misrender (issue #246).
+	if fieldType == "number" {
+		if unit := fieldInfoUnit(fieldInfo); unit != "" {
+			field.Config = &data.FieldConfig{Unit: unit}
+		}
 	}
 
 	return field
@@ -277,6 +281,8 @@ func (d *Datasource) createNullField(fieldName string, rowCount int, annotation 
 
 // applyFieldUnits sets Grafana field units from Cube format annotations so panels
 // auto-format values (e.g. currency, percent) without per-panel config (issue #246).
+// Only numeric fields receive a unit; formats on non-numeric fields (e.g. a
+// custom-time dimension) must never produce a numeric unit.
 func (d *Datasource) applyFieldUnits(frame *data.Frame, annotation CubeAnnotation) {
 	for _, field := range frame.Fields {
 		info, ok := annotation.Measures[field.Name]
@@ -284,6 +290,10 @@ func (d *Datasource) applyFieldUnits(frame *data.Frame, annotation CubeAnnotatio
 			info, ok = annotation.Dimensions[field.Name]
 		}
 		if !ok {
+			continue
+		}
+
+		if info.Type != "number" {
 			continue
 		}
 

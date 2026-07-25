@@ -15,9 +15,12 @@ func TestCubeFormatToGrafanaUnit(t *testing.T) {
 		// No format / no currency -> no unit.
 		{"empty", "", "", ""},
 
-		// Currency code alone is enough to render as currency.
-		{"currency code only USD", "", "USD", "currencyUSD"},
-		{"currency code only NZD", "", "NZD", "currency:NZD"},
+		// A bare currency CODE (no currency FORMAT) does NOT imply currency
+		// formatting: Cube only sets `currency` when a currency format is used,
+		// and client-core renders such values as plain numbers.
+		{"currency code only USD", "", "USD", ""},
+		{"currency code only NZD", "", "NZD", ""},
+		{"whitespace-only currency, no format", "", "   ", ""},
 
 		// Percent formats (Cube's percent values are unit fractions, 0–1).
 		{"percent", "percent", "", "percentunit"},
@@ -38,6 +41,9 @@ func TestCubeFormatToGrafanaUnit(t *testing.T) {
 		{"currency CAD fallback", "currency", "CAD", "currency:CAD"},
 		{"currency AUD fallback", "currency_2", "AUD", "currency:AUD"},
 		{"currency NZD trim", "currency", "  nzd  ", "currency:NZD"},
+		// Whitespace-only currency with a currency format falls back to default USD
+		// rather than an invalid `currency:` unit.
+		{"currency whitespace code", "currency", "   ", "currencyUSD"},
 
 		// Accounting is currency only when a currency code is provided.
 		{"accounting no currency", "accounting", "", ""},
@@ -54,11 +60,15 @@ func TestCubeFormatToGrafanaUnit(t *testing.T) {
 		{"id", "id", "", ""},
 
 		// Custom d3-format specifiers.
-		{"d3 percent", ".0%", "", "percentunit"},
+		{"d3 percent %", ".0%", "", "percentunit"},
+		{"d3 percent p", ".2p", "", "percentunit"},
+		{"d3 SI s", ".2s", "", "short"},
 		{"d3 dollar USD", "$,.2f", "USD", "currencyUSD"},
 		{"d3 dollar default USD", "$,.2f", "", "currencyUSD"},
 		{"d3 dollar EUR", "$,.2f", "EUR", "currencyEUR"},
-		{"d3 specifier with currency only", ".2f", "GBP", "currencyGBP"},
+		// A plain numeric d3 specifier stays unitless even when a currency code is
+		// present — client-core renders it as a plain number, not currency.
+		{"d3 specifier with currency only", ".2f", "GBP", ""},
 		{"d3 specifier without hints", ".2f", "", ""},
 		{"unknown format", "custom", "", ""},
 	}
@@ -92,6 +102,11 @@ func TestCubeFormatUnmarshalJSON(t *testing.T) {
 		{"object alias", `{"type":"custom-numeric","value":",.0f","alias":"number_0"}`, "number_0"},
 		{"object value only", `{"type":"custom-numeric","value":",.2f"}`, ",.2f"},
 		{"null", `null`, ""},
+		// Non-numeric object formats must NOT become a numeric specifier.
+		{"custom-time dropped", `{"type":"custom-time","value":"%Y-%m-%d"}`, ""},
+		{"link dropped", `{"type":"link","label":"View"}`, ""},
+		// Leading/trailing JSON whitespace must not break string dispatch.
+		{"whitespace-padded string", "  \"percent_2\"  ", "percent_2"},
 	}
 
 	for _, tt := range tests {

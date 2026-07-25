@@ -1633,3 +1633,57 @@ func TestCreateNullFieldAppliesFieldUnit(t *testing.T) {
 		t.Fatalf("Expected currencyEUR unit on null field, got %#v", field.Config)
 	}
 }
+
+// TestApplyFieldUnitsSkipsNonNumericFields verifies a non-numeric field carrying a
+// format annotation (e.g. a custom-time dimension) never receives a numeric unit
+// (issue #246 review: custom-time value "%Y-%m-%d" must not become percentunit).
+func TestApplyFieldUnitsSkipsNonNumericFields(t *testing.T) {
+	ds := Datasource{}
+
+	// A time dimension whose format (defensively) resolved to a percent-looking
+	// string, plus a legit numeric measure.
+	frame := data.NewFrame("response",
+		data.NewField("orders.created_at", nil, []*string{nil}),
+		data.NewField("orders.revenue", nil, []*float64{nil}),
+	)
+	annotation := CubeAnnotation{
+		Measures: map[string]CubeFieldInfo{
+			"orders.revenue": {Type: "number", Format: "currency", Currency: "USD"},
+		},
+		Dimensions: map[string]CubeFieldInfo{
+			"orders.created_at": {Type: "time", Format: "%Y-%m-%d"},
+		},
+	}
+
+	ds.applyFieldUnits(frame, annotation)
+
+	units := map[string]string{}
+	for _, f := range frame.Fields {
+		if f.Config != nil {
+			units[f.Name] = f.Config.Unit
+		}
+	}
+
+	if units["orders.created_at"] != "" {
+		t.Errorf("non-numeric dimension must have no unit, got %q", units["orders.created_at"])
+	}
+	if units["orders.revenue"] != "currencyUSD" {
+		t.Errorf("numeric measure should be currencyUSD, got %q", units["orders.revenue"])
+	}
+}
+
+// TestCreateNullFieldSkipsUnitForNonNumeric verifies all-null non-numeric columns
+// don't get a numeric unit even if a format annotation is present (issue #246).
+func TestCreateNullFieldSkipsUnitForNonNumeric(t *testing.T) {
+	ds := Datasource{}
+	annotation := CubeAnnotation{
+		Dimensions: map[string]CubeFieldInfo{
+			"orders.created_at": {Type: "time", Format: "%Y-%m-%d"},
+		},
+	}
+
+	field := ds.createNullField("orders.created_at", 1, annotation)
+	if field.Config != nil && field.Config.Unit != "" {
+		t.Errorf("expected no unit on non-numeric null field, got %q", field.Config.Unit)
+	}
+}
