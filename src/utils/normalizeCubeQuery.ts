@@ -48,8 +48,8 @@ export function normalizeCubeQuery(query: CubeQuery, options: NormalizeCubeQuery
 
   const validFilters = filterValidCubeFilters([...interpolatedFilters, ...adHocFilters]).map(stripUnaryFilterValues);
 
-  const queryTimeDimensions = interpolateTimeDimensions(query.timeDimensions, templateSrv, scopedVars);
-  const timeDimensions = queryTimeDimensions?.length ? queryTimeDimensions : injectDashboardTimeDimension(templateSrv, scopedVars);
+  const queryTimeDimensions = interpolateTimeDimensions(query.timeDimensions, templateSrv, scopedVars) ?? [];
+  const timeDimensions = applyDashboardTimeRange(queryTimeDimensions, templateSrv, scopedVars);
 
   return {
     dimensions: query.dimensions?.length ? query.dimensions : undefined,
@@ -133,6 +133,42 @@ function interpolateTimeDimensions(
 
     return interpolated as unknown as TimeDimension;
   });
+}
+
+/**
+ * Combine the panel's own timeDimensions with the dashboard-level time range
+ * (from $cubeTimeDimension) so the dashboard range ALWAYS narrows results,
+ * rather than being replaced by a panel's hardcoded timeDimensions (issue #173).
+ *
+ * When $cubeTimeDimension is configured and a dashboard range is available, the
+ * dashboard entry is appended as an additional timeDimensions entry. Cube ANDs
+ * every timeDimensions entry in the WHERE clause, so:
+ * - a panel entry for the SAME dimension with a different dateRange intersects
+ *   with the dashboard range (two same-dimension entries = AND of both ranges), and
+ * - panel entries for DIFFERENT dimensions keep their own filtering while the
+ *   dashboard range is added alongside them.
+ *
+ * When the panel has no timeDimensions, or $cubeTimeDimension / the range are not
+ * configured, behavior is unchanged.
+ *
+ * NOTE: we intentionally do NOT client-side dedupe/overlap-optimize matching
+ * ranges here — that is a deferred follow-up (see issue #173). Sending both
+ * entries is correct because Cube computes the intersection server-side.
+ */
+function applyDashboardTimeRange(
+  queryTimeDimensions: TimeDimension[],
+  templateSrv: ReturnType<typeof getTemplateSrv>,
+  scopedVars: ScopedVars
+): TimeDimension[] | undefined {
+  const dashboardTimeDimension = injectDashboardTimeDimension(templateSrv, scopedVars);
+
+  if (!dashboardTimeDimension) {
+    // No dashboard range to apply: preserve the panel's timeDimensions as-is.
+    return queryTimeDimensions.length ? queryTimeDimensions : undefined;
+  }
+
+  // Always AND the dashboard range in, even when the panel already has entries.
+  return [...queryTimeDimensions, ...dashboardTimeDimension];
 }
 
 function injectDashboardTimeDimension(
