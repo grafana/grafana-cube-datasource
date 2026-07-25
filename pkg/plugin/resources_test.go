@@ -735,6 +735,158 @@ func TestHandleTagValuesWithScopingFilters(t *testing.T) {
 	}
 }
 
+func TestHandleTagValuesWithTimeDimensions(t *testing.T) {
+	// Verifies the dashboard time range (issue #35) is forwarded to the Cube
+	// /v1/load query as timeDimensions when $cubeTimeDimension is configured.
+	var capturedQuery string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedQuery = r.URL.Query().Get("query")
+		response := CubeAPIResponse{
+			Data: []map[string]interface{}{
+				{"orders.customer_name": "Alice"},
+			},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Errorf("Failed to encode response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL}
+
+	timeDimensionsJSON := `[{"dimension":"orders.order_date","dateRange":["2018-03-01T00:00:00.000Z","2018-03-31T23:59:59.000Z"]}]`
+	encoded := url.QueryEscape(timeDimensionsJSON)
+
+	req := &backend.CallResourceRequest{
+		Path:          "tag-values",
+		Method:        "GET",
+		URL:           "/tag-values?key=orders.customer_name&timeDimensions=" + encoded,
+		PluginContext: newTestPluginContext(server.URL),
+	}
+
+	resp := callHandler(t, ds.handleTagValues, req)
+	if resp.Status != 200 {
+		t.Fatalf("Expected status 200, got %d. Response: %s", resp.Status, string(resp.Body))
+	}
+
+	var queryObj map[string]interface{}
+	if err := json.Unmarshal([]byte(capturedQuery), &queryObj); err != nil {
+		t.Fatalf("Failed to parse captured query: %v", err)
+	}
+
+	td, ok := queryObj["timeDimensions"]
+	if !ok {
+		t.Fatalf("Expected timeDimensions in query, but none found. Query: %s", capturedQuery)
+	}
+	tdArray, ok := td.([]interface{})
+	if !ok || len(tdArray) == 0 {
+		t.Fatalf("Expected timeDimensions array with elements, got: %v", td)
+	}
+	first, ok := tdArray[0].(map[string]interface{})
+	if !ok {
+		t.Fatalf("Expected timeDimension to be an object, got: %v", tdArray[0])
+	}
+	if first["dimension"] != "orders.order_date" {
+		t.Errorf("Expected dimension 'orders.order_date', got: %v", first["dimension"])
+	}
+	dateRange, ok := first["dateRange"].([]interface{})
+	if !ok || len(dateRange) != 2 {
+		t.Fatalf("Expected dateRange with 2 elements, got: %v", first["dateRange"])
+	}
+	if dateRange[0] != "2018-03-01T00:00:00.000Z" || dateRange[1] != "2018-03-31T23:59:59.000Z" {
+		t.Errorf("Unexpected dateRange values: %v", dateRange)
+	}
+}
+
+func TestHandleTagValuesInvalidTimeDimensionsIgnored(t *testing.T) {
+	// Malformed timeDimensions must be ignored (not fail the request) and must
+	// not appear in the outgoing Cube query.
+	var capturedQuery string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedQuery = r.URL.Query().Get("query")
+		response := CubeAPIResponse{Data: []map[string]interface{}{{"orders.customer_name": "Alice"}}}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Errorf("Failed to encode response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL}
+
+	req := &backend.CallResourceRequest{
+		Path:          "tag-values",
+		Method:        "GET",
+		URL:           "/tag-values?key=orders.customer_name&timeDimensions=" + url.QueryEscape("not-json"),
+		PluginContext: newTestPluginContext(server.URL),
+	}
+
+	resp := callHandler(t, ds.handleTagValues, req)
+	if resp.Status != 200 {
+		t.Fatalf("Expected status 200 (invalid time dimensions ignored), got %d. Response: %s", resp.Status, string(resp.Body))
+	}
+
+	var queryObj map[string]interface{}
+	if err := json.Unmarshal([]byte(capturedQuery), &queryObj); err != nil {
+		t.Fatalf("Failed to parse captured query: %v", err)
+	}
+	if _, ok := queryObj["timeDimensions"]; ok {
+		t.Errorf("Did not expect timeDimensions in query when input was invalid. Query: %s", capturedQuery)
+	}
+}
+
+func TestHandleTagValuesTimeDimensionsEdgeCasesIgnored(t *testing.T) {
+	// Well-formed JSON that is not a non-empty array of objects must be ignored
+	// (no timeDimensions in the outgoing query) without failing the request.
+	// Mirrors the trust model of the existing filters passthrough.
+	cases := []struct {
+		name  string
+		input string
+	}{
+		{"null", `null`},
+		{"empty array", `[]`},
+		{"array of non-objects", `["orders.order_date"]`},
+		{"object not array", `{"dimension":"orders.order_date"}`},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var capturedQuery string
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				capturedQuery = r.URL.Query().Get("query")
+				response := CubeAPIResponse{Data: []map[string]interface{}{{"orders.customer_name": "Alice"}}}
+				w.Header().Set("Content-Type", "application/json")
+				if err := json.NewEncoder(w).Encode(response); err != nil {
+					t.Errorf("Failed to encode response: %v", err)
+				}
+			}))
+			defer server.Close()
+
+			ds := Datasource{BaseURL: server.URL}
+			req := &backend.CallResourceRequest{
+				Path:          "tag-values",
+				Method:        "GET",
+				URL:           "/tag-values?key=orders.customer_name&timeDimensions=" + url.QueryEscape(tc.input),
+				PluginContext: newTestPluginContext(server.URL),
+			}
+
+			resp := callHandler(t, ds.handleTagValues, req)
+			if resp.Status != 200 {
+				t.Fatalf("Expected status 200 for %q, got %d. Response: %s", tc.input, resp.Status, string(resp.Body))
+			}
+
+			var queryObj map[string]interface{}
+			if err := json.Unmarshal([]byte(capturedQuery), &queryObj); err != nil {
+				t.Fatalf("Failed to parse captured query: %v", err)
+			}
+			if _, ok := queryObj["timeDimensions"]; ok {
+				t.Errorf("Did not expect timeDimensions in query for input %q. Query: %s", tc.input, capturedQuery)
+			}
+		})
+	}
+}
+
 func TestHandleTagValuesEmptyResponse(t *testing.T) {
 	// Create a mock server that returns an empty data array
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

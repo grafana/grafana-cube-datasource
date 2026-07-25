@@ -252,6 +252,19 @@ func (d *Datasource) handleTagValues(ctx context.Context, req *backend.CallResou
 		}
 	}
 
+	// Parse time dimensions to scope the results by the dashboard time range
+	// (used when $cubeTimeDimension is configured; see issue #35).
+	timeDimensionsJSON := parsedURL.Query().Get("timeDimensions")
+	if timeDimensionsJSON != "" {
+		var timeDimensions []map[string]interface{}
+		if err := json.Unmarshal([]byte(timeDimensionsJSON), &timeDimensions); err != nil {
+			backend.Logger.Warn("Failed to parse time dimensions, ignoring", "error", err)
+		} else if len(timeDimensions) > 0 {
+			cubeQuery["timeDimensions"] = timeDimensions
+			backend.Logger.Debug("Scoping tag values with dashboard time range", "timeDimensions", timeDimensions)
+		}
+	}
+
 	cubeQueryJSON, err := json.Marshal(cubeQuery)
 	if err != nil {
 		return sender.Send(jsonErrorResponse(500, errors.New("failed to marshal query")))
