@@ -86,6 +86,27 @@ describe('normalizeCubeQuery timeDimensions intersection (issue #173)', () => {
     ]);
   });
 
+  it('keeps a SAME-dimension granularity-only panel entry AND appends the dashboard range (grouping kept + range applied)', () => {
+    withDashboardTimeDimension('orders.created_at');
+    const query = {
+      refId: 'A',
+      measures: ['orders.count'],
+      // Same dimension as $cubeTimeDimension, but granularity-only (no dateRange):
+      // this entry drives grouping and, per Cube, contributes no WHERE clause.
+      timeDimensions: [{ dimension: 'orders.created_at', granularity: 'day' }],
+    } as unknown as CubeQuery;
+
+    const result = normalizeCubeQuery(query, baseOptions);
+
+    // Panel's granularity-only entry is preserved (grouping) and the dashboard
+    // dateRange entry is appended (supplies the WHERE range). Both are sent so
+    // grouping is kept AND the dashboard range is applied.
+    expect(result.timeDimensions).toEqual([
+      { dimension: 'orders.created_at', granularity: 'day' },
+      { dimension: 'orders.created_at', dateRange: [DASH_FROM_ISO, DASH_TO_ISO] },
+    ]);
+  });
+
   it('leaves the panel timeDimensions unchanged when $cubeTimeDimension is not configured', () => {
     withDashboardTimeDimension(null);
     const query = {
