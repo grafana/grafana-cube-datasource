@@ -151,6 +151,48 @@ func TestExtractMetadataFromResponse(t *testing.T) {
 	}
 }
 
+func TestExtractMetadataSurfacesMeasureFormat(t *testing.T) {
+	// Measures carry Cube format/currency through to the metadata SelectOption so
+	// consumers (e.g. the Grafana Assistant) can pick units (issue #246, item 2).
+	ds := &Datasource{}
+
+	metaResponse := &CubeMetaResponse{
+		Cubes: []CubeMeta{
+			{
+				Name: "orders_view",
+				Type: "view",
+				Measures: []CubeMeasure{
+					{Name: "orders_view.revenue", Type: "number", Format: "currency", Currency: "USD"},
+					{Name: "orders_view.rate", Type: "number", Format: "percent_2"},
+					{Name: "orders_view.count", Type: "number"},
+				},
+			},
+		},
+	}
+
+	result := ds.extractMetadataFromResponse(metaResponse)
+
+	if len(result.Measures) != 3 {
+		t.Fatalf("Expected 3 measures, got %d", len(result.Measures))
+	}
+
+	byValue := map[string]SelectOption{}
+	for _, m := range result.Measures {
+		byValue[m.Value] = m
+	}
+
+	if got := byValue["orders_view.revenue"]; got.Format != "currency" || got.Currency != "USD" {
+		t.Errorf("revenue: expected format=currency currency=USD, got format=%q currency=%q", got.Format, got.Currency)
+	}
+	if got := byValue["orders_view.rate"]; got.Format != "percent_2" || got.Currency != "" {
+		t.Errorf("rate: expected format=percent_2 currency empty, got format=%q currency=%q", got.Format, got.Currency)
+	}
+	// A measure without a format must omit format/currency (json omitempty).
+	if got := byValue["orders_view.count"]; got.Format != "" || got.Currency != "" {
+		t.Errorf("count: expected empty format/currency, got format=%q currency=%q", got.Format, got.Currency)
+	}
+}
+
 func TestExtractMetadataIgnoresCubesWithoutViews(t *testing.T) {
 	ds := &Datasource{}
 
