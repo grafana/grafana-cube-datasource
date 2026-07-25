@@ -1,6 +1,6 @@
 import { DataSource } from './datasource';
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { CubeDataSourceOptions, CubeFilter, Operator } from './types';
+import { CubeDataSourceOptions, CubeFilter, CubeQuery, Operator } from './types';
 import { getTemplateSrv } from '@grafana/runtime';
 
 // Mock @grafana/runtime
@@ -320,7 +320,7 @@ describe('DataSource', () => {
         });
       });
 
-      it('should not inject time dimension when query already has timeDimensions', () => {
+      it('should ADD the dashboard time range alongside a panel timeDimension for a DIFFERENT dimension (issue #173)', () => {
         const mockReplace = jest.fn((str: string) => {
           if (str === '$cubeTimeDimension') {
             return 'orders.created_at';
@@ -355,9 +355,126 @@ describe('DataSource', () => {
 
         const result = datasource.applyTemplateVariables(query, {});
 
-        // Should preserve existing timeDimensions, not override
+        // Panel entry is preserved AND the dashboard range is appended as a
+        // separate entry so it still narrows results.
+        expect(result.timeDimensions).toHaveLength(2);
+        expect(result.timeDimensions![0]).toEqual({ dimension: 'orders.updated_at', granularity: 'day' });
+        expect(result.timeDimensions![1]).toEqual({
+          dimension: 'orders.created_at',
+          dateRange: ['2023-12-01T00:00:00.000Z', '2023-12-02T00:00:00.000Z'],
+        });
+      });
+
+      it('should AND the dashboard range with a panel timeDimension for the SAME dimension (issue #173 intersection)', () => {
+        const mockReplace = jest.fn((str: string) => {
+          if (str === '$cubeTimeDimension') {
+            return 'orders.created_at';
+          }
+          if (str === '$__from') {
+            return '1701388800000'; // 2023-12-01
+          }
+          if (str === '$__to') {
+            return '1701475200000'; // 2023-12-02
+          }
+          return str;
+        });
+
+        mockGetTemplateSrv.mockReturnValue({
+          replace: mockReplace,
+          getAdhocFilters: () => [],
+        });
+
+        const datasource = createDataSource();
+
+        const query = {
+          refId: 'A',
+          measures: ['orders.count'],
+          timeDimensions: [
+            {
+              dimension: 'orders.created_at',
+              dateRange: ['2018-01-01T00:00:00.000Z', '2018-12-31T00:00:00.000Z'],
+            },
+          ],
+        } as unknown as CubeQuery;
+
+        const result = datasource.applyTemplateVariables(query, {});
+
+        // Both same-dimension entries are sent; Cube ANDs the two dateRanges,
+        // producing the intersection (here: empty, 2018 vs 2023).
+        expect(result.timeDimensions).toHaveLength(2);
+        expect(result.timeDimensions![0]).toEqual({
+          dimension: 'orders.created_at',
+          dateRange: ['2018-01-01T00:00:00.000Z', '2018-12-31T00:00:00.000Z'],
+        });
+        expect(result.timeDimensions![1]).toEqual({
+          dimension: 'orders.created_at',
+          dateRange: ['2023-12-01T00:00:00.000Z', '2023-12-02T00:00:00.000Z'],
+        });
+      });
+
+      it('should NOT add the dashboard range to an existing timeDimension when $cubeTimeDimension is not configured (issue #173 — unchanged)', () => {
+        // Variable unset: replace returns the token unchanged.
+        const mockReplace = jest.fn((str: string) => str);
+
+        mockGetTemplateSrv.mockReturnValue({
+          replace: mockReplace,
+          getAdhocFilters: () => [],
+        });
+
+        const datasource = createDataSource();
+
+        const query = {
+          refId: 'A',
+          measures: ['orders.count'],
+          timeDimensions: [
+            {
+              dimension: 'orders.created_at',
+              dateRange: ['2018-01-01T00:00:00.000Z', '2018-12-31T00:00:00.000Z'],
+            },
+          ],
+        } as unknown as CubeQuery;
+
+        const result = datasource.applyTemplateVariables(query, {});
+
+        // Behavior unchanged: only the panel's own timeDimension remains.
         expect(result.timeDimensions).toHaveLength(1);
-        expect(result.timeDimensions![0].dimension).toBe('orders.updated_at');
+        expect(result.timeDimensions![0]).toEqual({
+          dimension: 'orders.created_at',
+          dateRange: ['2018-01-01T00:00:00.000Z', '2018-12-31T00:00:00.000Z'],
+        });
+      });
+
+      it('should NOT add the dashboard range to an existing timeDimension when the time range is unavailable (issue #173 — unchanged)', () => {
+        const mockReplace = jest.fn((str: string) => {
+          if (str === '$cubeTimeDimension') {
+            return 'orders.created_at';
+          }
+          // $__from / $__to unavailable (returned unchanged).
+          return str;
+        });
+
+        mockGetTemplateSrv.mockReturnValue({
+          replace: mockReplace,
+          getAdhocFilters: () => [],
+        });
+
+        const datasource = createDataSource();
+
+        const query = {
+          refId: 'A',
+          measures: ['orders.count'],
+          timeDimensions: [
+            {
+              dimension: 'orders.updated_at',
+              granularity: 'day',
+            },
+          ],
+        };
+
+        const result = datasource.applyTemplateVariables(query, {});
+
+        expect(result.timeDimensions).toHaveLength(1);
+        expect(result.timeDimensions![0]).toEqual({ dimension: 'orders.updated_at', granularity: 'day' });
       });
 
       it('should not inject time dimension when $cubeTimeDimension variable is not set', () => {
