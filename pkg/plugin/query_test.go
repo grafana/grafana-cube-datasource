@@ -1544,3 +1544,146 @@ func TestConvertTimeDimensionsIntegration(t *testing.T) {
 		t.Errorf("Expected *time.Time value at index 0, got %T", val)
 	}
 }
+
+// TestQueryDataAppliesFieldUnits verifies Cube format annotations are mapped to
+// Grafana field units on result frames so panels auto-format values (issue #246).
+func TestQueryDataAppliesFieldUnits(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		response := CubeAPIResponse{
+			Data: []map[string]interface{}{
+				{
+					"orders.revenue": "1000.5",
+					"orders.rate":    "0.125",
+				},
+			},
+			Annotation: CubeAnnotation{
+				Measures: map[string]CubeFieldInfo{
+					"orders.revenue": {
+						Type:     "number",
+						Format:   "currency",
+						Currency: "USD",
+					},
+					"orders.rate": {
+						Type:   "number",
+						Format: "percent_1",
+					},
+				},
+				Dimensions:     map[string]CubeFieldInfo{},
+				Segments:       map[string]CubeFieldInfo{},
+				TimeDimensions: map[string]CubeFieldInfo{},
+			},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			t.Errorf("Failed to encode response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	ds := Datasource{BaseURL: server.URL}
+	queryJSON, _ := json.Marshal(map[string]interface{}{
+		"refId":    "A",
+		"measures": []string{"orders.revenue", "orders.rate"},
+	})
+
+	resp, err := ds.QueryData(
+		context.Background(),
+		&backend.QueryDataRequest{
+			PluginContext: newTestPluginContext(server.URL),
+			Queries:       []backend.DataQuery{{RefID: "A", JSON: queryJSON}},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	frame := resp.Responses["A"].Frames[0]
+	units := map[string]string{}
+	for _, field := range frame.Fields {
+		if field.Config != nil {
+			units[field.Name] = field.Config.Unit
+		}
+	}
+
+	if units["orders.revenue"] != "currencyUSD" {
+		t.Fatalf("Expected orders.revenue unit currencyUSD, got %q", units["orders.revenue"])
+	}
+	if units["orders.rate"] != "percentunit" {
+		t.Fatalf("Expected orders.rate unit percentunit, got %q", units["orders.rate"])
+	}
+}
+
+// TestCreateNullFieldAppliesFieldUnit verifies all-null columns still receive the
+// Grafana unit derived from their Cube format annotation (issue #246).
+func TestCreateNullFieldAppliesFieldUnit(t *testing.T) {
+	ds := Datasource{}
+	annotation := CubeAnnotation{
+		Measures: map[string]CubeFieldInfo{
+			"orders.revenue": {
+				Type:     "number",
+				Format:   "currency",
+				Currency: "EUR",
+			},
+		},
+	}
+
+	field := ds.createNullField("orders.revenue", 1, annotation)
+	if field.Config == nil || field.Config.Unit != "currencyEUR" {
+		t.Fatalf("Expected currencyEUR unit on null field, got %#v", field.Config)
+	}
+}
+
+// TestApplyFieldUnitsSkipsNonNumericFields verifies a non-numeric field carrying a
+// format annotation (e.g. a custom-time dimension) never receives a numeric unit
+// (issue #246 review: custom-time value "%Y-%m-%d" must not become percentunit).
+func TestApplyFieldUnitsSkipsNonNumericFields(t *testing.T) {
+	ds := Datasource{}
+
+	// A time dimension whose format (defensively) resolved to a percent-looking
+	// string, plus a legit numeric measure.
+	frame := data.NewFrame("response",
+		data.NewField("orders.created_at", nil, []*string{nil}),
+		data.NewField("orders.revenue", nil, []*float64{nil}),
+	)
+	annotation := CubeAnnotation{
+		Measures: map[string]CubeFieldInfo{
+			"orders.revenue": {Type: "number", Format: "currency", Currency: "USD"},
+		},
+		Dimensions: map[string]CubeFieldInfo{
+			"orders.created_at": {Type: "time", Format: "%Y-%m-%d"},
+		},
+	}
+
+	ds.applyFieldUnits(frame, annotation)
+
+	units := map[string]string{}
+	for _, f := range frame.Fields {
+		if f.Config != nil {
+			units[f.Name] = f.Config.Unit
+		}
+	}
+
+	if units["orders.created_at"] != "" {
+		t.Errorf("non-numeric dimension must have no unit, got %q", units["orders.created_at"])
+	}
+	if units["orders.revenue"] != "currencyUSD" {
+		t.Errorf("numeric measure should be currencyUSD, got %q", units["orders.revenue"])
+	}
+}
+
+// TestCreateNullFieldSkipsUnitForNonNumeric verifies all-null non-numeric columns
+// don't get a numeric unit even if a format annotation is present (issue #246).
+func TestCreateNullFieldSkipsUnitForNonNumeric(t *testing.T) {
+	ds := Datasource{}
+	annotation := CubeAnnotation{
+		Dimensions: map[string]CubeFieldInfo{
+			"orders.created_at": {Type: "time", Format: "%Y-%m-%d"},
+		},
+	}
+
+	field := ds.createNullField("orders.created_at", 1, annotation)
+	if field.Config != nil && field.Config.Unit != "" {
+		t.Errorf("expected no unit on non-numeric null field, got %q", field.Config.Unit)
+	}
+}

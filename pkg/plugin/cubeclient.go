@@ -401,6 +401,11 @@ type CubeFieldInfo struct {
 	Title      string `json:"title"`
 	ShortTitle string `json:"shortTitle"`
 	Type       string `json:"type"`
+	// Format is the Cube measure/dimension format from the query annotation
+	// (e.g. "currency", "percent_2"). Accepts a string or an object form.
+	Format CubeFormat `json:"format,omitempty"`
+	// Currency is the ISO 4217 code paired with `format: currency`.
+	Currency string `json:"currency,omitempty"`
 }
 
 // fetchCubeMetadata fetches metadata from Cube's /v1/meta endpoint
@@ -485,4 +490,10 @@ type CubeMeasure struct {
 	Type        string `json:"type"`
 	ShortTitle  string `json:"shortTitle"`
 	Description string `json:"description"`
+	// Format is the Cube measure format (e.g. "currency", "percent_2", "abbr").
+	// See https://docs.cube.dev/reference/data-modeling/measures#format
+	Format CubeFormat `json:"format,omitempty"`
+	// Currency is the ISO 4217 code paired with `format: currency` on the measure.
+	// See https://docs.cube.dev/reference/data-modeling/measures#currency
+	Currency string `json:"currency,omitempty"`
 }
