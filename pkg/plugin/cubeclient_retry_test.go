@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/grafana/cube/pkg/models"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 // intPtr returns a pointer to i, for setting Datasource.maxNetworkRetries.
@@ -61,7 +62,7 @@ func TestDoCubeLoadRequestRetriesOn502(t *testing.T) {
 
 	ds := &Datasource{BaseURL: server.URL, networkRetryBackoffBase: time.Millisecond}
 
-	got, err := ds.doCubeLoadRequest(context.Background(), server.URL+"/cubejs-api/v1/load", []byte(`{"measures":["orders.count"]}`), devConfig())
+	got, err := ds.doCubeLoadRequest(context.Background(), backend.PluginContext{}, server.URL+"/cubejs-api/v1/load", []byte(`{"measures":["orders.count"]}`), devConfig())
 	if err != nil {
 		t.Fatalf("expected success after 502 retries, got: %v", err)
 	}
@@ -85,7 +86,7 @@ func TestDoCubeLoadRequestExhaustsRetriesReturns502(t *testing.T) {
 
 	ds := &Datasource{BaseURL: server.URL, maxNetworkRetries: intPtr(2), networkRetryBackoffBase: time.Millisecond}
 
-	_, err := ds.doCubeLoadRequest(context.Background(), server.URL+"/cubejs-api/v1/load", []byte(`{}`), devConfig())
+	_, err := ds.doCubeLoadRequest(context.Background(), backend.PluginContext{}, server.URL+"/cubejs-api/v1/load", []byte(`{}`), devConfig())
 	if err == nil {
 		t.Fatal("expected error after exhausting retries")
 	}
@@ -115,7 +116,7 @@ func TestDoCubeLoadRequestDoesNotRetryNonRetryableStatus(t *testing.T) {
 
 	ds := &Datasource{BaseURL: server.URL, networkRetryBackoffBase: time.Millisecond}
 
-	_, err := ds.doCubeLoadRequest(context.Background(), server.URL+"/cubejs-api/v1/load", []byte(`{}`), devConfig())
+	_, err := ds.doCubeLoadRequest(context.Background(), backend.PluginContext{}, server.URL+"/cubejs-api/v1/load", []byte(`{}`), devConfig())
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -149,7 +150,7 @@ func TestDoCubeLoadRequestRetriesOnNetworkError(t *testing.T) {
 
 	ds := &Datasource{BaseURL: server.URL, networkRetryBackoffBase: time.Millisecond}
 
-	got, err := ds.doCubeLoadRequest(context.Background(), server.URL+"/cubejs-api/v1/load", []byte(`{}`), devConfig())
+	got, err := ds.doCubeLoadRequest(context.Background(), backend.PluginContext{}, server.URL+"/cubejs-api/v1/load", []byte(`{}`), devConfig())
 	if err != nil {
 		t.Fatalf("expected success after network-error retry, got: %v", err)
 	}
@@ -172,7 +173,7 @@ func TestDoCubeLoadRequestNetworkErrorRetriesDisabled(t *testing.T) {
 
 	ds := &Datasource{BaseURL: server.URL, maxNetworkRetries: intPtr(0)}
 
-	_, err := ds.doCubeLoadRequest(context.Background(), server.URL+"/cubejs-api/v1/load", []byte(`{}`), devConfig())
+	_, err := ds.doCubeLoadRequest(context.Background(), backend.PluginContext{}, server.URL+"/cubejs-api/v1/load", []byte(`{}`), devConfig())
 	if err == nil {
 		t.Fatal("expected error when retries disabled")
 	}
@@ -280,7 +281,7 @@ func TestDoCubeLoadRequestTimeoutNotRetried(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
 	defer cancel()
 
-	_, err := ds.doCubeLoadRequest(ctx, server.URL+"/cubejs-api/v1/load", []byte(`{}`), devConfig())
+	_, err := ds.doCubeLoadRequest(ctx, backend.PluginContext{}, server.URL+"/cubejs-api/v1/load", []byte(`{}`), devConfig())
 	if err == nil {
 		t.Fatal("expected timeout error")
 	}
@@ -311,7 +312,7 @@ func TestDoCubeLoadRequestCancelledDuringNetworkBackoff(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Millisecond)
 	defer cancel()
 
-	_, err := ds.doCubeLoadRequest(ctx, server.URL+"/cubejs-api/v1/load", []byte(`{}`), devConfig())
+	_, err := ds.doCubeLoadRequest(ctx, backend.PluginContext{}, server.URL+"/cubejs-api/v1/load", []byte(`{}`), devConfig())
 	if err == nil {
 		t.Fatal("expected cancellation/timeout error")
 	}
@@ -338,7 +339,7 @@ func TestDoCubeLoadRequestCancelledDuring502Backoff(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 40*time.Millisecond)
 	defer cancel()
 
-	_, err := ds.doCubeLoadRequest(ctx, server.URL+"/cubejs-api/v1/load", []byte(`{}`), devConfig())
+	_, err := ds.doCubeLoadRequest(ctx, backend.PluginContext{}, server.URL+"/cubejs-api/v1/load", []byte(`{}`), devConfig())
 	if err == nil {
 		t.Fatal("expected cancellation/timeout error")
 	}

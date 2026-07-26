@@ -5,10 +5,9 @@ go 1.26.5
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/grafana/authlib v0.0.0-20250219100139-6a3b1bbb50e7
+	github.com/grafana/authlib/types v0.0.0-20250219092154-21ce22b49f31
 	github.com/grafana/grafana-plugin-sdk-go v0.294.0
 )
-
-replace github.com/grafana/authlib => ../authlib
 
 require (
 	github.com/BurntSushi/toml v1.6.0 // indirect
@@ -31,7 +30,6 @@ require (
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/authlib/types v0.0.0-20250219092154-21ce22b49f31 // indirect
 	github.com/grafana/otel-profiling-go v0.6.0 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.12 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // indirect
@@ -84,6 +82,7 @@ require (
 	golang.org/x/crypto v0.54.0 // indirect
 	golang.org/x/exp v0.0.0-20260718201538-764159d718ef // indirect
 	golang.org/x/net v0.57.0 // indirect
+	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.40.0 // indirect
 	google.golang.org/genproto v0.0.0-20210630183607-d20f26d13c79 // indirect
