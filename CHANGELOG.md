@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.6.3](https://github.com/grafana/grafana-cube-datasource/compare/v0.6.2...v0.6.3) (2026-07-27)
+
+
+### Features
+
+* **format:** support Cube measure format → Grafana units ([#246](https://github.com/grafana/grafana-cube-datasource/issues/246)) ([#459](https://github.com/grafana/grafana-cube-datasource/issues/459)) ([2185fde](https://github.com/grafana/grafana-cube-datasource/commit/2185fde38ecc7c616f3003165525c30ab004c10a))
+
+
+### Bug Fixes
+
+* **adhoc:** scope filter values by dashboard time range ($cubeTimeDimension) ([#35](https://github.com/grafana/grafana-cube-datasource/issues/35)) ([#454](https://github.com/grafana/grafana-cube-datasource/issues/454)) ([84a3613](https://github.com/grafana/grafana-cube-datasource/commit/84a3613b58aeaa3366a402f175e177bb6743f423))
+* **backend:** preserve upstream /v1/load status + transient retry & transport classification ([#118](https://github.com/grafana/grafana-cube-datasource/issues/118)) ([#431](https://github.com/grafana/grafana-cube-datasource/issues/431)) ([c51844b](https://github.com/grafana/grafana-cube-datasource/commit/c51844b7620d3315e500379b80449a83b19e19f2))
+* **deps:** force brace-expansion 5.0.8 via minimatch 10 override (GHSA-mh99-v99m-4gvg) ([#476](https://github.com/grafana/grafana-cube-datasource/issues/476)) ([f52495c](https://github.com/grafana/grafana-cube-datasource/commit/f52495cc4b60e1fcac22f5b874add6b7fa285137))
+* **deps:** update dependency @grafana/plugin-ui to v0.17.1 ([#413](https://github.com/grafana/grafana-cube-datasource/issues/413)) ([5529e5d](https://github.com/grafana/grafana-cube-datasource/commit/5529e5dd56d98cc3c6b7b2e91e4b9554372f69ab))
+* **deps:** update dependency @grafana/plugin-ui to v0.17.2 ([#451](https://github.com/grafana/grafana-cube-datasource/issues/451)) ([971cf18](https://github.com/grafana/grafana-cube-datasource/commit/971cf18b16e9101484f1deece99754c394dc5b71))
+* **deps:** update dependency @grafana/plugin-ui to v0.17.3 ([#456](https://github.com/grafana/grafana-cube-datasource/issues/456)) ([1283a59](https://github.com/grafana/grafana-cube-datasource/commit/1283a59d62769e9ea97cc226fce56591ab74bd2c))
+* **deps:** update fast-uri to 3.1.4 (CVE-2026-16221) ([#410](https://github.com/grafana/grafana-cube-datasource/issues/410)) ([1052d46](https://github.com/grafana/grafana-cube-datasource/commit/1052d46ba9b4c45af534de6299c93e0d13c373a7))
+* **deps:** update fast-uri to patched 3.1.3 (CVE-2026-13676) ([#406](https://github.com/grafana/grafana-cube-datasource/issues/406)) ([6bdb84c](https://github.com/grafana/grafana-cube-datasource/commit/6bdb84cc4f5eabb17f3aff9be7bfdcd8f8361ca5))
+* **deps:** update grafana monorepo to v13.1.0 ([#414](https://github.com/grafana/grafana-cube-datasource/issues/414)) ([ab8e5ec](https://github.com/grafana/grafana-cube-datasource/commit/ab8e5ecbc4a877dabf87261a110cb9543c30558f))
+* **deps:** update grafana monorepo to v13.1.1 ([#448](https://github.com/grafana/grafana-cube-datasource/issues/448)) ([47230b9](https://github.com/grafana/grafana-cube-datasource/commit/47230b92706d77cb054701e2c901357167b248e7))
+* **deps:** update js-yaml to patched 4.3.0/3.15.0 (CVE-2026-59869) ([#383](https://github.com/grafana/grafana-cube-datasource/issues/383)) ([a792b10](https://github.com/grafana/grafana-cube-datasource/commit/a792b10aedc0d26567897d0190f6ec0420a7777d))
+* **deps:** update module github.com/grafana/grafana-plugin-sdk-go to v0.292.1 ([#376](https://github.com/grafana/grafana-cube-datasource/issues/376)) ([77902b6](https://github.com/grafana/grafana-cube-datasource/commit/77902b6c537558455ad2fc9e3559086c203fa61b))
+* **deps:** update module github.com/grafana/grafana-plugin-sdk-go to v0.294.0 ([#435](https://github.com/grafana/grafana-cube-datasource/issues/435)) ([dac5152](https://github.com/grafana/grafana-cube-datasource/commit/dac51520281e727645d959754767d0598db09580))
+* **deps:** update postcss to patched 8.5.18+ (GHSA-r28c-9q8g-f849) ([#452](https://github.com/grafana/grafana-cube-datasource/issues/452)) ([40afaa8](https://github.com/grafana/grafana-cube-datasource/commit/40afaa8decf8d423124bf6034ffd53c10bbc72cf))
+* **deps:** update tanstack-query monorepo to v5.101.2 ([#415](https://github.com/grafana/grafana-cube-datasource/issues/415)) ([c3ec237](https://github.com/grafana/grafana-cube-datasource/commit/c3ec2377e2e8441d9365777e07c57f5a58ed559a))
+* **deps:** update tanstack-query monorepo to v5.101.3 ([#437](https://github.com/grafana/grafana-cube-datasource/issues/437)) ([1af9098](https://github.com/grafana/grafana-cube-datasource/commit/1af90988b9bd945378247926c38137387c07efc8))
+* **deps:** update tanstack-query monorepo to v5.101.4 ([#449](https://github.com/grafana/grafana-cube-datasource/issues/449)) ([e08f2ee](https://github.com/grafana/grafana-cube-datasource/commit/e08f2eebdc932141e35191a907506cee1b0625e6))
+* fall back to POST /v1/load for large queries ([#379](https://github.com/grafana/grafana-cube-datasource/issues/379)) ([7edf7cf](https://github.com/grafana/grafana-cube-datasource/commit/7edf7cf8bcbd02c46bd7c0697f7c35b8771bea89))
+* **plugin:** make grafanaDependency prerelease-inclusive ([#362](https://github.com/grafana/grafana-cube-datasource/issues/362)) ([4348ec4](https://github.com/grafana/grafana-cube-datasource/commit/4348ec482d17434df65fdfc84175eff71f155645)), closes [#357](https://github.com/grafana/grafana-cube-datasource/issues/357)
+* **query-builder:** scope filter values by preceding + adhoc filters ([#32](https://github.com/grafana/grafana-cube-datasource/issues/32)) ([#453](https://github.com/grafana/grafana-cube-datasource/issues/453)) ([97bacaf](https://github.com/grafana/grafana-cube-datasource/commit/97bacaf9fdf56c77b23ade5fbc48cecf8117d302))
+* **security/unknown/:** update module golang.org/x/net to v0.56.0 [security] ([#401](https://github.com/grafana/grafana-cube-datasource/issues/401)) ([e52d176](https://github.com/grafana/grafana-cube-datasource/commit/e52d176a51b39a32b5ec3252fa8aaed08d0c6b64))
+* **security/unknown/:** update module golang.org/x/text to v0.39.0 [security] ([#402](https://github.com/grafana/grafana-cube-datasource/issues/402)) ([a4df655](https://github.com/grafana/grafana-cube-datasource/commit/a4df6559d2a5045b342e90b3c727e880e1e587f3))
+* **time:** intersect per-panel timeDimensions with dashboard time range ([#173](https://github.com/grafana/grafana-cube-datasource/issues/173)) ([#457](https://github.com/grafana/grafana-cube-datasource/issues/457)) ([1cbc618](https://github.com/grafana/grafana-cube-datasource/commit/1cbc618c335a0ea80de30f5d94024e111276495a))
+
 ## [0.6.2](https://github.com/grafana/grafana-cube-datasource/compare/v0.6.1...v0.6.2) (2026-06-03)
 
 
