@@ -44,6 +44,8 @@ mapping, method selection, or progress fields, you **must**:
 
 ### Non-obvious notes
 
+- **Node version (engine-strict):** `.npmrc` sets `engine-strict=true` and `package.json` requires Node `>=24` / npm `>=11.12.1`, so `npm install`/`npm run *` hard-fail on the wrong Node. The Cloud VM's infra ships `/exec-daemon/node` (v22) first on `PATH`; the snapshot works around this by setting the nvm `default` alias to `24.18.1` and prepending it to `PATH` in `~/.bashrc`. Interactive/login shells (and the startup update script) therefore get Node 24 automatically — if you spawn a bare non-login shell and hit `EBADENGINE`, run `. "$NVM_DIR/nvm.sh"` (or use `bash -l`) to pick up Node 24. `mage` lives in `$(go env GOPATH)/bin`, also added to `PATH` via `~/.bashrc`.
+- On the Cloud VM the Docker host is `x86_64`, so build the backend with `mage -v build:linux` (produces `gpx_cube_linux_amd64`) before `docker compose up`.
 - Playwright E2E tests (`npm run e2e`) require services to be up first. Use `--reporter=list` to avoid the interactive HTML report blocking the terminal.
 - `mage -v` builds all 6 platform binaries by default. For faster local dev, build only the Linux binary matching your Docker host architecture:
   - **Apple Silicon (M1/M2/M3/M4):** `mage -v build:linuxARM64` — Docker runs ARM64 containers natively, so Grafana loads `gpx_cube_linux_arm64`.
