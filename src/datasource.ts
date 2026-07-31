@@ -1,15 +1,47 @@
-import { DataSourceInstanceSettings, CoreApp, ScopedVars, TimeRange } from '@grafana/data';
+import { DataSourceInstanceSettings, CoreApp, ScopedVars, TimeRange, DataQueryRequest, DataQueryResponse } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
+import { Observable, from } from 'rxjs';
+import { mergeMap } from 'rxjs/operators';
 
 import { CubeQuery, CubeDataSourceOptions, DEFAULT_QUERY, Operator } from './types';
 import { normalizeCubeQuery } from './utils/normalizeCubeQuery';
+import type { MetadataResponse } from './queries';
 
 export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceOptions> {
   readonly instanceSettings: DataSourceInstanceSettings<CubeDataSourceOptions>;
 
+  // Cached view metadata (member -> view) so the synchronous runtime path
+  // (applyTemplateVariables) can drop cross-view AdHoc filters (issue #307).
+  private cachedMetadata: MetadataResponse | null = null;
+  // Shared in-flight metadata fetch so a cold dashboard's concurrent per-panel
+  // query() calls collapse to a SINGLE /v1/meta request instead of N (issue #307).
+  private metadataInFlight: Promise<MetadataResponse> | null = null;
+
   constructor(instanceSettings: DataSourceInstanceSettings<CubeDataSourceOptions>) {
     super(instanceSettings);
     this.instanceSettings = instanceSettings;
+    // Note: we intentionally do NOT prefetch metadata here. The async query()
+    // path loads-and-caches it before the first query runs (issue #307), which
+    // avoids firing a metadata request in non-query contexts (config editor /
+    // health checks).
+  }
+
+  /** Synchronously exposes the cached view metadata, or null before it loads. */
+  getCachedMetadata(): MetadataResponse | null {
+    return this.cachedMetadata;
+  }
+
+  // Ensure the view metadata is loaded BEFORE any query is executed, so the very
+  // first runtime query on a fresh dashboard can already scope AdHoc filters by
+  // view (issue #307). applyTemplateVariables is synchronous and cannot await, so
+  // we gate here in the async query() path; without this a cold-start dashboard
+  // could inject cross-view filters and leave panels red until a manual refresh.
+  query(request: DataQueryRequest<CubeQuery>): Observable<DataQueryResponse> {
+    if (this.cachedMetadata) {
+      return super.query(request);
+    }
+    // Best-effort: on failure, fall back to prior inject-all behavior.
+    return from(this.getMetadata().catch(() => null)).pipe(mergeMap(() => super.query(request)));
   }
 
   getDefaultQuery(_: CoreApp): Partial<CubeQuery> {
@@ -22,6 +54,8 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
       datasourceName: this.name,
       mapOperator: (operator) => this.mapOperator(operator),
       scopedVars,
+      // Drop AdHoc filters that belong to a different Cube view (issue #307).
+      metadata: this.cachedMetadata ?? undefined,
     });
 
     return {
@@ -121,8 +155,21 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
     return [{ dimension, dateRange: [from, to] }];
   }
 
-  // Get available dimensions and measures for the query builder
-  getMetadata() {
-    return this.getResource('metadata');
+  // Get available dimensions and measures for the query builder.
+  // Caches the result so the runtime path can scope AdHoc filters by view (#307),
+  // and de-dupes concurrent fetches (a cold burst of panel queries shares one).
+  getMetadata(): Promise<MetadataResponse> {
+    if (this.metadataInFlight) {
+      return this.metadataInFlight;
+    }
+    this.metadataInFlight = this.getResource<MetadataResponse>('metadata')
+      .then((metadata) => {
+        this.cachedMetadata = metadata;
+        return metadata;
+      })
+      .finally(() => {
+        this.metadataInFlight = null;
+      });
+    return this.metadataInFlight;
   }
 }

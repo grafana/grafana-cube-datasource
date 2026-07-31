@@ -2,6 +2,7 @@ import { DataSource } from './datasource';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { CubeDataSourceOptions, CubeFilter, CubeQuery, Operator } from './types';
 import { getTemplateSrv } from '@grafana/runtime';
+import { of, lastValueFrom } from 'rxjs';
 
 // Mock @grafana/runtime
 jest.mock('@grafana/runtime', () => ({
@@ -753,6 +754,111 @@ describe('DataSource', () => {
 
       const query = { refId: 'A', measures: ['orders.count'] };
       expect(datasource.filterQuery(query)).toBe(true);
+    });
+  });
+
+  describe('query() metadata gating (issue #307 cold-start)', () => {
+    const superProto = Object.getPrototypeOf(DataSource.prototype);
+
+    it('awaits metadata BEFORE running the first query when the cache is cold', async () => {
+      const metadata = {
+        dimensions: [{ label: 'orders.status', value: 'orders.status', type: 'string', cube: 'orders' }],
+        measures: [],
+      };
+      mockGetTemplateSrv.mockReturnValue({ replace: (s: string) => s, getAdhocFilters: () => [] });
+
+      const datasource = createDataSource();
+      // Force a cold cache (ignore any best-effort constructor prefetch).
+      (datasource as any).cachedMetadata = null;
+
+      const order: string[] = [];
+      mockGetResource.mockImplementation(async (path: string) => {
+        if (path === 'metadata') {
+          order.push('metadata');
+          return metadata;
+        }
+        return {};
+      });
+      const superSpy = jest.spyOn(superProto, 'query').mockImplementation(() => {
+        order.push('query');
+        return of({ data: [] });
+      });
+
+      await lastValueFrom(datasource.query({ targets: [] } as any));
+
+      // Metadata is fetched first, THEN the backend query runs -> no cold race.
+      expect(order).toEqual(['metadata', 'query']);
+      expect((datasource as any).cachedMetadata).toEqual(metadata);
+
+      superSpy.mockRestore();
+    });
+
+    it('does NOT re-fetch metadata when the cache is already warm', async () => {
+      const datasource = createDataSource();
+      (datasource as any).cachedMetadata = { dimensions: [], measures: [] };
+
+      mockGetResource.mockClear();
+      const superSpy = jest.spyOn(superProto, 'query').mockReturnValue(of({ data: [] }));
+
+      await lastValueFrom(datasource.query({ targets: [] } as any));
+
+      expect(superSpy).toHaveBeenCalledTimes(1);
+      expect(mockGetResource).not.toHaveBeenCalledWith('metadata');
+
+      superSpy.mockRestore();
+    });
+
+    it('collapses a cold burst of concurrent queries into a single /v1/meta fetch', async () => {
+      const metadata = { dimensions: [], measures: [] };
+      mockGetTemplateSrv.mockReturnValue({ replace: (s: string) => s, getAdhocFilters: () => [] });
+
+      const datasource = createDataSource();
+      (datasource as any).cachedMetadata = null;
+      (datasource as any).metadataInFlight = null;
+
+      let metaCalls = 0;
+      mockGetResource.mockImplementation(async (path: string) => {
+        if (path === 'metadata') {
+          metaCalls++;
+          // Defer so all concurrent callers observe the same in-flight promise.
+          await new Promise((resolve) => setTimeout(resolve, 5));
+          return metadata;
+        }
+        return {};
+      });
+      const superSpy = jest.spyOn(superProto, 'query').mockReturnValue(of({ data: [] }));
+
+      // Three panels query concurrently on a cold cache.
+      await Promise.all([
+        lastValueFrom(datasource.query({ targets: [] } as any)),
+        lastValueFrom(datasource.query({ targets: [] } as any)),
+        lastValueFrom(datasource.query({ targets: [] } as any)),
+      ]);
+
+      expect(metaCalls).toBe(1);
+      expect(superSpy).toHaveBeenCalledTimes(3);
+
+      superSpy.mockRestore();
+    });
+
+    it('still runs the query (inject-all fallback) when metadata fetch fails on cold start', async () => {
+      const datasource = createDataSource();
+      (datasource as any).cachedMetadata = null;
+
+      mockGetResource.mockImplementation(async (path: string) => {
+        if (path === 'metadata') {
+          throw new Error('metadata unavailable');
+        }
+        return {};
+      });
+      const superSpy = jest.spyOn(superProto, 'query').mockReturnValue(of({ data: [] }));
+
+      await lastValueFrom(datasource.query({ targets: [] } as any));
+
+      expect(superSpy).toHaveBeenCalledTimes(1);
+      expect((datasource as any).cachedMetadata).toBeNull();
+
+      superSpy.mockRestore();
     });
   });
 });

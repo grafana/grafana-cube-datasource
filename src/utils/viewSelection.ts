@@ -8,9 +8,22 @@ interface ViewSelectionQuery {
   filters?: unknown[];
 }
 
-interface ViewSelectionMetadata {
+export interface ViewSelectionMetadata {
   dimensions: MetadataOption[];
   measures: MetadataOption[];
+}
+
+/**
+ * Build a member (fully-qualified name) -> view (cube) map from metadata.
+ * Cube view members are fully qualified (e.g. `view_a.region`), so this lets us
+ * tell which view an AdHoc filter's key belongs to. See issue #307.
+ */
+export function buildMemberViewMap(metadata: ViewSelectionMetadata): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const option of [...metadata.dimensions, ...metadata.measures]) {
+    map.set(option.value, option.cube);
+  }
+  return map;
 }
 
 export interface ViewSelectionState {

@@ -1,7 +1,15 @@
 import type { BinaryFilter, UnaryFilter, Filter as CubeJsFilter, Query as CubeJsQuery } from '@cubejs-client/core';
 import { DataSource } from '../datasource';
-import { CubeFilterItem, CubeQuery, UNARY_OPERATORS, isCubeFilter, isCubeAndFilter, isCubeOrFilter } from '../types';
+import { CubeFilter, CubeFilterItem, CubeQuery, UNARY_OPERATORS, isCubeFilter, isCubeAndFilter, isCubeOrFilter } from '../types';
 import { normalizeCubeQuery } from './normalizeCubeQuery';
+import type { ViewSelectionMetadata } from './viewSelection';
+
+export interface BuiltCubeQuery {
+  /** The Cube query JSON, or '' when the query has no dimensions/measures. */
+  json: string;
+  /** AdHoc filters dropped because they target a different view (issue #307). */
+  droppedAdHocFilters: CubeFilter[];
+}
 
 /**
  * Builds a Cube.js query JSON string from a Grafana query object.
@@ -9,15 +17,28 @@ import { normalizeCubeQuery } from './normalizeCubeQuery';
  *
  * This function uses @cubejs-client/core types to ensure compile-time
  * compatibility with Cube's /load endpoint format.
+ *
+ * Also returns the AdHoc filters that were dropped as inapplicable to this
+ * query's view, so the SQL preview can explain why they did not apply (#307).
  */
-export function buildCubeQueryJson(query: CubeQuery, datasource: DataSource): string {
+export function buildCubeQueryJson(
+  query: CubeQuery,
+  datasource: DataSource,
+  // Optional explicit view metadata. Callers (e.g. the SQL preview) pass the
+  // reactive useMetadataQuery result so the "skipped N" hint updates when
+  // metadata loads; falls back to the datasource cache otherwise (issue #307).
+  metadata?: ViewSelectionMetadata
+): BuiltCubeQuery {
   const normalizedQuery = normalizeCubeQuery(query, {
     datasourceName: datasource.name,
     mapOperator: (operator) => datasource.mapOperator(operator),
+    metadata: metadata ?? datasource.getCachedMetadata() ?? undefined,
   });
 
+  const droppedAdHocFilters = normalizedQuery.droppedAdHocFilters ?? [];
+
   if (!normalizedQuery.dimensions?.length && !normalizedQuery.measures?.length) {
-    return '';
+    return { json: '', droppedAdHocFilters };
   }
 
   // Using CubeJsQuery type for compile-time checking against Cube's official API
@@ -47,7 +68,7 @@ export function buildCubeQueryJson(query: CubeQuery, datasource: DataSource): st
     cubeQuery.limit = normalizedQuery.limit;
   }
 
-  return JSON.stringify(cubeQuery);
+  return { json: JSON.stringify(cubeQuery), droppedAdHocFilters };
 }
 
 /**

@@ -148,3 +148,143 @@ describe('normalizeCubeQuery timeDimensions intersection (issue #173)', () => {
     expect(result.timeDimensions).toBeUndefined();
   });
 });
+
+describe('normalizeCubeQuery AdHoc view-scoping (issue #307)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // Metadata with two sealed views, each fully-qualifying its own members.
+  const metadata = {
+    dimensions: [
+      { label: 'view_a.region', value: 'view_a.region', type: 'string', cube: 'view_a' },
+      { label: 'view_a.customer', value: 'view_a.customer', type: 'string', cube: 'view_a' },
+      { label: 'view_b.region', value: 'view_b.region', type: 'string', cube: 'view_b' },
+    ],
+    measures: [
+      { label: 'view_a.count', value: 'view_a.count', type: 'number', cube: 'view_a' },
+      { label: 'view_b.count', value: 'view_b.count', type: 'number', cube: 'view_b' },
+    ],
+  };
+
+  const withAdHocFilters = (filters: Array<{ key: string; operator: string; value: string; values?: string[] }>) =>
+    mockGetTemplateSrv.mockReturnValue({
+      getAdhocFilters: () => filters,
+      // No $cubeTimeDimension / range unless a test overrides it.
+      replace: (str: string) => str,
+    });
+
+  const options = { ...baseOptions, metadata };
+
+  it('keeps an AdHoc filter whose member belongs to the query view', () => {
+    withAdHocFilters([{ key: 'view_a.region', operator: '=', value: 'uk' }]);
+    const query = { refId: 'A', dimensions: ['view_a.customer'], measures: ['view_a.count'] } as CubeQuery;
+
+    const result = normalizeCubeQuery(query, options);
+
+    expect(result.filters).toEqual([{ member: 'view_a.region', operator: Operator.Equals, values: ['uk'] }]);
+    expect(result.droppedAdHocFilters).toBeUndefined();
+  });
+
+  it('drops an AdHoc filter whose member belongs to a different view', () => {
+    withAdHocFilters([{ key: 'view_b.region', operator: '=', value: 'uk' }]);
+    const query = { refId: 'A', dimensions: ['view_a.customer'], measures: ['view_a.count'] } as CubeQuery;
+
+    const result = normalizeCubeQuery(query, options);
+
+    expect(result.filters).toBeUndefined();
+    expect(result.droppedAdHocFilters).toEqual([{ member: 'view_b.region', operator: Operator.Equals, values: ['uk'] }]);
+  });
+
+  it('keeps matching and drops non-matching filters together (mixed multi-view)', () => {
+    withAdHocFilters([
+      { key: 'view_a.region', operator: '=', value: 'uk' },
+      { key: 'view_b.region', operator: '=', value: 'fr' },
+    ]);
+    const query = { refId: 'A', measures: ['view_a.count'] } as CubeQuery;
+
+    const result = normalizeCubeQuery(query, options);
+
+    expect(result.filters).toEqual([{ member: 'view_a.region', operator: Operator.Equals, values: ['uk'] }]);
+    expect(result.droppedAdHocFilters).toEqual([{ member: 'view_b.region', operator: Operator.Equals, values: ['fr'] }]);
+  });
+
+  it('infers the query view from panel filters when no dims/measures are set', () => {
+    withAdHocFilters([{ key: 'view_a.region', operator: '=', value: 'uk' }]);
+    const query = {
+      refId: 'A',
+      filters: [{ member: 'view_a.customer', operator: Operator.Equals, values: ['BBC'] }],
+    } as unknown as CubeQuery;
+
+    const result = normalizeCubeQuery(query, options);
+
+    // view inferred as view_a from the panel filter -> AdHoc kept.
+    expect(result.droppedAdHocFilters).toBeUndefined();
+    expect(result.filters).toEqual(
+      expect.arrayContaining([{ member: 'view_a.region', operator: Operator.Equals, values: ['uk'] }])
+    );
+  });
+
+  it('skips AdHoc injection WITHOUT flagging drops when no view can be inferred (empty query)', () => {
+    withAdHocFilters([{ key: 'view_a.region', operator: '=', value: 'uk' }]);
+    const query = { refId: 'A' } as CubeQuery;
+
+    const result = normalizeCubeQuery(query, options);
+
+    // Filters are not injected (view unknown), but they are NOT reported as
+    // dropped/inapplicable: they will apply once a dimension/measure is added,
+    // so the SQL preview must not show a misleading "different view" hint (#307).
+    expect(result.filters).toBeUndefined();
+    expect(result.droppedAdHocFilters).toBeUndefined();
+  });
+
+  it('drops an AdHoc filter whose member is not present in metadata (unknown view)', () => {
+    withAdHocFilters([{ key: 'orders.unknown', operator: '=', value: 'x' }]);
+    const query = { refId: 'A', measures: ['view_a.count'] } as CubeQuery;
+
+    const result = normalizeCubeQuery(query, options);
+
+    expect(result.filters).toBeUndefined();
+    expect(result.droppedAdHocFilters).toEqual([{ member: 'orders.unknown', operator: Operator.Equals, values: ['x'] }]);
+  });
+
+  it('keeps ALL AdHoc filters (prior behavior) when metadata is not provided', () => {
+    withAdHocFilters([{ key: 'view_b.region', operator: '=', value: 'uk' }]);
+    const query = { refId: 'A', measures: ['view_a.count'] } as CubeQuery;
+
+    // baseOptions has no metadata -> no view scoping, inject everything.
+    const result = normalizeCubeQuery(query, baseOptions);
+
+    expect(result.filters).toEqual([{ member: 'view_b.region', operator: Operator.Equals, values: ['uk'] }]);
+    expect(result.droppedAdHocFilters).toBeUndefined();
+  });
+
+  it('still injects the dashboard time dimension while dropping a cross-view AdHoc filter (interaction with #35/#173)', () => {
+    mockGetTemplateSrv.mockReturnValue({
+      getAdhocFilters: () => [{ key: 'view_b.region', operator: '=', value: 'uk' }],
+      replace: (str: string) => {
+        if (str === '$cubeTimeDimension') {
+          return 'view_a.order_date';
+        }
+        if (str === '$__from') {
+          return DASH_FROM;
+        }
+        if (str === '$__to') {
+          return DASH_TO;
+        }
+        return str;
+      },
+    });
+    const query = { refId: 'A', measures: ['view_a.count'] } as CubeQuery;
+
+    const result = normalizeCubeQuery(query, options);
+
+    // Cross-view AdHoc dropped...
+    expect(result.filters).toBeUndefined();
+    expect(result.droppedAdHocFilters).toEqual([{ member: 'view_b.region', operator: Operator.Equals, values: ['uk'] }]);
+    // ...but the dashboard time-range injection is unaffected.
+    expect(result.timeDimensions).toEqual([
+      { dimension: 'view_a.order_date', dateRange: [DASH_FROM_ISO, DASH_TO_ISO] },
+    ]);
+  });
+});

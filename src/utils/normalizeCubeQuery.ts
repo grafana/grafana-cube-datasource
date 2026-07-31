@@ -4,6 +4,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { CubeFilter, CubeFilterItem, CubeQuery, Operator, UNARY_OPERATORS, isCubeAndFilter, isCubeFilter, isCubeOrFilter } from '../types';
 import { filterValidCubeFilters } from './filterValidation';
 import { normalizeOrder, OrderArray } from './normalizeOrder';
+import { buildMemberViewMap, getViewSelectionState, ViewSelectionMetadata } from './viewSelection';
 
 interface AdHocFilter {
   key: string;
@@ -16,6 +17,12 @@ interface NormalizeCubeQueryOptions {
   datasourceName: string;
   mapOperator: (grafanaOperator: string) => Operator;
   scopedVars?: ScopedVars;
+  /**
+   * View metadata (dimensions/measures with their `cube`/view) used to drop
+   * AdHoc filters that target a different Cube view than this query (issue #307).
+   * When omitted (e.g. before metadata has loaded), AdHoc injection is unchanged.
+   */
+  metadata?: ViewSelectionMetadata;
 }
 
 export interface NormalizedCubeQuery {
@@ -25,6 +32,12 @@ export interface NormalizedCubeQuery {
   filters?: CubeFilterItem[];
   order?: OrderArray;
   limit?: number;
+  /**
+   * AdHoc filters that were dropped because they target a different view than
+   * this query (or no view could be inferred). Surfaced in the SQL preview so
+   * users understand why a dashboard filter did not apply (issue #307).
+   */
+  droppedAdHocFilters?: CubeFilter[];
 }
 
 /**
@@ -46,7 +59,17 @@ export function normalizeCubeQuery(query: CubeQuery, options: NormalizeCubeQuery
     values: filter.values && filter.values.length > 0 ? filter.values : [filter.value],
   }));
 
-  const validFilters = filterValidCubeFilters([...interpolatedFilters, ...adHocFilters]).map(stripUnaryFilterValues);
+  // Cube views are sealed namespaces (members are fully qualified, e.g. `view_a.region`).
+  // Injecting an AdHoc filter for a member of a different view makes Cube /v1/load
+  // error and turns unrelated panels red. Drop AdHoc filters whose member does not
+  // belong to this query's inferred view (issue #307).
+  const { applicable: applicableAdHocFilters, dropped: droppedAdHocFilters } = partitionAdHocFiltersByView(
+    adHocFilters,
+    query,
+    options.metadata
+  );
+
+  const validFilters = filterValidCubeFilters([...interpolatedFilters, ...applicableAdHocFilters]).map(stripUnaryFilterValues);
 
   const queryTimeDimensions = interpolateTimeDimensions(query.timeDimensions, templateSrv, scopedVars) ?? [];
   const timeDimensions = applyDashboardTimeRange(queryTimeDimensions, templateSrv, scopedVars);
@@ -58,7 +81,57 @@ export function normalizeCubeQuery(query: CubeQuery, options: NormalizeCubeQuery
     filters: validFilters.length > 0 ? validFilters : undefined,
     order: normalizeOrder(query.order),
     limit: query.limit ?? undefined,
+    droppedAdHocFilters: droppedAdHocFilters.length > 0 ? droppedAdHocFilters : undefined,
   };
+}
+
+/**
+ * Split injected AdHoc filters into those applicable to this query's view and
+ * those that must be dropped (they target a different view), reusing the same
+ * view-inference logic as the query builder's getViewSelectionState.
+ *
+ * - No metadata (not loaded yet): keep ALL AdHoc filters (prior behavior), so
+ *   single-view dashboards are not regressed before metadata resolves.
+ * - Metadata present but no view inferable (empty query / no dims/measures/
+ *   panel-filters): skip AdHoc injection entirely (all dropped).
+ * - Otherwise: keep filters whose member's view matches the query's view.
+ *   Members not present in metadata are treated as non-matching and dropped.
+ */
+function partitionAdHocFiltersByView(
+  adHocFilters: CubeFilter[],
+  query: CubeQuery,
+  metadata?: ViewSelectionMetadata
+): { applicable: CubeFilter[]; dropped: CubeFilter[] } {
+  if (!metadata) {
+    return { applicable: adHocFilters, dropped: [] };
+  }
+
+  const { view } = getViewSelectionState(
+    { dimensions: query.dimensions, measures: query.measures, filters: query.filters },
+    metadata
+  );
+
+  if (!view) {
+    // No view can be inferred yet (empty/incomplete query with no dims/measures/
+    // panel-filters). We still can't safely inject AdHoc filters (we don't know
+    // which view they'd target), but these are NOT "inapplicable / wrong-view"
+    // drops — they will apply once the user picks a dimension/measure. So we do
+    // NOT report them as dropped, avoiding a misleading "targets a different
+    // Cube view" hint on a fresh panel (issue #307 review).
+    return { applicable: [], dropped: [] };
+  }
+
+  const memberToView = buildMemberViewMap(metadata);
+  const applicable: CubeFilter[] = [];
+  const dropped: CubeFilter[] = [];
+  for (const filter of adHocFilters) {
+    if (memberToView.get(filter.member) === view) {
+      applicable.push(filter);
+    } else {
+      dropped.push(filter);
+    }
+  }
+  return { applicable, dropped };
 }
 
 function interpolateFilterItem(

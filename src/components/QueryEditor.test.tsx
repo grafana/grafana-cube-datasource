@@ -6,9 +6,15 @@ import { CubeQuery, Operator } from '../types';
 import { getTemplateSrv } from '@grafana/runtime';
 import { createMockDataSource, setup } from '../testUtils';
 
-// Mock the SQLPreview component
+// Mock the SQLPreview component. Also expose droppedAdHocFilters so tests can
+// assert the #307 view-scoping result is threaded through reactively.
 jest.mock('./SQLPreview', () => ({
-  SQLPreview: ({ sql }: { sql: string }) => <div data-testid="sql-preview">{sql}</div>,
+  SQLPreview: ({ sql, droppedAdHocFilters = [] }: { sql: string; droppedAdHocFilters?: Array<{ member: string }> }) => (
+    <div data-testid="sql-preview">
+      {sql}
+      <span data-testid="dropped-adhoc">{droppedAdHocFilters.map((f) => f.member).join(',')}</span>
+    </div>
+  ),
 }));
 
 // Mock @grafana/runtime for getTemplateSrv
@@ -863,6 +869,47 @@ describe('QueryEditor', () => {
     });
   });
 
+  describe('AdHoc view-scoping hint (issue #307)', () => {
+    it('shows the "Skipped N" hint once metadata loads (deferred rerender)', async () => {
+      // AdHoc filter targets a member outside this query's "orders" view.
+      mockGetTemplateSrv.mockReturnValue({
+        replace: jest.fn((value: string) => value),
+        getAdhocFilters: jest.fn(() => [{ key: 'other.region', operator: '=', value: 'US' }]),
+      });
+
+      const datasource = createMockDataSource();
+      // Genuinely cold: the synchronous cache is empty until getMetadata resolves,
+      // so the initial render must NOT scope (dropped list empty) and the dropped
+      // filter should appear ONLY after the async metadata load (deferred rerender).
+      datasource.getCachedMetadata = jest.fn().mockReturnValue(null);
+      const query = createMockQuery({ dimensions: ['orders.status'], measures: ['orders.count'] });
+
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      // Before metadata resolves: no scoping yet (cold cache -> inject-all).
+      expect(screen.getByTestId('dropped-adhoc')).toHaveTextContent('');
+
+      // After the async getMetadata resolves via react-query, the memo recomputes
+      // and threads the dropped (cross-view) filter through.
+      await waitFor(() => expect(screen.getByTestId('dropped-adhoc')).toHaveTextContent('other.region'));
+    });
+
+    it('shows no hint when the AdHoc filter belongs to the query view', async () => {
+      mockGetTemplateSrv.mockReturnValue({
+        replace: jest.fn((value: string) => value),
+        getAdhocFilters: jest.fn(() => [{ key: 'orders.region', operator: '=', value: 'US' }]),
+      });
+
+      const datasource = createMockDataSource();
+      const query = createMockQuery({ dimensions: ['orders.status'], measures: ['orders.count'] });
+
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      await waitFor(() => expect(datasource.getMetadata).toHaveBeenCalled());
+      expect(screen.getByTestId('dropped-adhoc')).toHaveTextContent('');
+    });
+  });
+
   describe('unsupported features detection', () => {
     it('should show JSON viewer when query has time dimensions', async () => {
       const datasource = createMockDataSource();
@@ -883,8 +930,9 @@ describe('QueryEditor', () => {
       expect(screen.queryByText('Select dimensions...')).not.toBeInTheDocument();
       expect(screen.queryByText('Select measures...')).not.toBeInTheDocument();
 
-      // Should NOT fetch metadata (visual builder not rendered)
-      expect(datasource.getMetadata).not.toHaveBeenCalled();
+      // Metadata IS fetched even in JSON mode so the SQL preview can scope AdHoc
+      // filters by view and render the "skipped N" hint reactively (issue #307).
+      expect(datasource.getMetadata).toHaveBeenCalled();
     });
 
     it('should show JSON viewer with query content when unsupported features detected', async () => {

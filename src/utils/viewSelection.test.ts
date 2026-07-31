@@ -1,5 +1,5 @@
 import { MetadataOption } from '../queries';
-import { decorateWithViewSelection, getViewSelectionState } from './viewSelection';
+import { buildMemberViewMap, decorateWithViewSelection, getViewSelectionState } from './viewSelection';
 
 const opt = (value: string, view = value.split('.')[0], extra: Partial<MetadataOption> = {}): MetadataOption => ({
   label: value,
@@ -100,5 +100,25 @@ describe('decorateWithViewSelection', () => {
       existing: true,
       originalDescription: 'attribution channel',
     });
+  });
+});
+
+describe('buildMemberViewMap (issue #307)', () => {
+  it('maps every dimension and measure member to its view', () => {
+    const map = buildMemberViewMap({
+      dimensions: [opt('view_a.region'), opt('view_b.region')],
+      measures: [opt('view_a.count'), opt('view_b.count')],
+    });
+
+    expect(map.get('view_a.region')).toBe('view_a');
+    expect(map.get('view_b.region')).toBe('view_b');
+    expect(map.get('view_a.count')).toBe('view_a');
+    expect(map.get('view_b.count')).toBe('view_b');
+    expect(map.get('unknown.member')).toBeUndefined();
+    expect(map.size).toBe(4);
+  });
+
+  it('returns an empty map for empty metadata', () => {
+    expect(buildMemberViewMap({ dimensions: [], measures: [] }).size).toBe(0);
   });
 });
