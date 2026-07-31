@@ -13,6 +13,9 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
   // Cached view metadata (member -> view) so the synchronous runtime path
   // (applyTemplateVariables) can drop cross-view AdHoc filters (issue #307).
   private cachedMetadata: MetadataResponse | null = null;
+  // Shared in-flight metadata fetch so a cold dashboard's concurrent per-panel
+  // query() calls collapse to a SINGLE /v1/meta request instead of N (issue #307).
+  private metadataInFlight: Promise<MetadataResponse> | null = null;
 
   constructor(instanceSettings: DataSourceInstanceSettings<CubeDataSourceOptions>) {
     super(instanceSettings);
@@ -153,10 +156,20 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
   }
 
   // Get available dimensions and measures for the query builder.
-  // Caches the result so the runtime path can scope AdHoc filters by view (#307).
-  async getMetadata(): Promise<MetadataResponse> {
-    const metadata = await this.getResource<MetadataResponse>('metadata');
-    this.cachedMetadata = metadata;
-    return metadata;
+  // Caches the result so the runtime path can scope AdHoc filters by view (#307),
+  // and de-dupes concurrent fetches (a cold burst of panel queries shares one).
+  getMetadata(): Promise<MetadataResponse> {
+    if (this.metadataInFlight) {
+      return this.metadataInFlight;
+    }
+    this.metadataInFlight = this.getResource<MetadataResponse>('metadata')
+      .then((metadata) => {
+        this.cachedMetadata = metadata;
+        return metadata;
+      })
+      .finally(() => {
+        this.metadataInFlight = null;
+      });
+    return this.metadataInFlight;
   }
 }

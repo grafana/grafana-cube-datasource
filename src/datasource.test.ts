@@ -808,6 +808,39 @@ describe('DataSource', () => {
       superSpy.mockRestore();
     });
 
+    it('collapses a cold burst of concurrent queries into a single /v1/meta fetch', async () => {
+      const metadata = { dimensions: [], measures: [] };
+      mockGetTemplateSrv.mockReturnValue({ replace: (s: string) => s, getAdhocFilters: () => [] });
+
+      const datasource = createDataSource();
+      (datasource as any).cachedMetadata = null;
+      (datasource as any).metadataInFlight = null;
+
+      let metaCalls = 0;
+      mockGetResource.mockImplementation(async (path: string) => {
+        if (path === 'metadata') {
+          metaCalls++;
+          // Defer so all concurrent callers observe the same in-flight promise.
+          await new Promise((resolve) => setTimeout(resolve, 5));
+          return metadata;
+        }
+        return {};
+      });
+      const superSpy = jest.spyOn(superProto, 'query').mockReturnValue(of({ data: [] }));
+
+      // Three panels query concurrently on a cold cache.
+      await Promise.all([
+        lastValueFrom(datasource.query({ targets: [] } as any)),
+        lastValueFrom(datasource.query({ targets: [] } as any)),
+        lastValueFrom(datasource.query({ targets: [] } as any)),
+      ]);
+
+      expect(metaCalls).toBe(1);
+      expect(superSpy).toHaveBeenCalledTimes(3);
+
+      superSpy.mockRestore();
+    });
+
     it('still runs the query (inject-all fallback) when metadata fetch fails on cold start', async () => {
       const datasource = createDataSource();
       (datasource as any).cachedMetadata = null;

@@ -878,13 +878,19 @@ describe('QueryEditor', () => {
       });
 
       const datasource = createMockDataSource();
+      // Genuinely cold: the synchronous cache is empty until getMetadata resolves,
+      // so the initial render must NOT scope (dropped list empty) and the dropped
+      // filter should appear ONLY after the async metadata load (deferred rerender).
+      datasource.getCachedMetadata = jest.fn().mockReturnValue(null);
       const query = createMockQuery({ dimensions: ['orders.status'], measures: ['orders.count'] });
 
       setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
 
-      // getMetadata resolves asynchronously via react-query; the memo must
-      // recompute and thread the dropped (cross-view) filter through once the
-      // view metadata is available (deferred rerender).
+      // Before metadata resolves: no scoping yet (cold cache -> inject-all).
+      expect(screen.getByTestId('dropped-adhoc')).toHaveTextContent('');
+
+      // After the async getMetadata resolves via react-query, the memo recomputes
+      // and threads the dropped (cross-view) filter through.
       await waitFor(() => expect(screen.getByTestId('dropped-adhoc')).toHaveTextContent('other.region'));
     });
 
