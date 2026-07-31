@@ -1,4 +1,5 @@
-import type { AdHocVariableFilter, DataSourceRef } from '@grafana/data';
+import type { AdHocVariableFilter } from '@grafana/data';
+import type { DataSourceRef } from '@grafana/schema';
 import { getTemplateSrv } from '@grafana/runtime';
 
 /**
