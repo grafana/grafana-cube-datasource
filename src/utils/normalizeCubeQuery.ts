@@ -2,21 +2,23 @@ import type { TimeDimension } from '@cubejs-client/core';
 import type { ScopedVars } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { CubeFilter, CubeFilterItem, CubeQuery, Operator, UNARY_OPERATORS, isCubeAndFilter, isCubeFilter, isCubeOrFilter } from '../types';
+import { AdHocFilter, resolveAdHocFilters } from './adHocFilters';
 import { filterValidCubeFilters } from './filterValidation';
 import { normalizeOrder, OrderArray } from './normalizeOrder';
 import { buildMemberViewMap, getViewSelectionState, ViewSelectionMetadata } from './viewSelection';
 
-interface AdHocFilter {
-  key: string;
-  operator: string;
-  value: string;
-  values?: string[];
-}
-
 interface NormalizeCubeQueryOptions {
   datasourceName: string;
+  /** Datasource uid — used with name to resolve AdHoc filters from dashboard variables (#127). */
+  datasourceUid?: string;
   mapOperator: (grafanaOperator: string) => Operator;
   scopedVars?: ScopedVars;
+  /**
+   * Explicit AdHoc filters from `applyTemplateVariables`'s third argument /
+   * `DataQueryRequest.filters` (supported path after getAdhocFilters deprecation,
+   * issue #127). When omitted, filters are resolved from dashboard variables.
+   */
+  adHocFilters?: AdHocFilter[] | null;
   /**
    * View metadata (dimensions/measures with their `cube`/view) used to drop
    * AdHoc filters that target a different Cube view than this query (issue #307).
@@ -52,7 +54,10 @@ export function normalizeCubeQuery(query: CubeQuery, options: NormalizeCubeQuery
   const scopedVars = options.scopedVars ?? {};
 
   const interpolatedFilters = query.filters?.map((item) => interpolateFilterItem(item, templateSrv, scopedVars)) ?? [];
-  const adHocFilters = getAdHocFilters(templateSrv, options.datasourceName).map((filter): CubeFilter => ({
+  const adHocFilters = resolveAdHocFilters(
+    { name: options.datasourceName, uid: options.datasourceUid ?? options.datasourceName },
+    options.adHocFilters
+  ).map((filter): CubeFilter => ({
     member: filter.key,
     operator: options.mapOperator(filter.operator),
     // Multi-value operators (=| and !=|) use values array; otherwise fall back to single value.
@@ -277,12 +282,4 @@ function injectDashboardTimeDimension(
       dateRange: [fromDate.toISOString(), toDate.toISOString()],
     },
   ];
-}
-
-function getAdHocFilters(templateSrv: ReturnType<typeof getTemplateSrv>, datasourceName: string): AdHocFilter[] {
-  const withAdHoc = templateSrv as ReturnType<typeof getTemplateSrv> & {
-    getAdhocFilters?: (name: string) => AdHocFilter[] | undefined;
-  };
-
-  return withAdHoc.getAdhocFilters?.(datasourceName) ?? [];
 }

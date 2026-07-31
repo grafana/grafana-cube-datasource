@@ -1,4 +1,4 @@
-import { DataSourceInstanceSettings, CoreApp, ScopedVars, TimeRange, DataQueryRequest, DataQueryResponse } from '@grafana/data';
+import { DataSourceInstanceSettings, CoreApp, ScopedVars, TimeRange, DataQueryRequest, DataQueryResponse, AdHocVariableFilter } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { Observable, from } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
@@ -49,12 +49,19 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
     return DEFAULT_QUERY;
   }
 
-  applyTemplateVariables(query: CubeQuery, scopedVars: ScopedVars): CubeQuery {
+  applyTemplateVariables(query: CubeQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): CubeQuery {
     // Keep runtime execution behavior aligned with SQL preview query shaping.
+    // Prefer the explicit `filters` argument Grafana passes (issue #127); fall
+    // back to dashboard-variable / deprecated getAdhocFilters resolution inside
+    // normalizeCubeQuery when filters is undefined/empty.
     const normalized = normalizeCubeQuery(query, {
       datasourceName: this.name,
+      datasourceUid: this.uid,
       mapOperator: (operator) => this.mapOperator(operator),
       scopedVars,
+      // If Grafana passes an empty array (e.g. scenes + stale getAdhocFilters),
+      // fall back to resolving from dashboard variables so AdHoc still applies.
+      adHocFilters: filters && filters.length > 0 ? filters : undefined,
       // Drop AdHoc filters that belong to a different Cube view (issue #307).
       metadata: this.cachedMetadata ?? undefined,
     });

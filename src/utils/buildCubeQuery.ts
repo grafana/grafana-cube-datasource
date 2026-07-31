@@ -31,6 +31,7 @@ export function buildCubeQueryJson(
 ): BuiltCubeQuery {
   const normalizedQuery = normalizeCubeQuery(query, {
     datasourceName: datasource.name,
+    datasourceUid: datasource.uid,
     mapOperator: (operator) => datasource.mapOperator(operator),
     metadata: metadata ?? datasource.getCachedMetadata() ?? undefined,
   });

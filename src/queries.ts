@@ -1,9 +1,10 @@
 import { useQuery, useMutation, useQueryClient, UseQueryResult } from '@tanstack/react-query';
 import { SelectableValue } from '@grafana/data';
-import { getBackendSrv, getTemplateSrv } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
 import { DataSource } from './datasource';
 import { fetchSqlDatasources } from './services/datasourceApi';
 import { CubeFilter, DbSchemaResponse, GenerateSchemaRequest, ModelFilesResponse, Operator } from './types';
+import { resolveAdHocFilters } from './utils/adHocFilters';
 
 export interface MetadataOption {
   label: string;
@@ -148,20 +149,9 @@ export function buildScopingTagFilters(
   return [...fromAdhoc, ...fromPreceding];
 }
 
-/** Read active AdHoc filters for a datasource, defensively (templateSrv may be absent in tests). */
-function readAdhocFilters(datasourceName: string): AdHocFilter[] {
-  try {
-    const templateSrv = getTemplateSrv() as ReturnType<typeof getTemplateSrv> & {
-      getAdhocFilters?: (name: string) => AdHocFilter[] | undefined;
-    };
-    // NOTE: getAdhocFilters is deprecated. This mirrors the existing usage in
-    // src/utils/normalizeCubeQuery.ts; both call sites should migrate together to
-    // a supported UI-context API once one exists. Tracked by #129 (which currently
-    // only covers the query-execution path, not this getTagValues lookup).
-    return templateSrv.getAdhocFilters?.(datasourceName) ?? [];
-  } catch {
-    return [];
-  }
+/** Read active AdHoc filters for a datasource (issue #127). */
+function readAdhocFilters(datasource: { name: string; uid: string }): AdHocFilter[] {
+  return resolveAdHocFilters(datasource);
 }
 
 export const useMemberValuesQuery = ({
@@ -177,7 +167,7 @@ export const useMemberValuesQuery = ({
   // Combine dashboard AdHoc filters with the builder's preceding filters so the
   // dropdown is scoped like AdHoc filters (issue #32). Snapshotting into the
   // query key keeps results reactive to filter changes and avoids stale caches.
-  const scopingFilters = buildScopingTagFilters(precedingFilters, readAdhocFilters(datasource.name));
+  const scopingFilters = buildScopingTagFilters(precedingFilters, readAdhocFilters(datasource));
 
   return useQuery<TagValue[]>({
     queryKey: ['memberValues', datasource.uid, member, scopingFilters],
