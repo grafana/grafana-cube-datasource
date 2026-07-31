@@ -40,8 +40,13 @@ export function SQLPreview({ sql, exploreSqlDatasourceUid, droppedAdHocFilters =
     ) : null;
 
   if (!sql) {
-    // Still surface the skipped-filters hint even when there is no SQL to show.
-    return droppedHint;
+    // Still surface the skipped-filters hint even when there is no SQL to show,
+    // wrapped consistently in the editor row layout.
+    return droppedHint ? (
+      <EditorRow>
+        <EditorFieldGroup>{droppedHint}</EditorFieldGroup>
+      </EditorRow>
+    ) : null;
   }
 
   const highlighted = Prism.highlight(sql, Prism.languages.sql, 'sql');

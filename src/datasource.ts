@@ -1,5 +1,7 @@
-import { DataSourceInstanceSettings, CoreApp, ScopedVars, TimeRange } from '@grafana/data';
+import { DataSourceInstanceSettings, CoreApp, ScopedVars, TimeRange, DataQueryRequest, DataQueryResponse } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
+import { Observable, from } from 'rxjs';
+import { mergeMap } from 'rxjs/operators';
 
 import { CubeQuery, CubeDataSourceOptions, DEFAULT_QUERY, Operator } from './types';
 import { normalizeCubeQuery } from './utils/normalizeCubeQuery';
@@ -15,14 +17,28 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
   constructor(instanceSettings: DataSourceInstanceSettings<CubeDataSourceOptions>) {
     super(instanceSettings);
     this.instanceSettings = instanceSettings;
-    // Warm the metadata cache so the first dashboard queries can already scope
-    // AdHoc filters by view. Best-effort: failures fall back to prior behavior.
-    void this.getMetadata().catch(() => {});
+    // Note: we intentionally do NOT prefetch metadata here. The async query()
+    // path loads-and-caches it before the first query runs (issue #307), which
+    // avoids firing a metadata request in non-query contexts (config editor /
+    // health checks).
   }
 
   /** Synchronously exposes the cached view metadata, or null before it loads. */
   getCachedMetadata(): MetadataResponse | null {
     return this.cachedMetadata;
+  }
+
+  // Ensure the view metadata is loaded BEFORE any query is executed, so the very
+  // first runtime query on a fresh dashboard can already scope AdHoc filters by
+  // view (issue #307). applyTemplateVariables is synchronous and cannot await, so
+  // we gate here in the async query() path; without this a cold-start dashboard
+  // could inject cross-view filters and leave panels red until a manual refresh.
+  query(request: DataQueryRequest<CubeQuery>): Observable<DataQueryResponse> {
+    if (this.cachedMetadata) {
+      return super.query(request);
+    }
+    // Best-effort: on failure, fall back to prior inject-all behavior.
+    return from(this.getMetadata().catch(() => null)).pipe(mergeMap(() => super.query(request)));
   }
 
   getDefaultQuery(_: CoreApp): Partial<CubeQuery> {

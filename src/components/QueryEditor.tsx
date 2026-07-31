@@ -35,10 +35,15 @@ function useCubeQueryJson(query: CubeQuery, datasource: DataSource): BuiltCubeQu
   const fromTime = templateSrv.replace('$__from', {});
   const toTime = templateSrv.replace('$__to', {});
 
+  // Subscribe to metadata so the AdHoc view-scoping (and the "skipped N" hint)
+  // re-renders once metadata loads, in BOTH the visual and unsupported/JSON
+  // editor modes (issue #307). react-query dedupes the fetch.
+  const { data: metadata } = useMetadataQuery({ datasource });
+
   return useMemo(
-    () => buildCubeQueryJson(query, datasource),
+    () => buildCubeQueryJson(query, datasource, metadata),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [query, datasource, adHocFiltersKey, cubeTimeDimension, fromTime, toTime]
+    [query, datasource, adHocFiltersKey, cubeTimeDimension, fromTime, toTime, metadata]
   );
 }
 

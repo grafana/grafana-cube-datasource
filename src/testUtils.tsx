@@ -41,19 +41,22 @@ export const createMockDataSource = (mockMetadata: any = null, mockSQLResponse: 
 
   const datasource = new DataSource(instanceSettings);
 
-  // Mock getMetadata
-  datasource.getMetadata = jest.fn().mockResolvedValue(
-    mockMetadata || {
-      dimensions: [
-        { label: 'orders.status', value: 'orders.status' },
-        { label: 'orders.customer', value: 'orders.customer' },
-      ],
-      measures: [
-        { label: 'orders.count', value: 'orders.count' },
-        { label: 'orders.total', value: 'orders.total' },
-      ],
-    }
-  );
+  // Mock getMetadata. Members carry `cube` (their Cube view) so AdHoc view-scoping
+  // (issue #307) can infer this single "orders" view and keep orders.* filters.
+  const metadata = mockMetadata || {
+    dimensions: [
+      { label: 'orders.status', value: 'orders.status', type: 'string', cube: 'orders' },
+      { label: 'orders.customer', value: 'orders.customer', type: 'string', cube: 'orders' },
+      { label: 'orders.region', value: 'orders.region', type: 'string', cube: 'orders' },
+    ],
+    measures: [
+      { label: 'orders.count', value: 'orders.count', type: 'number', cube: 'orders' },
+      { label: 'orders.total', value: 'orders.total', type: 'number', cube: 'orders' },
+    ],
+  };
+  datasource.getMetadata = jest.fn().mockResolvedValue(metadata);
+  // Synchronous cache accessor used by the runtime path / buildCubeQueryJson fallback.
+  datasource.getCachedMetadata = jest.fn().mockReturnValue(metadata);
 
   // Mock getResource for SQL compilation
   datasource.getResource = jest.fn().mockResolvedValue(

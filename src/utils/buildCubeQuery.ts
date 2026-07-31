@@ -2,6 +2,7 @@ import type { BinaryFilter, UnaryFilter, Filter as CubeJsFilter, Query as CubeJs
 import { DataSource } from '../datasource';
 import { CubeFilter, CubeFilterItem, CubeQuery, UNARY_OPERATORS, isCubeFilter, isCubeAndFilter, isCubeOrFilter } from '../types';
 import { normalizeCubeQuery } from './normalizeCubeQuery';
+import type { ViewSelectionMetadata } from './viewSelection';
 
 export interface BuiltCubeQuery {
   /** The Cube query JSON, or '' when the query has no dimensions/measures. */
@@ -20,11 +21,18 @@ export interface BuiltCubeQuery {
  * Also returns the AdHoc filters that were dropped as inapplicable to this
  * query's view, so the SQL preview can explain why they did not apply (#307).
  */
-export function buildCubeQueryJson(query: CubeQuery, datasource: DataSource): BuiltCubeQuery {
+export function buildCubeQueryJson(
+  query: CubeQuery,
+  datasource: DataSource,
+  // Optional explicit view metadata. Callers (e.g. the SQL preview) pass the
+  // reactive useMetadataQuery result so the "skipped N" hint updates when
+  // metadata loads; falls back to the datasource cache otherwise (issue #307).
+  metadata?: ViewSelectionMetadata
+): BuiltCubeQuery {
   const normalizedQuery = normalizeCubeQuery(query, {
     datasourceName: datasource.name,
     mapOperator: (operator) => datasource.mapOperator(operator),
-    metadata: datasource.getCachedMetadata() ?? undefined,
+    metadata: metadata ?? datasource.getCachedMetadata() ?? undefined,
   });
 
   const droppedAdHocFilters = normalizedQuery.droppedAdHocFilters ?? [];
