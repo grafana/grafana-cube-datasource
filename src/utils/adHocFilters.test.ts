@@ -40,6 +40,16 @@ describe('resolveAdHocFilters (issue #127)', () => {
     expect(resolveAdHocFilters(datasource)).toEqual([filterA, filterB]);
   });
 
+  it('flat-maps filters ACROSS multiple matching AdHoc variables', () => {
+    setTemplateSrv({
+      variables: [
+        { type: 'adhoc', datasource: { uid: datasource.uid }, filters: [filterA] },
+        { type: 'adhoc', datasource: { uid: datasource.uid }, filters: [filterB] },
+      ],
+    });
+    expect(resolveAdHocFilters(datasource)).toEqual([filterA, filterB]);
+  });
+
   it('matches AdHoc variables by datasource name and by string ref', () => {
     setTemplateSrv({ variables: [{ type: 'adhoc', datasource: { uid: 'Cube' }, filters: [filterA] }] });
     expect(resolveAdHocFilters(datasource)).toEqual([filterA]); // uid===name accepted
