@@ -10,7 +10,7 @@ import { useMetadataQuery, useCompiledSqlQuery, MetadataOption } from '../querie
 import { OrderBy } from './OrderBy/OrderBy';
 import { FilterField } from './FilterField/FilterField';
 import { useQueryEditorHandlers } from '../hooks/useQueryEditorHandlers';
-import { buildCubeQueryJson } from '../utils/buildCubeQuery';
+import { buildCubeQueryJson, BuiltCubeQuery } from '../utils/buildCubeQuery';
 import { detectUnsupportedFeatures } from '../utils/detectUnsupportedFeatures';
 import { decorateWithViewSelection, getViewSelectionState } from '../utils/viewSelection';
 import { JsonQueryViewer } from './JsonQueryViewer';
@@ -25,7 +25,7 @@ type Props = QueryEditorProps<DataSource, CubeQuery, CubeDataSourceOptions>;
  * Without surfacing these as useMemo dependencies, the SQL preview goes stale
  * when dashboard-level values change. See grafana/semantic-layer#13.
  */
-function useCubeQueryJson(query: CubeQuery, datasource: DataSource): string {
+function useCubeQueryJson(query: CubeQuery, datasource: DataSource): BuiltCubeQuery {
   const templateSrv = getTemplateSrv();
   const withAdHoc = templateSrv as ReturnType<typeof getTemplateSrv> & {
     getAdhocFilters?: (name: string) => unknown[];
@@ -67,7 +67,7 @@ function UnsupportedQueryEditor({
   datasource: DataSource;
   reasons: string[];
 }) {
-  const cubeQueryJson = useCubeQueryJson(query, datasource);
+  const { json: cubeQueryJson, droppedAdHocFilters } = useCubeQueryJson(query, datasource);
   const { data: compiledSql, isLoading: compiledSqlIsLoading } = useCompiledSqlQuery({
     datasource,
     cubeQueryJson,
@@ -86,6 +86,7 @@ function UnsupportedQueryEditor({
       <SQLPreview
         sql={compiledSql?.sql ?? ''}
         exploreSqlDatasourceUid={datasource.instanceSettings?.jsonData?.exploreSqlDatasourceUid}
+        droppedAdHocFilters={droppedAdHocFilters}
       />
     </>
   );
@@ -97,7 +98,7 @@ function UnsupportedQueryEditor({
  */
 function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
   const styles = useStyles2(getStyles);
-  const cubeQueryJson = useCubeQueryJson(query, datasource);
+  const { json: cubeQueryJson, droppedAdHocFilters } = useCubeQueryJson(query, datasource);
 
   const { data, isLoading: metadataIsLoading, isError: metadataIsError } = useMetadataQuery({ datasource });
   const metadata = data ?? { dimensions: [], measures: [] };
@@ -252,6 +253,7 @@ function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
       <SQLPreview
         sql={compiledSql?.sql ?? ''}
         exploreSqlDatasourceUid={datasource.instanceSettings?.jsonData?.exploreSqlDatasourceUid}
+        droppedAdHocFilters={droppedAdHocFilters}
       />
     </>
   );

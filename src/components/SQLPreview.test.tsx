@@ -17,6 +17,7 @@ import { screen } from '@testing-library/react';
 import { setup } from '../testUtils';
 import { SQLPreview } from './SQLPreview';
 import { useDatasourceQuery } from '../queries';
+import { Operator } from '../types';
 
 const mockUseDatasourceQuery = useDatasourceQuery as jest.Mock;
 
@@ -228,6 +229,51 @@ describe('SQLPreview', () => {
 
       const button = screen.queryByRole('link', { name: /Edit SQL in Explore/i });
       expect(button).not.toBeInTheDocument();
+    });
+  });
+
+  describe('skipped AdHoc filters hint (issue #307)', () => {
+    it('shows a "Skipped N" hint listing dropped cross-view filters alongside the SQL', () => {
+      setup(
+        <SQLPreview
+          sql="SELECT * FROM orders"
+          droppedAdHocFilters={[
+            { member: 'view_b.region', operator: Operator.Equals, values: ['uk'] },
+            { member: 'view_c.country', operator: Operator.Equals, values: ['fr'] },
+          ]}
+        />
+      );
+
+      expect(screen.getByText('Skipped 2 inapplicable AdHoc filters')).toBeInTheDocument();
+      expect(screen.getByText(/view_b\.region, view_c\.country/)).toBeInTheDocument();
+    });
+
+    it('uses singular wording for a single dropped filter', () => {
+      setup(
+        <SQLPreview
+          sql="SELECT * FROM orders"
+          droppedAdHocFilters={[{ member: 'view_b.region', operator: Operator.Equals, values: ['uk'] }]}
+        />
+      );
+
+      expect(screen.getByText('Skipped 1 inapplicable AdHoc filter')).toBeInTheDocument();
+    });
+
+    it('renders the hint even when there is no SQL to show', () => {
+      const { container } = setup(
+        <SQLPreview
+          sql=""
+          droppedAdHocFilters={[{ member: 'view_b.region', operator: Operator.Equals, values: ['uk'] }]}
+        />
+      );
+
+      expect(container.firstChild).not.toBeNull();
+      expect(screen.getByText('Skipped 1 inapplicable AdHoc filter')).toBeInTheDocument();
+    });
+
+    it('shows no hint when there are no dropped filters', () => {
+      setup(<SQLPreview sql="SELECT * FROM orders" droppedAdHocFilters={[]} />);
+      expect(screen.queryByText(/Skipped/)).not.toBeInTheDocument();
     });
   });
 });

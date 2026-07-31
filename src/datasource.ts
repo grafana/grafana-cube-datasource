@@ -3,13 +3,26 @@ import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 
 import { CubeQuery, CubeDataSourceOptions, DEFAULT_QUERY, Operator } from './types';
 import { normalizeCubeQuery } from './utils/normalizeCubeQuery';
+import type { MetadataResponse } from './queries';
 
 export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceOptions> {
   readonly instanceSettings: DataSourceInstanceSettings<CubeDataSourceOptions>;
 
+  // Cached view metadata (member -> view) so the synchronous runtime path
+  // (applyTemplateVariables) can drop cross-view AdHoc filters (issue #307).
+  private cachedMetadata: MetadataResponse | null = null;
+
   constructor(instanceSettings: DataSourceInstanceSettings<CubeDataSourceOptions>) {
     super(instanceSettings);
     this.instanceSettings = instanceSettings;
+    // Warm the metadata cache so the first dashboard queries can already scope
+    // AdHoc filters by view. Best-effort: failures fall back to prior behavior.
+    void this.getMetadata().catch(() => {});
+  }
+
+  /** Synchronously exposes the cached view metadata, or null before it loads. */
+  getCachedMetadata(): MetadataResponse | null {
+    return this.cachedMetadata;
   }
 
   getDefaultQuery(_: CoreApp): Partial<CubeQuery> {
@@ -22,6 +35,8 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
       datasourceName: this.name,
       mapOperator: (operator) => this.mapOperator(operator),
       scopedVars,
+      // Drop AdHoc filters that belong to a different Cube view (issue #307).
+      metadata: this.cachedMetadata ?? undefined,
     });
 
     return {
@@ -121,8 +136,11 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
     return [{ dimension, dateRange: [from, to] }];
   }
 
-  // Get available dimensions and measures for the query builder
-  getMetadata() {
-    return this.getResource('metadata');
+  // Get available dimensions and measures for the query builder.
+  // Caches the result so the runtime path can scope AdHoc filters by view (#307).
+  async getMetadata(): Promise<MetadataResponse> {
+    const metadata = await this.getResource<MetadataResponse>('metadata');
+    this.cachedMetadata = metadata;
+    return metadata;
   }
 }

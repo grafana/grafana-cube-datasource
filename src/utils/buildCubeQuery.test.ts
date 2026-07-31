@@ -18,6 +18,8 @@ const createDatasourceStub = () => {
       }
       return Operator.Equals;
     }),
+    // No cached view metadata in these tests -> AdHoc view-scoping is a no-op (#307).
+    getCachedMetadata: jest.fn(() => null),
   } as any;
 };
 
@@ -37,7 +39,7 @@ describe('buildCubeQueryJson', () => {
       limit: 0,
     };
 
-    const result = JSON.parse(buildCubeQueryJson(query, datasource));
+    const result = JSON.parse(buildCubeQueryJson(query, datasource).json);
 
     expect(result.limit).toBe(0);
   });
@@ -49,7 +51,7 @@ describe('buildCubeQueryJson', () => {
       measures: ['orders.count'],
     };
 
-    const result = JSON.parse(buildCubeQueryJson(query, datasource));
+    const result = JSON.parse(buildCubeQueryJson(query, datasource).json);
 
     expect(result).not.toHaveProperty('limit');
   });
@@ -62,7 +64,7 @@ describe('buildCubeQueryJson', () => {
       filters: [{ member: 'orders.discount', operator: Operator.Set }],
     };
 
-    const result = JSON.parse(buildCubeQueryJson(query, datasource));
+    const result = JSON.parse(buildCubeQueryJson(query, datasource).json);
 
     expect(result.filters).toEqual([{ member: 'orders.discount', operator: 'set' }]);
   });
@@ -87,7 +89,7 @@ describe('buildCubeQueryJson', () => {
       ],
     };
 
-    const result = JSON.parse(buildCubeQueryJson(query, datasource));
+    const result = JSON.parse(buildCubeQueryJson(query, datasource).json);
 
     expect(result.filters).toEqual([
       {
@@ -127,8 +129,37 @@ describe('buildCubeQueryJson', () => {
       measures: ['orders.count'],
     };
 
-    const result = JSON.parse(buildCubeQueryJson(query, datasource));
+    const result = JSON.parse(buildCubeQueryJson(query, datasource).json);
 
     expect(result).not.toHaveProperty('timeDimensions');
+  });
+
+  it('surfaces AdHoc filters dropped as inapplicable to the query view (issue #307)', () => {
+    mockGetTemplateSrv.mockReturnValue({
+      replace: (value: string) => value,
+      getAdhocFilters: () => [
+        { key: 'view_a.region', operator: '=', value: 'uk' },
+        { key: 'view_b.region', operator: '=', value: 'fr' },
+      ],
+    });
+
+    const datasource = createDatasourceStub();
+    datasource.getCachedMetadata = jest.fn(() => ({
+      dimensions: [
+        { label: 'view_a.region', value: 'view_a.region', type: 'string', cube: 'view_a' },
+        { label: 'view_b.region', value: 'view_b.region', type: 'string', cube: 'view_b' },
+      ],
+      measures: [{ label: 'view_a.count', value: 'view_a.count', type: 'number', cube: 'view_a' }],
+    }));
+
+    const query: CubeQuery = { refId: 'A', measures: ['view_a.count'] };
+
+    const { json, droppedAdHocFilters } = buildCubeQueryJson(query, datasource);
+    const parsed = JSON.parse(json);
+
+    // Only the same-view filter is applied...
+    expect(parsed.filters).toEqual([{ member: 'view_a.region', operator: 'equals', values: ['uk'] }]);
+    // ...and the cross-view filter is reported as dropped.
+    expect(droppedAdHocFilters).toEqual([{ member: 'view_b.region', operator: 'equals', values: ['fr'] }]);
   });
 });

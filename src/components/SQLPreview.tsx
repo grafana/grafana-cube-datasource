@@ -2,24 +2,46 @@ import React from 'react';
 import { css, cx } from '@emotion/css';
 import { EditorFieldGroup, EditorRow } from '@grafana/plugin-ui';
 import { GrafanaTheme2 } from '@grafana/data';
-import { LinkButton, useTheme2 } from '@grafana/ui';
+import { Alert, LinkButton, useTheme2 } from '@grafana/ui';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-sql';
 import { useDatasourceQuery } from '../queries';
+import { CubeFilter } from '../types';
 
 interface SQLPreviewProps {
   sql: string;
   exploreSqlDatasourceUid?: string;
+  /**
+   * AdHoc filters dropped because they target a different Cube view than this
+   * query. Surfaced as a hint so users understand why a dashboard filter did
+   * not apply to this panel (issue #307).
+   */
+  droppedAdHocFilters?: CubeFilter[];
 }
 
-export function SQLPreview({ sql, exploreSqlDatasourceUid }: SQLPreviewProps) {
+export function SQLPreview({ sql, exploreSqlDatasourceUid, droppedAdHocFilters = [] }: SQLPreviewProps) {
   const theme = useTheme2();
   const styles = getStyles(theme);
 
   const { data: targetDatasource, isPending } = useDatasourceQuery(exploreSqlDatasourceUid);
 
+  const droppedHint =
+    droppedAdHocFilters.length > 0 ? (
+      <Alert
+        severity="info"
+        title={`Skipped ${droppedAdHocFilters.length} inapplicable AdHoc filter${
+          droppedAdHocFilters.length === 1 ? '' : 's'
+        }`}
+      >
+        {`These dashboard filters target a different Cube view and were not applied to this panel: ${droppedAdHocFilters
+          .map((f) => f.member)
+          .join(', ')}`}
+      </Alert>
+    ) : null;
+
   if (!sql) {
-    return null;
+    // Still surface the skipped-filters hint even when there is no SQL to show.
+    return droppedHint;
   }
 
   const highlighted = Prism.highlight(sql, Prism.languages.sql, 'sql');
@@ -65,6 +87,7 @@ export function SQLPreview({ sql, exploreSqlDatasourceUid }: SQLPreviewProps) {
   return (
     <EditorRow>
       <EditorFieldGroup>
+        {droppedHint}
         <div className={styles.container}>
           <div
             className={cx(styles.sqlDisplay, 'prism-syntax-highlight')}

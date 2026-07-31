@@ -81,6 +81,8 @@ AdHoc filters can also be edited directly in the dashboard UI to add additional 
 - Multiple AdHoc filters combine with AND (intersection)
 - AdHoc filters combine with per-panel filters using AND (intersection)
 
+> **AdHoc filters are scoped to a single Cube view.** Cube views are sealed namespaces — every member is fully qualified by its view (e.g. `view_a.region`, never just `region`). An AdHoc filter therefore only applies to panels whose query targets the **same view** as the filter's member; it is automatically dropped from queries on other views (which would otherwise error). In practice, clicking `customer = BBC` on a `view_a` panel filters only the `view_a` panels on the dashboard — `view_b` panels are left unfiltered. When a filter is dropped, the panel's SQL preview shows a "Skipped N inapplicable AdHoc filter(s)" hint. Cross-view (business-level) filtering would require explicit cross-view equivalence in the data model and is tracked as a follow-up.
+
 #### Time Range Filtering
 
 To filter all panels by the dashboard time picker:
