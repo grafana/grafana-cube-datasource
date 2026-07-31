@@ -59,9 +59,12 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
       datasourceUid: this.uid,
       mapOperator: (operator) => this.mapOperator(operator),
       scopedVars,
-      // If Grafana passes an empty array (e.g. scenes + stale getAdhocFilters),
-      // fall back to resolving from dashboard variables so AdHoc still applies.
-      adHocFilters: filters && filters.length > 0 ? filters : undefined,
+      // Pass Grafana's explicit filters AS-IS and let resolveAdHocFilters own the
+      // precedence (issue #127): a non-empty list wins; an empty list still lets
+      // scenes recover via dashboard variables, but an intentional empty (Explore
+      // "no filters") is honored and NOT overridden by a stale global
+      // getAdhocFilters. Do not coerce [] -> undefined here.
+      adHocFilters: filters,
       // Drop AdHoc filters that belong to a different Cube view (issue #307).
       metadata: this.cachedMetadata ?? undefined,
     });

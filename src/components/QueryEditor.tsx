@@ -11,6 +11,7 @@ import { OrderBy } from './OrderBy/OrderBy';
 import { FilterField } from './FilterField/FilterField';
 import { useQueryEditorHandlers } from '../hooks/useQueryEditorHandlers';
 import { buildCubeQueryJson, BuiltCubeQuery } from '../utils/buildCubeQuery';
+import { resolveAdHocFilters } from '../utils/adHocFilters';
 import { detectUnsupportedFeatures } from '../utils/detectUnsupportedFeatures';
 import { decorateWithViewSelection, getViewSelectionState } from '../utils/viewSelection';
 import { JsonQueryViewer } from './JsonQueryViewer';
@@ -27,20 +28,14 @@ type Props = QueryEditorProps<DataSource, CubeQuery, CubeDataSourceOptions>;
  */
 function useCubeQueryJson(query: CubeQuery, datasource: DataSource): BuiltCubeQuery {
   const templateSrv = getTemplateSrv();
-  // Prefer reading AdHoc filters from dashboard variables (supported path after
-  // getAdhocFilters deprecation, issue #127). Snapshot into a key so the SQL
-  // preview re-renders when filters change.
+  // Snapshot the RESOLVED AdHoc filters (issue #127) so the SQL preview
+  // re-renders when filters change. resolveAdHocFilters reads dashboard AdHoc
+  // variables first and only touches the deprecated getAdhocFilters as a
+  // conditional fallback, so normal scenes editing does not emit the
+  // deprecation warning (unlike calling getAdhocFilters unconditionally here).
   const adHocFiltersKey = JSON.stringify(
-    (templateSrv.getVariables?.() ?? [])
-      .filter((v) => v.type === 'adhoc')
-      .map((v) => ('filters' in v ? v.filters : []))
+    resolveAdHocFilters({ name: datasource.name, uid: datasource.uid })
   );
-  // Keep deprecated getAdhocFilters in the dependency key too, for older Grafana
-  // / Explore contexts that still populate it.
-  const withAdHoc = templateSrv as ReturnType<typeof getTemplateSrv> & {
-    getAdhocFilters?: (name: string) => unknown[];
-  };
-  const deprecatedAdHocKey = JSON.stringify(withAdHoc.getAdhocFilters?.(datasource.name) ?? []);
   const cubeTimeDimension = templateSrv.replace('$cubeTimeDimension', {});
   const fromTime = templateSrv.replace('$__from', {});
   const toTime = templateSrv.replace('$__to', {});
@@ -53,7 +48,7 @@ function useCubeQueryJson(query: CubeQuery, datasource: DataSource): BuiltCubeQu
   return useMemo(
     () => buildCubeQueryJson(query, datasource, metadata),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [query, datasource, adHocFiltersKey, deprecatedAdHocKey, cubeTimeDimension, fromTime, toTime, metadata]
+    [query, datasource, adHocFiltersKey, cubeTimeDimension, fromTime, toTime, metadata]
   );
 }
 
