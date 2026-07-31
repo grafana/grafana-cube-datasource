@@ -31,6 +31,18 @@ const createDataSource = (options: Partial<CubeDataSourceOptions> = {}) => {
 
   const datasource = new DataSource(instanceSettings);
   datasource.getResource = mockGetResource;
+  // Default single-view ("orders") metadata so getTagValues view-scoping (#498)
+  // is a no-op for same-view members. Tests that need cross-view / cold behavior
+  // override getCachedMetadata explicitly.
+  datasource.getCachedMetadata = jest.fn().mockReturnValue({
+    dimensions: [
+      { label: 'orders.status', value: 'orders.status', type: 'string', cube: 'orders' },
+      { label: 'orders.region', value: 'orders.region', type: 'string', cube: 'orders' },
+      { label: 'orders.customer', value: 'orders.customer', type: 'string', cube: 'orders' },
+      { label: 'orders.order_date', value: 'orders.order_date', type: 'time', cube: 'orders' },
+    ],
+    measures: [{ label: 'orders.count', value: 'orders.count', type: 'number', cube: 'orders' }],
+  });
   return datasource;
 };
 
@@ -241,6 +253,157 @@ describe('DataSource', () => {
         });
         // templateSrv must not even be consulted when there is no timeRange.
         expect(replace).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('view-scoping of scoping filters + time dimension (issue #498)', () => {
+      const twoViewMetadata = {
+        dimensions: [
+          { label: 'customers.location', value: 'customers.location', type: 'string', cube: 'customers' },
+          { label: 'customers.name', value: 'customers.name', type: 'string', cube: 'customers' },
+          { label: 'customers.created_at', value: 'customers.created_at', type: 'time', cube: 'customers' },
+          { label: 'ad_campaigns.platform', value: 'ad_campaigns.platform', type: 'string', cube: 'ad_campaigns' },
+          { label: 'ad_campaigns.region', value: 'ad_campaigns.region', type: 'string', cube: 'ad_campaigns' },
+        ],
+        measures: [{ label: 'ad_campaigns.clicks', value: 'ad_campaigns.clicks', type: 'number', cube: 'ad_campaigns' }],
+      };
+      const makeTimeRange = () => ({
+        from: { toISOString: () => '2018-03-01T00:00:00.000Z' },
+        to: { toISOString: () => '2018-03-31T23:59:59.000Z' },
+      });
+      const withTwoViews = () => {
+        const datasource = createDataSource();
+        datasource.getCachedMetadata = jest.fn().mockReturnValue(twoViewMetadata);
+        return datasource;
+      };
+
+      it('keeps same-view scoping filters and drops cross-view ones', async () => {
+        mockGetResource.mockResolvedValue([]);
+        mockGetTemplateSrv.mockReturnValue({ replace: (s: string) => s });
+        const datasource = withTwoViews();
+
+        await datasource.getTagValues({
+          key: 'ad_campaigns.platform',
+          filters: [
+            { key: 'customers.location', operator: '=', value: 'uk' }, // cross-view -> drop
+            { key: 'ad_campaigns.region', operator: '=', value: 'emea' }, // same view -> keep
+          ],
+        });
+
+        expect(mockGetResource).toHaveBeenCalledWith('tag-values', {
+          key: 'ad_campaigns.platform',
+          filters: JSON.stringify([{ member: 'ad_campaigns.region', operator: 'equals', values: ['emea'] }]),
+          timeDimensions: undefined,
+        });
+      });
+
+      it('drops ALL scoping filters when every one is cross-view (unscoped beats error)', async () => {
+        mockGetResource.mockResolvedValue([]);
+        mockGetTemplateSrv.mockReturnValue({ replace: (s: string) => s });
+        const datasource = withTwoViews();
+
+        await datasource.getTagValues({
+          key: 'ad_campaigns.platform',
+          filters: [{ key: 'customers.location', operator: '=', value: 'uk' }],
+        });
+
+        expect(mockGetResource).toHaveBeenCalledWith('tag-values', {
+          key: 'ad_campaigns.platform',
+          filters: undefined,
+          timeDimensions: undefined,
+        });
+      });
+
+      it('drops ALL scoping filters when the key itself is not in metadata (stale/unknown)', async () => {
+        mockGetResource.mockResolvedValue([]);
+        mockGetTemplateSrv.mockReturnValue({ replace: (s: string) => s });
+        const datasource = withTwoViews();
+
+        await datasource.getTagValues({
+          key: 'gone.member',
+          filters: [{ key: 'ad_campaigns.region', operator: '=', value: 'emea' }],
+        });
+
+        // Cannot resolve the key's view -> attempt unscoped rather than error.
+        expect(mockGetResource).toHaveBeenCalledWith('tag-values', {
+          key: 'gone.member',
+          filters: undefined,
+          timeDimensions: undefined,
+        });
+      });
+
+      it('represents the query-builder useMemberValuesQuery surface: cross-view AdHoc dropped', async () => {
+        mockGetResource.mockResolvedValue([]);
+        mockGetTemplateSrv.mockReturnValue({ replace: (s: string) => s });
+        const datasource = withTwoViews();
+
+        // useMemberValuesQuery threads active dashboard AdHoc filters into the
+        // same getTagValues lookup; a cross-view one must not reach the backend.
+        await datasource.getTagValues({
+          key: 'customers.name',
+          filters: [{ key: 'ad_campaigns.platform', operator: '=', value: 'google' }],
+        });
+
+        expect(mockGetResource).toHaveBeenCalledWith('tag-values', {
+          key: 'customers.name',
+          filters: undefined,
+          timeDimensions: undefined,
+        });
+      });
+
+      it('injects $cubeTimeDimension when it is in the SAME view as key', async () => {
+        mockGetResource.mockResolvedValue([]);
+        mockGetTemplateSrv.mockReturnValue({
+          replace: (s: string) => (s === '$cubeTimeDimension' ? 'customers.created_at' : s),
+        });
+        const datasource = withTwoViews();
+
+        await datasource.getTagValues({ key: 'customers.name', timeRange: makeTimeRange() as any });
+
+        expect(mockGetResource).toHaveBeenCalledWith('tag-values', {
+          key: 'customers.name',
+          filters: undefined,
+          timeDimensions: JSON.stringify([
+            { dimension: 'customers.created_at', dateRange: ['2018-03-01T00:00:00.000Z', '2018-03-31T23:59:59.000Z'] },
+          ]),
+        });
+      });
+
+      it('drops $cubeTimeDimension when it is in a DIFFERENT view than key (#35 interaction)', async () => {
+        mockGetResource.mockResolvedValue([]);
+        mockGetTemplateSrv.mockReturnValue({
+          replace: (s: string) => (s === '$cubeTimeDimension' ? 'customers.created_at' : s),
+        });
+        const datasource = withTwoViews();
+
+        // key in ad_campaigns view, time dimension in customers view -> drop it.
+        await datasource.getTagValues({ key: 'ad_campaigns.platform', timeRange: makeTimeRange() as any });
+
+        expect(mockGetResource).toHaveBeenCalledWith('tag-values', {
+          key: 'ad_campaigns.platform',
+          filters: undefined,
+          timeDimensions: undefined,
+        });
+      });
+
+      it('forwards scoping filters unchanged when metadata is unavailable (prior behavior)', async () => {
+        mockGetResource.mockResolvedValue([]);
+        mockGetTemplateSrv.mockReturnValue({ replace: (s: string) => s });
+        const datasource = createDataSource();
+        // No metadata at all: cache null and getMetadata fails.
+        datasource.getCachedMetadata = jest.fn().mockReturnValue(null);
+        datasource.getMetadata = jest.fn().mockRejectedValue(new Error('no meta'));
+
+        await datasource.getTagValues({
+          key: 'ad_campaigns.platform',
+          filters: [{ key: 'customers.location', operator: '=', value: 'uk' }],
+        });
+
+        expect(mockGetResource).toHaveBeenCalledWith('tag-values', {
+          key: 'ad_campaigns.platform',
+          filters: JSON.stringify([{ member: 'customers.location', operator: 'equals', values: ['uk'] }]),
+          timeDimensions: undefined,
+        });
       });
     });
   });

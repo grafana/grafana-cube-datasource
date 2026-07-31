@@ -5,6 +5,7 @@ import { mergeMap } from 'rxjs/operators';
 
 import { CubeQuery, CubeDataSourceOptions, DEFAULT_QUERY, Operator } from './types';
 import { normalizeCubeQuery } from './utils/normalizeCubeQuery';
+import { buildMemberViewMap } from './utils/viewSelection';
 import type { MetadataResponse } from './queries';
 
 export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceOptions> {
@@ -107,22 +108,29 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
   // Scopes results by any existing AdHoc filters (like Prometheus does) and,
   // when $cubeTimeDimension is configured, by the dashboard time range Grafana
   // provides in options.timeRange (parity with Prometheus/Loki/Elasticsearch).
-  getTagValues(options: {
+  async getTagValues(options: {
     key: string;
     filters?: Array<{ key: string; operator: string; value: string; values?: string[] }>;
     // Context time range Grafana passes to getTagValues since v10.3.
     timeRange?: TimeRange;
   }) {
-    // Convert existing filters to Cube format for scoping
-    const scopingFilters = options.filters?.length
-      ? options.filters.map((filter) => ({
-          member: filter.key,
-          operator: this.mapOperator(filter.operator),
-          values: filter.values && filter.values.length > 0 ? filter.values : [filter.value],
-        }))
-      : undefined;
+    // Cube views are sealed namespaces: a scoping filter (or $cubeTimeDimension)
+    // whose member lives in a different view than `key` makes /v1/load error (no
+    // join path). Resolve view metadata so we can keep only same-view scoping
+    // (issue #498, the value-lookup twin of #495). getTagValues is async, so we
+    // can await; prefer the cache (Grafana calls getTagKeys -> getMetadata first,
+    // so it is normally already warm) and only fetch when cold.
+    let metadata = this.getCachedMetadata();
+    if (!metadata) {
+      try {
+        metadata = await this.getMetadata();
+      } catch {
+        metadata = null;
+      }
+    }
 
-    const timeDimensions = this.buildTagValueTimeDimensions(options.timeRange);
+    const scopingFilters = this.partitionScopingFiltersByView(options.key, options.filters, metadata);
+    const timeDimensions = this.buildTagValueTimeDimensions(options.key, options.timeRange, metadata);
 
     return this.getResource('tag-values', {
       key: options.key,
@@ -131,12 +139,54 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
     });
   }
 
+  // Keep only scoping filters whose member belongs to the same Cube view as the
+  // looked-up `key`; drop cross-view ones (which would error). Mirrors #495's
+  // sealed-view doctrine on the value-lookup path (issue #498).
+  private partitionScopingFiltersByView(
+    key: string,
+    filters: Array<{ key: string; operator: string; value: string; values?: string[] }> | undefined,
+    metadata: MetadataResponse | null
+  ): Array<{ member: string; operator: Operator; values: string[] }> | undefined {
+    if (!filters?.length) {
+      return undefined;
+    }
+
+    const toCube = (filter: { key: string; operator: string; value: string; values?: string[] }) => ({
+      member: filter.key,
+      operator: this.mapOperator(filter.operator),
+      values: filter.values && filter.values.length > 0 ? filter.values : [filter.value],
+    });
+
+    // Without metadata we cannot resolve views; forward as-is (prior behavior).
+    if (!metadata) {
+      return filters.map(toCube);
+    }
+
+    const memberToView = buildMemberViewMap(metadata);
+    const keyView = memberToView.get(key);
+
+    // Edge case: `key` itself isn't in metadata (stale filter after a model
+    // change / unknown). We can't determine its view, so drop ALL scoping
+    // filters (attempt unscoped) rather than forward all and guarantee a
+    // cross-view error.
+    if (keyView === undefined) {
+      return undefined;
+    }
+
+    const applicable = filters.filter((filter) => memberToView.get(filter.key) === keyView).map(toCube);
+    return applicable.length > 0 ? applicable : undefined;
+  }
+
   // Build a Cube time dimension filter for tag-value lookups from the dashboard
   // time range. Requires BOTH a configured $cubeTimeDimension dashboard variable
   // (Cube needs to know WHICH dimension carries time, unlike Prometheus/Loki) and
   // a timeRange from Grafana. Returns undefined when either is missing, so
   // behavior is unchanged when the variable is not set (issue #35).
-  private buildTagValueTimeDimensions(timeRange?: TimeRange): Array<{ dimension: string; dateRange: [string, string] }> | undefined {
+  private buildTagValueTimeDimensions(
+    key: string,
+    timeRange: TimeRange | undefined,
+    metadata: MetadataResponse | null
+  ): Array<{ dimension: string; dateRange: [string, string] }> | undefined {
     if (!timeRange) {
       return undefined;
     }
@@ -144,6 +194,17 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
     const dimension = getTemplateSrv().replace('$cubeTimeDimension');
     if (!dimension || dimension === '$cubeTimeDimension') {
       return undefined;
+    }
+
+    // Only inject the dashboard time dimension if it lives in the SAME view as
+    // `key`; a cross-view time dimension errors just like a cross-view filter
+    // (issue #498, #35 interaction). Without metadata we forward as before.
+    if (metadata) {
+      const memberToView = buildMemberViewMap(metadata);
+      const keyView = memberToView.get(key);
+      if (keyView === undefined || memberToView.get(dimension) !== keyView) {
+        return undefined;
+      }
     }
 
     const from = timeRange.from?.toISOString?.();
