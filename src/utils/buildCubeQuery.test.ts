@@ -162,4 +162,27 @@ describe('buildCubeQueryJson', () => {
     // ...and the cross-view filter is reported as dropped.
     expect(droppedAdHocFilters).toEqual([{ member: 'view_b.region', operator: 'equals', values: ['fr'] }]);
   });
+
+  it('does NOT report dropped filters for an incomplete (no-view) query (issue #307 review)', () => {
+    mockGetTemplateSrv.mockReturnValue({
+      replace: (value: string) => value,
+      getAdhocFilters: () => [{ key: 'view_a.region', operator: '=', value: 'uk' }],
+    });
+
+    const datasource = createDatasourceStub();
+    datasource.getCachedMetadata = jest.fn(() => ({
+      dimensions: [{ label: 'view_a.region', value: 'view_a.region', type: 'string', cube: 'view_a' }],
+      measures: [{ label: 'view_a.count', value: 'view_a.count', type: 'number', cube: 'view_a' }],
+    }));
+
+    // Empty query: no dimensions/measures/filters -> no view can be inferred.
+    const query: CubeQuery = { refId: 'A' };
+
+    const { json, droppedAdHocFilters } = buildCubeQueryJson(query, datasource);
+
+    // No SQL to build, and crucially NO dropped filters reported (they will
+    // apply once a dimension/measure is chosen) -> no misleading hint.
+    expect(json).toBe('');
+    expect(droppedAdHocFilters).toEqual([]);
+  });
 });

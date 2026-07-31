@@ -225,14 +225,17 @@ describe('normalizeCubeQuery AdHoc view-scoping (issue #307)', () => {
     );
   });
 
-  it('drops ALL AdHoc filters when no view can be inferred (empty query)', () => {
+  it('skips AdHoc injection WITHOUT flagging drops when no view can be inferred (empty query)', () => {
     withAdHocFilters([{ key: 'view_a.region', operator: '=', value: 'uk' }]);
     const query = { refId: 'A' } as CubeQuery;
 
     const result = normalizeCubeQuery(query, options);
 
+    // Filters are not injected (view unknown), but they are NOT reported as
+    // dropped/inapplicable: they will apply once a dimension/measure is added,
+    // so the SQL preview must not show a misleading "different view" hint (#307).
     expect(result.filters).toBeUndefined();
-    expect(result.droppedAdHocFilters).toEqual([{ member: 'view_a.region', operator: Operator.Equals, values: ['uk'] }]);
+    expect(result.droppedAdHocFilters).toBeUndefined();
   });
 
   it('drops an AdHoc filter whose member is not present in metadata (unknown view)', () => {

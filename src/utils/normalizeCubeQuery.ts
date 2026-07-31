@@ -112,7 +112,13 @@ function partitionAdHocFiltersByView(
   );
 
   if (!view) {
-    return { applicable: [], dropped: adHocFilters };
+    // No view can be inferred yet (empty/incomplete query with no dims/measures/
+    // panel-filters). We still can't safely inject AdHoc filters (we don't know
+    // which view they'd target), but these are NOT "inapplicable / wrong-view"
+    // drops — they will apply once the user picks a dimension/measure. So we do
+    // NOT report them as dropped, avoiding a misleading "targets a different
+    // Cube view" hint on a fresh panel (issue #307 review).
+    return { applicable: [], dropped: [] };
   }
 
   const memberToView = buildMemberViewMap(metadata);
