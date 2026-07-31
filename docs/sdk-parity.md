@@ -55,8 +55,9 @@ sources of truth (the Cube monorepo is cloned alongside this repo at `../cube`):
 
 ## Divergence log
 
-Behaviors where the Go backend intentionally differs from `@cubejs-client/core`.
-Everything not listed here is expected to mirror the SDK.
+Behaviors where this plugin intentionally differs from `@cubejs-client/core` —
+mostly in the Go backend, plus frontend query shaping where it changes what we
+send to Cube. Everything not listed here is expected to mirror the SDK.
 
 ### How the SDK actually retries (precedence matters)
 
@@ -148,3 +149,31 @@ SDK-aligned, **not** a divergence, so it is not listed below.
   duplicate Grafana's refresh mechanism.
 - **User impact:** none for standard dashboards; real-time streaming panels are
   not supported by this datasource.
+
+### 5. Cross-view AdHoc filters are dropped rather than attempted
+
+- **SDK behavior:** an SDK client sends whatever filters the caller supplies.
+  Cube resolves view members down to their underlying cubes and **will** join
+  across views whenever its join graph has a directed path; only a genuinely
+  disjoint pair fails, with `Can't find join path to join 'x', 'y'`.
+- **Divergence:** we drop AdHoc filters (and `$cubeTimeDimension` on value
+  lookups) whose member belongs to a different view than the query, without
+  attempting the request — forgoing joins Cube would have performed
+  ([#307](https://github.com/grafana/grafana-cube-datasource/issues/307),
+  [#498](https://github.com/grafana/grafana-cube-datasource/issues/498)).
+- **Rationale:** views are curated marts, and "a filter means something only
+  inside its own view" is predictable. "…unless the model happens to have a
+  join path" makes behavior depend on invisible join topology, so two
+  identical-looking dashboards would behave differently. Attempt-then-retry
+  (Option 4 in #498) was considered and rejected: Cube returns no error code,
+  so detection means matching the error string, and results would silently
+  change when a modeler adds an unrelated join. Genuinely global filters are a
+  modeling problem — expose the shared dimension in each view.
+- **User impact:** in a multi-view dashboard, a filter set on view A never
+  narrows panels or value lookups in view B, even where Cube could have joined
+  them. Users see the unscoped result rather than an error; the SQL preview
+  reports which filters were skipped.
+- **Tests:** `normalizeCubeQuery AdHoc view-scoping (issue #307)` in
+  `src/utils/normalizeCubeQuery.test.ts`, and the `getTagValues` view-partition
+  cases in `src/datasource.test.ts` (e.g. "keeps same-view scoping filters and
+  drops cross-view ones").
