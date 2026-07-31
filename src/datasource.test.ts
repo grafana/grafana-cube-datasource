@@ -386,6 +386,68 @@ describe('DataSource', () => {
         });
       });
 
+      it('awaits getMetadata on a cold cache and uses it to partition (cold path)', async () => {
+        mockGetResource.mockResolvedValue([]);
+        mockGetTemplateSrv.mockReturnValue({ replace: (s: string) => s });
+
+        const datasource = createDataSource();
+        datasource.getCachedMetadata = jest.fn().mockReturnValue(null); // cold
+        datasource.getMetadata = jest.fn().mockResolvedValue(twoViewMetadata);
+
+        await datasource.getTagValues({
+          key: 'ad_campaigns.platform',
+          filters: [
+            { key: 'customers.location', operator: '=', value: 'uk' }, // cross-view -> drop
+            { key: 'ad_campaigns.region', operator: '=', value: 'emea' }, // same view -> keep
+          ],
+        });
+
+        expect(datasource.getMetadata).toHaveBeenCalledTimes(1);
+        expect(mockGetResource).toHaveBeenCalledWith('tag-values', {
+          key: 'ad_campaigns.platform',
+          filters: JSON.stringify([{ member: 'ad_campaigns.region', operator: 'equals', values: ['emea'] }]),
+          timeDimensions: undefined,
+        });
+      });
+
+      it('uses the cached metadata without re-fetching on a warm cache (warm path)', async () => {
+        mockGetResource.mockResolvedValue([]);
+        mockGetTemplateSrv.mockReturnValue({ replace: (s: string) => s });
+
+        const datasource = withTwoViews(); // getCachedMetadata returns metadata
+        datasource.getMetadata = jest.fn(); // must NOT be called
+
+        await datasource.getTagValues({
+          key: 'ad_campaigns.platform',
+          filters: [{ key: 'customers.location', operator: '=', value: 'uk' }],
+        });
+
+        expect(datasource.getMetadata).not.toHaveBeenCalled();
+        expect(mockGetResource).toHaveBeenCalledWith('tag-values', {
+          key: 'ad_campaigns.platform',
+          filters: undefined, // cross-view dropped using the cached metadata
+          timeDimensions: undefined,
+        });
+      });
+
+      it('skips the metadata fetch entirely when there are no filters and no timeRange', async () => {
+        mockGetResource.mockResolvedValue([]);
+        const datasource = withTwoViews();
+        const getCached = datasource.getCachedMetadata as jest.Mock;
+        datasource.getMetadata = jest.fn();
+        getCached.mockClear();
+
+        await datasource.getTagValues({ key: 'ad_campaigns.platform' });
+
+        expect(datasource.getMetadata).not.toHaveBeenCalled();
+        expect(getCached).not.toHaveBeenCalled();
+        expect(mockGetResource).toHaveBeenCalledWith('tag-values', {
+          key: 'ad_campaigns.platform',
+          filters: undefined,
+          timeDimensions: undefined,
+        });
+      });
+
       it('forwards scoping filters unchanged when metadata is unavailable (prior behavior)', async () => {
         mockGetResource.mockResolvedValue([]);
         mockGetTemplateSrv.mockReturnValue({ replace: (s: string) => s });

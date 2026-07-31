@@ -114,6 +114,16 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
     // Context time range Grafana passes to getTagValues since v10.3.
     timeRange?: TimeRange;
   }) {
+    // Nothing to partition or scope (no scoping filters and no time range): skip
+    // the metadata fetch entirely — there is nothing to drop or view-check.
+    if (!options.filters?.length && !options.timeRange) {
+      return this.getResource('tag-values', {
+        key: options.key,
+        filters: undefined,
+        timeDimensions: undefined,
+      });
+    }
+
     // Cube views are sealed namespaces: a scoping filter (or $cubeTimeDimension)
     // whose member lives in a different view than `key` makes /v1/load error (no
     // join path). Resolve view metadata so we can keep only same-view scoping
