@@ -481,6 +481,7 @@ describe('DataSource', () => {
 
       mockGetTemplateSrv.mockReturnValue({
         replace: mockReplace,
+        getVariables: () => [],
         getAdhocFilters: () => [],
       });
 
@@ -503,6 +504,113 @@ describe('DataSource', () => {
 
       expect(result.filters).toBeDefined();
       expect((result.filters![0] as CubeFilter).values).toContain('completed');
+    });
+
+    it('applies AdHoc filters from the third-argument filters list (issue #127)', () => {
+      mockGetTemplateSrv.mockReturnValue({
+        replace: (s: string) => s,
+        getVariables: () => [],
+        getAdhocFilters: () => [],
+      });
+
+      const datasource = createDataSource();
+      const query = {
+        refId: 'A',
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+      };
+
+      const result = datasource.applyTemplateVariables(query, {}, [
+        { key: 'orders.status', operator: '=', value: 'completed' },
+      ]);
+
+      expect(result.filters).toEqual([
+        { member: 'orders.status', operator: Operator.Equals, values: ['completed'] },
+      ]);
+    });
+
+    it('honors an explicit empty filters list and does NOT fall back to the deprecated global (Explore no-filters, #127)', () => {
+      mockGetTemplateSrv.mockReturnValue({
+        replace: (s: string) => s,
+        getVariables: () => [], // no dashboard AdHoc variables
+        // A stale global that must NOT leak in when Explore passes filters: [].
+        getAdhocFilters: () => [{ key: 'orders.status', operator: '=', value: 'STALE' }],
+      });
+
+      const datasource = createDataSource();
+      const query = {
+        refId: 'A',
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+      };
+
+      // Explicit empty list is passed AS-IS (no []->undefined coercion), so
+      // resolveAdHocFilters honors it and does not consult the deprecated API.
+      const result = datasource.applyTemplateVariables(query, {}, []);
+
+      expect(result.filters).toBeUndefined();
+    });
+
+    it('recovers AdHoc filters from dashboard variables when Grafana passes an empty list (scenes miss, #127)', () => {
+      mockGetTemplateSrv.mockReturnValue({
+        replace: (s: string) => s,
+        getVariables: () => [
+          {
+            type: 'adhoc',
+            datasource: { uid: 'test-uid' },
+            filters: [{ key: 'orders.status', operator: '=', value: 'completed' }],
+          },
+        ],
+        getAdhocFilters: () => [],
+      });
+
+      const datasource = createDataSource();
+      const query = {
+        refId: 'A',
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+      };
+
+      // Empty explicit list still recovers via getVariables (step 2).
+      const result = datasource.applyTemplateVariables(query, {}, []);
+
+      expect(result.filters).toEqual([
+        { member: 'orders.status', operator: Operator.Equals, values: ['completed'] },
+      ]);
+    });
+
+    it('drops cross-view AdHoc filters passed via the third argument (issues #127 + #307)', () => {
+      mockGetTemplateSrv.mockReturnValue({
+        replace: (s: string) => s,
+        getVariables: () => [],
+        getAdhocFilters: () => [],
+      });
+
+      const datasource = createDataSource();
+      // Seed cached metadata so view-scoping is active.
+      (datasource as any).cachedMetadata = {
+        dimensions: [
+          { label: 'orders.status', value: 'orders.status', type: 'string', cube: 'orders' },
+          { label: 'customers.segment', value: 'customers.customer_segment', type: 'string', cube: 'customers' },
+        ],
+        measures: [
+          { label: 'orders.count', value: 'orders.count', type: 'number', cube: 'orders' },
+          { label: 'customers.count', value: 'customers.count', type: 'number', cube: 'customers' },
+        ],
+      };
+
+      const customersQuery = {
+        refId: 'A',
+        dimensions: ['customers.customer_segment'],
+        measures: ['customers.count'],
+      };
+
+      const result = datasource.applyTemplateVariables(customersQuery, {}, [
+        { key: 'orders.status', operator: '=', value: 'completed' },
+      ]);
+
+      // Cross-view AdHoc filter must NOT be injected into the customers query.
+      expect(result.filters).toBeUndefined();
     });
 
     describe('dashboard-level time dimension', () => {
