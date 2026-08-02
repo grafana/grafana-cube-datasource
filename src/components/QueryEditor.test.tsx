@@ -1060,6 +1060,83 @@ describe('QueryEditor', () => {
       });
     });
 
+    it('sources SQL-preview AdHoc filters from props.data.request.filters and refreshes when they change (#506)', async () => {
+      // No dashboard variables -> request.filters must be the source of truth.
+      mockGetTemplateSrv.mockReturnValue({
+        replace: jest.fn((value: string) => value),
+        getVariables: jest.fn(() => []),
+        getAdhocFilters: jest.fn(() => []),
+      });
+
+      const datasource = createMockDataSource();
+      const query = createMockQuery({ dimensions: ['orders.status'], measures: ['orders.count'] });
+      const dataWith = (value: string) =>
+        ({ request: { filters: [{ key: 'orders.status', operator: '=', value }] } } as any);
+
+      const { rerender } = setup(
+        <QueryEditor
+          query={query}
+          onChange={mockOnChange}
+          onRunQuery={mockOnRunQuery}
+          datasource={datasource}
+          data={dataWith('completed')}
+        />
+      );
+
+      await waitFor(() => {
+        const call = (datasource.getResource as jest.Mock).mock.calls.find((c: unknown[]) => c[0] === 'sql');
+        expect(call).toBeDefined();
+        expect(JSON.parse(call![1].query).filters).toEqual([
+          { member: 'orders.status', operator: 'equals', values: ['completed'] },
+        ]);
+      });
+
+      (datasource.getResource as jest.Mock).mockClear();
+
+      // Applied filters change (a new query ran) -> preview memo refreshes.
+      rerender(
+        <QueryEditor
+          query={query}
+          onChange={mockOnChange}
+          onRunQuery={mockOnRunQuery}
+          datasource={datasource}
+          data={dataWith('pending')}
+        />
+      );
+
+      await waitFor(() => {
+        const call = (datasource.getResource as jest.Mock).mock.calls.find((c: unknown[]) => c[0] === 'sql');
+        expect(call).toBeDefined();
+        expect(JSON.parse(call![1].query).filters).toEqual([
+          { member: 'orders.status', operator: 'equals', values: ['pending'] },
+        ]);
+      });
+    });
+
+    it('falls back to getVariables for the preview before the first run (data undefined, #506 gotcha)', async () => {
+      mockGetTemplateSrv.mockReturnValue({
+        replace: jest.fn((value: string) => value),
+        getVariables: jest.fn(() => [
+          { type: 'adhoc', datasource: { uid: 'test-uid' }, filters: [{ key: 'orders.status', operator: '=', value: 'from_var' }] },
+        ]),
+        getAdhocFilters: jest.fn(() => []),
+      });
+
+      const datasource = createMockDataSource();
+      const query = createMockQuery({ dimensions: ['orders.status'], measures: ['orders.count'] });
+
+      // No data prop -> request.filters undefined -> must fall back to getVariables.
+      setup(<QueryEditor query={query} onChange={mockOnChange} onRunQuery={mockOnRunQuery} datasource={datasource} />);
+
+      await waitFor(() => {
+        const call = (datasource.getResource as jest.Mock).mock.calls.find((c: unknown[]) => c[0] === 'sql');
+        expect(call).toBeDefined();
+        expect(JSON.parse(call![1].query).filters).toEqual([
+          { member: 'orders.status', operator: 'equals', values: ['from_var'] },
+        ]);
+      });
+    });
+
     it('should recompute SQL preview when dashboard time range changes', async () => {
       const initialFrom = Date.now() - 3600000;
       const initialTo = Date.now();
