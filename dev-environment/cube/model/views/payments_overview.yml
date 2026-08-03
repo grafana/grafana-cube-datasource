@@ -1,0 +1,14 @@
+views:
+  - name: payments_overview
+
+    cubes:
+      - join_path: payments
+        includes:
+          - payment_method
+          - currency
+          - is_successful
+          - created_at
+          - amount
+          - count
+          - total_amount
+        prefix: false
