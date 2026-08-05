@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { InlineField, Input, Alert, MultiSelect, Text, Field, TextLink, useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { GrafanaTheme2, QueryEditorProps, SelectableValue } from '@grafana/data';
+import { AdHocVariableFilter, GrafanaTheme2, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataSource } from '../datasource';
 import { CubeDataSourceOptions, CubeQuery, CubeFilter, isCubeFilter } from '../types';
@@ -26,15 +26,25 @@ type Props = QueryEditorProps<DataSource, CubeQuery, CubeDataSourceOptions>;
  * Without surfacing these as useMemo dependencies, the SQL preview goes stale
  * when dashboard-level values change. See grafana/semantic-layer#13.
  */
-function useCubeQueryJson(query: CubeQuery, datasource: DataSource): BuiltCubeQuery {
+function useCubeQueryJson(
+  query: CubeQuery,
+  datasource: DataSource,
+  // The editor's props.data.request.filters — the AdHoc filters the last query
+  // actually ran with (Torkel's supported editor path, issue #506).
+  requestFilters?: AdHocVariableFilter[]
+): BuiltCubeQuery {
   const templateSrv = getTemplateSrv();
-  // Snapshot the RESOLVED AdHoc filters (issue #127) so the SQL preview
-  // re-renders when filters change. resolveAdHocFilters reads dashboard AdHoc
-  // variables first and only touches the deprecated getAdhocFilters as a
-  // conditional fallback, so normal scenes editing does not emit the
-  // deprecation warning (unlike calling getAdhocFilters unconditionally here).
+  // Snapshot the RESOLVED AdHoc filters so the SQL preview re-renders when the
+  // applied filters change. Precedence mirrors the runtime resolveAdHocFilters
+  // (issues #127/#506):
+  //   1. props.data.request.filters (post-run, canonical: matches execution)
+  //   2. getTemplateSrv().getVariables() adhoc vars (immediate / pre-run state)
+  //   3. deprecated getAdhocFilters() (older Grafana only)
+  // GOTCHA: data.request.filters is only populated AFTER a query runs; on first
+  // open / pre-run it is empty/undefined, so resolveAdHocFilters falls back to
+  // getVariables() and the preview still shows AdHoc WHERE before first execution.
   const adHocFiltersKey = JSON.stringify(
-    resolveAdHocFilters({ name: datasource.name, uid: datasource.uid })
+    resolveAdHocFilters({ name: datasource.name, uid: datasource.uid }, requestFilters)
   );
   const cubeTimeDimension = templateSrv.replace('$cubeTimeDimension', {});
   const fromTime = templateSrv.replace('$__from', {});
@@ -46,7 +56,7 @@ function useCubeQueryJson(query: CubeQuery, datasource: DataSource): BuiltCubeQu
   const { data: metadata } = useMetadataQuery({ datasource });
 
   return useMemo(
-    () => buildCubeQueryJson(query, datasource, metadata),
+    () => buildCubeQueryJson(query, datasource, metadata, requestFilters),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [query, datasource, adHocFiltersKey, cubeTimeDimension, fromTime, toTime, metadata]
   );
@@ -54,10 +64,18 @@ function useCubeQueryJson(query: CubeQuery, datasource: DataSource): BuiltCubeQu
 
 export function QueryEditor(props: Props) {
   const { query, datasource } = props;
+  const requestFilters = props.data?.request?.filters;
   const unsupportedFeatures = useMemo(() => detectUnsupportedFeatures(query), [query]);
 
   if (unsupportedFeatures.length > 0) {
-    return <UnsupportedQueryEditor query={query} datasource={datasource} reasons={unsupportedFeatures} />;
+    return (
+      <UnsupportedQueryEditor
+        query={query}
+        datasource={datasource}
+        reasons={unsupportedFeatures}
+        requestFilters={requestFilters}
+      />
+    );
   }
 
   return <VisualQueryEditor {...props} />;
@@ -72,12 +90,14 @@ function UnsupportedQueryEditor({
   query,
   datasource,
   reasons,
+  requestFilters,
 }: {
   query: CubeQuery;
   datasource: DataSource;
   reasons: string[];
+  requestFilters?: AdHocVariableFilter[];
 }) {
-  const { json: cubeQueryJson, droppedAdHocFilters } = useCubeQueryJson(query, datasource);
+  const { json: cubeQueryJson, droppedAdHocFilters } = useCubeQueryJson(query, datasource, requestFilters);
   const { data: compiledSql, isLoading: compiledSqlIsLoading } = useCompiledSqlQuery({
     datasource,
     cubeQueryJson,
@@ -106,9 +126,10 @@ function UnsupportedQueryEditor({
  * The full visual query builder with dimensions, measures, filters,
  * ordering, and SQL preview.
  */
-function VisualQueryEditor({ query, onChange, onRunQuery, datasource }: Props) {
+function VisualQueryEditor({ query, onChange, onRunQuery, datasource, data: panelData }: Props) {
   const styles = useStyles2(getStyles);
-  const { json: cubeQueryJson, droppedAdHocFilters } = useCubeQueryJson(query, datasource);
+  const requestFilters = panelData?.request?.filters;
+  const { json: cubeQueryJson, droppedAdHocFilters } = useCubeQueryJson(query, datasource, requestFilters);
 
   const { data, isLoading: metadataIsLoading, isError: metadataIsError } = useMetadataQuery({ datasource });
   const metadata = data ?? { dimensions: [], measures: [] };
