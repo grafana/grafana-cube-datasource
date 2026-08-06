@@ -1,5 +1,5 @@
 import { getTemplateSrv } from '@grafana/runtime';
-import { resolveAdHocFilters } from './adHocFilters';
+import { dropMatchAllFilters, isMatchAllFilter, resolveAdHocFilters } from './adHocFilters';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -94,5 +94,47 @@ describe('resolveAdHocFilters (issue #127)', () => {
   it('returns [] when nothing resolves (no explicit, no variables, no deprecated API)', () => {
     mockGetTemplateSrv.mockReturnValue({ getVariables: () => [] });
     expect(resolveAdHocFilters(datasource)).toEqual([]);
+  });
+});
+
+// Scenes rewrites a cleared dashboard-origin (pinned) filter to its match-all
+// sentinel (`=~ .*`, displayed "All") and passes it to queries. mapOperator
+// collapses =~ to equals, so forwarding it would mean `x equals '.*'` — the
+// opposite of "All". It must resolve to no-filter instead (issue #530).
+describe('match-all sentinel handling (issue #530)', () => {
+  const matchAll = { key: 'orders.status', operator: '=~', value: '.*', values: ['.*'] };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    setTemplateSrv({ variables: [], getAdhocFilters: () => [] });
+  });
+
+  it('isMatchAllFilter recognises exactly the scenes match-all shape', () => {
+    expect(isMatchAllFilter(matchAll)).toBe(true);
+    expect(isMatchAllFilter({ operator: '=~', value: '.+' })).toBe(false); // real (if unsupported) regex
+    expect(isMatchAllFilter({ operator: '=', value: '.*' })).toBe(false); // literal equals '.*'
+    expect(isMatchAllFilter({ operator: '!~', value: '.*' })).toBe(false); // not the clear-state shape
+  });
+
+  it('dropMatchAllFilters removes only match-all sentinels', () => {
+    expect(dropMatchAllFilters([matchAll, filterA])).toEqual([filterA]);
+  });
+
+  it('drops match-all sentinels from an explicit filters list', () => {
+    expect(resolveAdHocFilters(datasource, [matchAll, filterA])).toEqual([filterA]);
+  });
+
+  it('treats an explicit list of ONLY match-all sentinels as an intentional empty selection (no fallback)', () => {
+    // A cleared pinned filter must mean "no restriction", not "re-resolve from
+    // other sources".
+    setTemplateSrv({ variables: [], getAdhocFilters: () => [filterB] });
+    expect(resolveAdHocFilters(datasource, [matchAll])).toEqual([]);
+  });
+
+  it('drops match-all sentinels resolved from dashboard AdHoc variables', () => {
+    setTemplateSrv({
+      variables: [{ type: 'adhoc', datasource: { uid: datasource.uid }, filters: [matchAll, filterB] }],
+    });
+    expect(resolveAdHocFilters(datasource)).toEqual([filterB]);
   });
 });

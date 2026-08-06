@@ -9,6 +9,24 @@ import { getTemplateSrv } from '@grafana/runtime';
 export type AdHocFilter = AdHocVariableFilter;
 
 /**
+ * Scenes' match-all sentinel. Clearing a dashboard-origin (pinned) filter
+ * rewrites it to `operator: '=~', value: '.*'` (displayed as "All") and scenes
+ * passes it through to the datasource, meaning "this filter restricts nothing"
+ * — which is literally how Prometheus evaluates it (anchored matchers, absent
+ * labels match `.*`). This plugin has no regex operators (`=~` maps to equals
+ * in mapOperator), so forwarding it would invert the intent into
+ * `x equals '.*'` — matching nothing. Treat it as no-filter instead (issue #530).
+ */
+export function isMatchAllFilter(filter: Pick<AdHocFilter, 'operator' | 'value'>): boolean {
+  return filter.operator === '=~' && filter.value === '.*';
+}
+
+/** Drop scenes' match-all sentinel filters — see isMatchAllFilter (issue #530). */
+export function dropMatchAllFilters<T extends Pick<AdHocFilter, 'operator' | 'value'>>(filters: T[]): T[] {
+  return filters.filter((filter) => !isMatchAllFilter(filter));
+}
+
+/**
  * Resolve AdHoc filters for a datasource.
  *
  * Prefer a non-empty explicitly-passed list (the third argument of
@@ -19,8 +37,19 @@ export type AdHocFilter = AdHocVariableFilter;
  * deprecated getAdhocFilters did not see the variable — read active AdHoc
  * variables from `templateSrv.getVariables()` that target this datasource.
  * Fall back to the deprecated `getAdhocFilters(name)` for older Grafana.
+ *
+ * Match-all sentinels (`=~ .*`) are dropped from the result after resolution,
+ * so an explicit list containing only match-all filters still counts as an
+ * intentional (now empty) selection and does not fall back to other sources.
  */
 export function resolveAdHocFilters(
+  datasource: { name: string; uid: string },
+  explicitFilters?: AdHocFilter[] | null
+): AdHocFilter[] {
+  return dropMatchAllFilters(resolveAdHocFiltersRaw(datasource, explicitFilters));
+}
+
+function resolveAdHocFiltersRaw(
   datasource: { name: string; uid: string },
   explicitFilters?: AdHocFilter[] | null
 ): AdHocFilter[] {

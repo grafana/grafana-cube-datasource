@@ -171,6 +171,31 @@ describe('DataSource', () => {
       expect(result).toEqual(mockValues);
     });
 
+    // Scenes' cleared pinned filter (`=~ .*`, shown as "All") means "restrict
+    // nothing" — it must not scope value lookups (issue #530).
+    it('should ignore scenes match-all sentinel filters (issue #530)', async () => {
+      const mockValues = ['value1'];
+      mockGetResource.mockResolvedValue(mockValues);
+      const datasource = createDataSource();
+
+      const matchAll = { key: 'orders.status', operator: '=~', value: '.*', values: ['.*'] };
+
+      // Only a match-all filter: behaves as if no filters were passed.
+      await datasource.getTagValues({ key: 'orders.customer', filters: [matchAll] });
+      expect(mockGetResource).toHaveBeenCalledWith('tag-values', { key: 'orders.customer', filters: undefined });
+
+      // Mixed with a real filter: only the real filter scopes the lookup.
+      mockGetResource.mockClear();
+      await datasource.getTagValues({
+        key: 'orders.customer',
+        filters: [matchAll, { key: 'orders.status', operator: '=', value: 'completed' }],
+      });
+      expect(mockGetResource).toHaveBeenCalledWith('tag-values', {
+        key: 'orders.customer',
+        filters: JSON.stringify([{ member: 'orders.status', operator: 'equals', values: ['completed'] }]),
+      });
+    });
+
     describe('time-range scoping ($cubeTimeDimension) — issue #35', () => {
       const makeTimeRange = () => ({
         from: { toISOString: () => '2018-03-01T00:00:00.000Z' },
