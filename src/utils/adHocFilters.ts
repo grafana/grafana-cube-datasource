@@ -16,6 +16,12 @@ export type AdHocFilter = AdHocVariableFilter;
  * labels match `.*`). This plugin has no regex operators (`=~` maps to equals
  * in mapOperator), so forwarding it would invert the intent into
  * `x equals '.*'` — matching nothing. Treat it as no-filter instead (issue #530).
+ *
+ * Note this also drops a MANUALLY authored `=~ '.*'` — intentional, since the
+ * shapes are indistinguishable and the sentinel semantics ("restrict nothing")
+ * are what a user typing that would expect anyway. Anyone relying on the
+ * temporary =~→equals mapping to match the literal string `.*` must use
+ * `= '.*'`, which is untouched.
  */
 export function isMatchAllFilter(filter: Pick<AdHocFilter, 'operator' | 'value'>): boolean {
   return filter.operator === '=~' && filter.value === '.*';

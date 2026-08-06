@@ -196,6 +196,36 @@ describe('DataSource', () => {
       });
     });
 
+    it('drops a match-all sentinel but still applies the time range (issues #530 + #35)', async () => {
+      mockGetResource.mockResolvedValue([]);
+      mockGetTemplateSrv.mockReturnValue({
+        replace: (str: string) => (str === '$cubeTimeDimension' ? 'orders.order_date' : str),
+      });
+      const datasource = createDataSource();
+
+      await datasource.getTagValues({
+        key: 'orders.customer',
+        filters: [{ key: 'orders.status', operator: '=~', value: '.*', values: ['.*'] }],
+        timeRange: {
+          from: { toISOString: () => '2018-03-01T00:00:00.000Z' },
+          to: { toISOString: () => '2018-03-31T23:59:59.000Z' },
+        } as any,
+      });
+
+      // Sentinel gone, but the timeRange still scopes the lookup (the presence
+      // of a sentinel must not divert into the "nothing to do" fast path).
+      expect(mockGetResource).toHaveBeenCalledWith('tag-values', {
+        key: 'orders.customer',
+        filters: undefined,
+        timeDimensions: JSON.stringify([
+          {
+            dimension: 'orders.order_date',
+            dateRange: ['2018-03-01T00:00:00.000Z', '2018-03-31T23:59:59.000Z'],
+          },
+        ]),
+      });
+    });
+
     describe('time-range scoping ($cubeTimeDimension) — issue #35', () => {
       const makeTimeRange = () => ({
         from: { toISOString: () => '2018-03-01T00:00:00.000Z' },
@@ -636,6 +666,71 @@ describe('DataSource', () => {
 
       // Cross-view AdHoc filter must NOT be injected into the customers query.
       expect(result.filters).toBeUndefined();
+    });
+
+    // Runtime-level guarantee for issue #530: scenes' match-all sentinel
+    // (`=~ .*`, a cleared pinned filter shown as "All") must never reach Cube
+    // via panel execution, and must not trigger fallback to other sources.
+    describe('scenes match-all sentinel (issue #530)', () => {
+      const matchAll = { key: 'orders.status', operator: '=~', value: '.*', values: ['.*'] };
+      const query = {
+        refId: 'A',
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+      };
+
+      it('produces NO Cube filter for a lone sentinel, without falling back to dashboard variables or the deprecated API', () => {
+        mockGetTemplateSrv.mockReturnValue({
+          replace: (s: string) => s,
+          // Both fallback sources hold real filters that must NOT leak in: the
+          // sentinel is an intentional (empty) selection, not a missing one.
+          getVariables: () => [
+            {
+              type: 'adhoc',
+              datasource: { uid: 'test-uid' },
+              filters: [{ key: 'orders.status', operator: '=', value: 'FROM_VARIABLES' }],
+            },
+          ],
+          getAdhocFilters: () => [{ key: 'orders.status', operator: '=', value: 'FROM_DEPRECATED' }],
+        });
+
+        const datasource = createDataSource();
+        const result = datasource.applyTemplateVariables(query, {}, [matchAll]);
+
+        expect(result.filters).toBeUndefined();
+      });
+
+      it('keeps only the real filter when mixed with a sentinel', () => {
+        mockGetTemplateSrv.mockReturnValue({
+          replace: (s: string) => s,
+          getVariables: () => [],
+          getAdhocFilters: () => [],
+        });
+
+        const datasource = createDataSource();
+        const result = datasource.applyTemplateVariables(query, {}, [
+          matchAll,
+          { key: 'orders.status', operator: '=', value: 'completed' },
+        ]);
+
+        expect(result.filters).toEqual([
+          { member: 'orders.status', operator: Operator.Equals, values: ['completed'] },
+        ]);
+      });
+
+      it('drops a sentinel arriving solely via the deprecated getAdhocFilters path', () => {
+        mockGetTemplateSrv.mockReturnValue({
+          replace: (s: string) => s,
+          getVariables: () => [], // no dashboard AdHoc variables -> deprecated fallback
+          getAdhocFilters: () => [matchAll],
+        });
+
+        const datasource = createDataSource();
+        // No explicit filters argument (older Grafana path).
+        const result = datasource.applyTemplateVariables(query, {});
+
+        expect(result.filters).toBeUndefined();
+      });
     });
 
     describe('dashboard-level time dimension', () => {
