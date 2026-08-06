@@ -120,6 +120,13 @@ describe('match-all sentinel handling (issue #530)', () => {
     expect(dropMatchAllFilters([matchAll, filterA])).toEqual([filterA]);
   });
 
+  it('preserves =~ filters with real values (pre-existing equals-workaround behaviour is unchanged)', () => {
+    // `Territory =~ AMER` keeps filtering to AMER: mapOperator still turns it
+    // into equals 'AMER'. Only the machine-generated `.*` sentinel is dropped.
+    const regexish = { key: 'orders.region', operator: '=~', value: 'AMER' };
+    expect(resolveAdHocFilters(datasource, [regexish, matchAll])).toEqual([regexish]);
+  });
+
   it('drops match-all sentinels from an explicit filters list', () => {
     expect(resolveAdHocFilters(datasource, [matchAll, filterA])).toEqual([filterA]);
   });
