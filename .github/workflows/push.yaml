@@ -42,8 +42,13 @@ jobs:
       id-token: write
     with:
       plugin-version-suffix: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
-      # Run plugin-validator in CI to catch issues before release
-      run-plugin-validator: true
+      # PoC: run plugin-validator only on pushes to main, not on every PR.
+      # The validator (docker pull + osv-scanner + analyzers) adds ~1.5 min to the
+      # required 'Test and build plugin' check, and a single flagged CVE anywhere in
+      # the lockfile turns EVERY open PR red (as happened with fast-uri CVE-2026-18446).
+      # Dependabot/Socket/renovate already surface CVEs on PRs; keep the validator as
+      # a release gate on main instead of a merge gate on PRs.
+      run-plugin-validator: ${{ github.event_name == 'push' }}
       plugin-validator-config-path: .plugin-validator.yaml
       # Skip the grafana-dev image in Playwright tests (image may be temporarily unavailable)
       run-playwright-with-skip-grafana-dev-image: true
