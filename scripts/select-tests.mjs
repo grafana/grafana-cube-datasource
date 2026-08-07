@@ -131,7 +131,9 @@ function fullRunPlan(reason) {
 
 function writeGithubOutputs(plan, listFile) {
   const out = process.env.GITHUB_OUTPUT;
-  if (!out) return;
+  if (!out) {
+    return;
+  }
   appendFileSync(
     out,
     [
