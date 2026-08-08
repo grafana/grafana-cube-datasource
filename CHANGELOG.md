@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.4](https://github.com/grafana/grafana-cube-datasource/compare/v0.6.3...v0.6.4) (2026-08-08)
+
+
+### Bug Fixes
+
+* **adhoc:** drop AdHoc filters inapplicable to a query's Cube view ([#307](https://github.com/grafana/grafana-cube-datasource/issues/307)) ([#495](https://github.com/grafana/grafana-cube-datasource/issues/495)) ([dc4130d](https://github.com/grafana/grafana-cube-datasource/commit/dc4130dabc5e453d10d521f0f618966f6868d20c))
+* **adhoc:** partition getTagValues scoping filters + time dimension by view ([#498](https://github.com/grafana/grafana-cube-datasource/issues/498)) ([#499](https://github.com/grafana/grafana-cube-datasource/issues/499)) ([fe0ba7e](https://github.com/grafana/grafana-cube-datasource/commit/fe0ba7ec854062073952b9c1e26cac985ede27d6))
+* **adhoc:** wire AdHoc filters via request.filters ([#127](https://github.com/grafana/grafana-cube-datasource/issues/127)) + [#307](https://github.com/grafana/grafana-cube-datasource/issues/307) demo ([#507](https://github.com/grafana/grafana-cube-datasource/issues/507)) ([c45b7f3](https://github.com/grafana/grafana-cube-datasource/commit/c45b7f3ec01ff333e999e4e994792b6e42928dbb))
+* **deps:** bump fast-uri to 3.1.5 to fix CVE-2026-18446 ([#535](https://github.com/grafana/grafana-cube-datasource/issues/535)) ([62151c5](https://github.com/grafana/grafana-cube-datasource/commit/62151c54dd68cf870f1633e81a494a0e570584a5))
+* **deps:** update grafana monorepo to v13.1.2 ([#544](https://github.com/grafana/grafana-cube-datasource/issues/544)) ([f53ba8f](https://github.com/grafana/grafana-cube-datasource/commit/f53ba8f4e87f5320b23aa4c56cfa37ae7975079e))
+* **deps:** update module github.com/grafana/grafana-plugin-sdk-go to v0.295.0 ([#529](https://github.com/grafana/grafana-cube-datasource/issues/529)) ([a5adc40](https://github.com/grafana/grafana-cube-datasource/commit/a5adc40a6d4322f127e3411b9f4cf5725b2825bd))
+
 ## [0.6.3](https://github.com/grafana/grafana-cube-datasource/compare/v0.6.2...v0.6.3) (2026-07-27)
 
 
