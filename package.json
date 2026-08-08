@@ -96,7 +96,7 @@
     "qs": "6.15.3",
     "ws": "8.21.2",
     "prismjs": "1.30.0",
-    "fast-uri": "3.1.5",
+    "fast-uri": "4.1.2",
     "js-yaml": "4.3.1",
     "@istanbuljs/load-nyc-config": {
       "js-yaml": "3.15.1"
