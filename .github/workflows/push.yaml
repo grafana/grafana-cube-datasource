@@ -34,6 +34,12 @@ jobs:
       - name: Install dependencies (fails if lockfile is out of sync)
         run: npm ci
 
+      # `npm ci` above only checks dependencies/devDependencies. npm never writes
+      # `overrides` into the lockfile, so an override can be bumped in package.json
+      # while the lockfile keeps resolving the old version - silently, as in #550.
+      - name: Check declared overrides are honoured by the lockfile
+        run: node .github/scripts/check-lockfile-overrides.mjs
+
   ci:
     name: CI
     uses: grafana/plugin-ci-workflows/.github/workflows/ci.yml@ci-cd-workflows/v11.1.0
