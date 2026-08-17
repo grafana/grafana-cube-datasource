@@ -97,9 +97,6 @@
     "ws": "8.21.3",
     "prismjs": "1.30.0",
     "fast-uri": "4.1.2",
-    "js-yaml": "5.3.0",
-    "@istanbuljs/load-nyc-config": {
-      "js-yaml": "5.3.0"
-    }
+    "js-yaml": "5.3.0"
   }
 }
