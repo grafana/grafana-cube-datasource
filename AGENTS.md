@@ -51,3 +51,4 @@ mapping, method selection, or progress fields, you **must**:
   - **Apple Silicon (M1/M2/M3/M4):** `mage -v build:linuxARM64` — Docker runs ARM64 containers natively, so Grafana loads `gpx_cube_linux_arm64`.
   - **Intel Mac / Linux x86_64:** `mage -v build:linux` — builds `gpx_cube_linux_amd64`.
   - Using the wrong architecture target means Grafana loads a stale binary and your changes won't take effect.
+- Security issues should be reported via [Grafana's security issue reporting page](https://grafana.com/legal/report-a-security-issue/) and not directly in this repository.
