@@ -171,6 +171,27 @@ describe('DataSource', () => {
       expect(result).toEqual(mockValues);
     });
 
+    // Same for the current All sentinel shape (`=| $__all`, scenes#1591).
+    it('should ignore the all-value sentinel when scoping value lookups', async () => {
+      mockGetResource.mockResolvedValue(['value1']);
+      const datasource = createDataSource();
+
+      const allValue = { key: 'orders.status', operator: '=|', value: '$__all', values: ['$__all'] };
+
+      await datasource.getTagValues({ key: 'orders.customer', filters: [allValue] });
+      expect(mockGetResource).toHaveBeenCalledWith('tag-values', { key: 'orders.customer', filters: undefined });
+
+      mockGetResource.mockClear();
+      await datasource.getTagValues({
+        key: 'orders.customer',
+        filters: [allValue, { key: 'orders.status', operator: '=', value: 'completed' }],
+      });
+      expect(mockGetResource).toHaveBeenCalledWith('tag-values', {
+        key: 'orders.customer',
+        filters: JSON.stringify([{ member: 'orders.status', operator: 'equals', values: ['completed'] }]),
+      });
+    });
+
     // Scenes' cleared pinned filter (`=~ .*`, shown as "All") means "restrict
     // nothing" — it must not scope value lookups (issue #530).
     it('should ignore scenes match-all sentinel filters (issue #530)', async () => {
@@ -728,6 +749,82 @@ describe('DataSource', () => {
         const datasource = createDataSource();
         // No explicit filters argument (older Grafana path).
         const result = datasource.applyTemplateVariables(query, {});
+
+        expect(result.filters).toBeUndefined();
+      });
+    });
+
+    // Runtime-level guarantee for scenes#1591: the All sentinel on the one-of
+    // operator (`=| $__all`) must never reach Cube. Scenes excludes it from
+    // DataQueryRequest.filters, so it arrives via the dashboard-variable fallback
+    // (issue #127) rather than the explicit list — that is the regression path.
+    describe('scenes all-value sentinel (scenes#1591)', () => {
+      const allValue = { key: 'orders.status', operator: '=|', value: '$__all', values: ['$__all'] };
+      const query = {
+        refId: 'A',
+        dimensions: ['orders.status'],
+        measures: ['orders.count'],
+      };
+
+      it('produces NO Cube filter when the variable fallback recovers a stripped sentinel', () => {
+        mockGetTemplateSrv.mockReturnValue({
+          replace: (str: string) => str,
+          getVariables: () => [{ type: 'adhoc', datasource: { uid: 'test-uid' }, filters: [allValue] }],
+          getAdhocFilters: () => [],
+        });
+
+        const datasource = createDataSource();
+        // Empty explicit list: scenes removed the sentinel before handing over.
+        const result = datasource.applyTemplateVariables(query, {}, []);
+
+        expect(result.filters).toBeUndefined();
+      });
+
+      it('produces NO Cube filter for a lone sentinel in the explicit list', () => {
+        mockGetTemplateSrv.mockReturnValue({
+          replace: (str: string) => str,
+          getVariables: () => [],
+          getAdhocFilters: () => [],
+        });
+
+        const datasource = createDataSource();
+        expect(datasource.applyTemplateVariables(query, {}, [allValue]).filters).toBeUndefined();
+      });
+
+      it('keeps only the real filter when mixed with a sentinel', () => {
+        mockGetTemplateSrv.mockReturnValue({
+          replace: (str: string) => str,
+          getVariables: () => [],
+          getAdhocFilters: () => [],
+        });
+
+        const datasource = createDataSource();
+        const result = datasource.applyTemplateVariables(query, {}, [
+          allValue,
+          { key: 'orders.region', operator: '=|', value: 'AMER', values: ['AMER', 'EMEA'] },
+        ]);
+
+        expect(result.filters).toEqual([
+          { member: 'orders.region', operator: Operator.Equals, values: ['AMER', 'EMEA'] },
+        ]);
+      });
+
+      it('produces NO Cube filter when every pinned filter is All (reported dashboard case)', () => {
+        const pinnedAll = ['ae_l1_territory', 'ae_l3_territory', 'ae_segment', 'ae_seller_type'].map((key) => ({
+          key: `sales_northern_lights.${key}`,
+          operator: '=|',
+          value: '$__all',
+          values: ['$__all'],
+        }));
+
+        mockGetTemplateSrv.mockReturnValue({
+          replace: (str: string) => str,
+          getVariables: () => [{ type: 'adhoc', datasource: { uid: 'test-uid' }, filters: pinnedAll }],
+          getAdhocFilters: () => [],
+        });
+
+        const datasource = createDataSource();
+        const result = datasource.applyTemplateVariables(query, {}, []);
 
         expect(result.filters).toBeUndefined();
       });
