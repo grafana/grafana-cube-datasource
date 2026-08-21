@@ -8,27 +8,50 @@ import { getTemplateSrv } from '@grafana/runtime';
  */
 export type AdHocFilter = AdHocVariableFilter;
 
+/** Scenes' multi-value "one of" operator. */
+const ONE_OF_OPERATOR = '=|';
+
 /**
- * Scenes' match-all sentinel. Clearing a dashboard-origin (pinned) filter
- * rewrites it to `operator: '=~', value: '.*'` (displayed as "All") and scenes
- * passes it through to the datasource, meaning "this filter restricts nothing"
- * — which is literally how Prometheus evaluates it (anchored matchers, absent
- * labels match `.*`). This plugin has no regex operators (`=~` maps to equals
- * in mapOperator), so forwarding it would invert the intent into
- * `x equals '.*'` — matching nothing. Treat it as no-filter instead (issue #530).
- *
- * Note this also drops a MANUALLY authored `=~ '.*'` — intentional, since the
- * shapes are indistinguishable and the sentinel semantics ("restrict nothing")
- * are what a user typing that would expect anyway. Anyone relying on the
- * temporary =~→equals mapping to match the literal string `.*` must use
- * `= '.*'`, which is untouched.
+ * Scenes' "All" sentinel value. Not exported by any @grafana package, so the
+ * literal is duplicated here (it matches ALL_VARIABLE_VALUE in grafana/scenes).
  */
-export function isMatchAllFilter(filter: Pick<AdHocFilter, 'operator' | 'value'>): boolean {
+const ALL_VALUE = '$__all';
+
+/**
+ * Scenes' match-all filters — a pinned filter that restricts nothing, displayed
+ * as "All". Two shapes exist and both must resolve to no-filter:
+ *
+ * - `=| $__all` — the current shape. Since grafana/scenes#1591 a dashboard-origin
+ *   filter carries the All sentinel on the "one of" operator, whether authored
+ *   that way in the default filters editor or selected by a viewer.
+ * - `=~ .*` — the older shape, still produced for datasources that do not
+ *   declare multi-value operators (issue #530).
+ *
+ * Scenes excludes both from `DataQueryRequest.filters`, but they still reach the
+ * plugin: when that list arrives empty, resolveAdHocFilters falls back to the
+ * dashboard AdHoc variable's raw filters (issue #127), which recovers exactly
+ * what scenes removed. So the drop has to happen here, not upstream.
+ *
+ * Forwarding either shape inverts the intent. This plugin has no regex operators
+ * and mapOperator collapses both `=~` and `=|` to equals, so the pill promises
+ * everything while the query asks for `x equals '.*'` / `x equals '$__all'` —
+ * matching nothing.
+ *
+ * Note this also drops a MANUALLY authored `=~ '.*'`, or `$__all` picked via
+ * "one of" — intentional, since the shapes are indistinguishable and "restrict
+ * nothing" is what a user selecting them would expect anyway. Anyone needing the
+ * literal string must use `= '.*'` / `= '$__all'`, which are untouched.
+ */
+export function isMatchAllFilter(filter: Pick<AdHocFilter, 'operator' | 'value' | 'values'>): boolean {
+  if (filter.operator === ONE_OF_OPERATOR) {
+    return (filter.values ?? (filter.value ? [filter.value] : [])).includes(ALL_VALUE);
+  }
+
   return filter.operator === '=~' && filter.value === '.*';
 }
 
 /** Drop scenes' match-all sentinel filters — see isMatchAllFilter (issue #530). */
-export function dropMatchAllFilters<T extends Pick<AdHocFilter, 'operator' | 'value'>>(filters: T[]): T[] {
+export function dropMatchAllFilters<T extends Pick<AdHocFilter, 'operator' | 'value' | 'values'>>(filters: T[]): T[] {
   return filters.filter((filter) => !isMatchAllFilter(filter));
 }
 
@@ -44,9 +67,9 @@ export function dropMatchAllFilters<T extends Pick<AdHocFilter, 'operator' | 'va
  * variables from `templateSrv.getVariables()` that target this datasource.
  * Fall back to the deprecated `getAdhocFilters(name)` for older Grafana.
  *
- * Match-all sentinels (`=~ .*`) are dropped from the result after resolution,
- * so an explicit list containing only match-all filters still counts as an
- * intentional (now empty) selection and does not fall back to other sources.
+ * Match-all sentinels (`=| $__all` and `=~ .*`) are dropped from the result after
+ * resolution, so an explicit list containing only match-all filters still counts
+ * as an intentional (now empty) selection and does not fall back to other sources.
  */
 export function resolveAdHocFilters(
   datasource: { name: string; uid: string },

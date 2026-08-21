@@ -97,6 +97,73 @@ describe('resolveAdHocFilters (issue #127)', () => {
   });
 });
 
+// Since grafana/scenes#1591 a pinned filter that restricts nothing carries the All
+// sentinel on the multi-value operator (`=| $__all`) rather than `=~ .*`. mapOperator
+// collapses `=|` to equals, so forwarding it asks Cube for `x equals '$__all'` — no
+// rows, while the pill reads "All".
+describe('all-value sentinel handling (scenes#1591)', () => {
+  const allValue = { key: 'orders.status', operator: '=|', value: '$__all', values: ['$__all'] };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    setTemplateSrv({ variables: [], getAdhocFilters: () => [] });
+  });
+
+  it('isMatchAllFilter recognises the one-of All sentinel', () => {
+    expect(isMatchAllFilter(allValue)).toBe(true);
+    // value-only shape, as the default filters editor persists it
+    expect(isMatchAllFilter({ operator: '=|', value: '$__all' })).toBe(true);
+  });
+
+  it('only treats All as match-all on the one-of operator', () => {
+    // "not one of" never offers All (it would read as excluding everything), so a
+    // literal $__all there stays a real filter.
+    expect(isMatchAllFilter({ operator: '!=|', value: '$__all', values: ['$__all'] })).toBe(false);
+    expect(isMatchAllFilter({ operator: '=', value: '$__all' })).toBe(false);
+  });
+
+  it('preserves one-of filters with real values', () => {
+    const multiValue = { key: 'orders.region', operator: '=|', value: 'AMER', values: ['AMER', 'EMEA'] };
+    expect(isMatchAllFilter(multiValue)).toBe(false);
+    expect(resolveAdHocFilters(datasource, [multiValue, allValue])).toEqual([multiValue]);
+  });
+
+  it('treats All mixed with real values as match-all, matching scenes', () => {
+    // Scenes makes All exclusive in the combobox so this should not occur, but its
+    // own isMatchAllFilter uses .includes() — mirror that rather than diverge.
+    expect(isMatchAllFilter({ operator: '=|', value: 'AMER', values: ['AMER', '$__all'] })).toBe(true);
+  });
+
+  it('drops the sentinel from an explicit filters list', () => {
+    expect(resolveAdHocFilters(datasource, [allValue, filterA])).toEqual([filterA]);
+  });
+
+  it('drops the sentinel recovered from dashboard AdHoc variables', () => {
+    // The actual regression: scenes excludes the sentinel from
+    // DataQueryRequest.filters, so the explicit list arrives EMPTY and the
+    // variable fallback reads it straight back in.
+    setTemplateSrv({
+      variables: [{ type: 'adhoc', datasource: { uid: datasource.uid }, filters: [allValue, filterB] }],
+    });
+    expect(resolveAdHocFilters(datasource, [])).toEqual([filterB]);
+  });
+
+  it('yields no filters when every pinned filter is All', () => {
+    // The reported dashboard case: five pinned filters all set to All must mean
+    // "no restriction", not five filters that each match nothing.
+    const pinnedAll = ['ae_l1_territory', 'ae_l3_territory', 'ae_segment', 'ae_seller_type'].map((key) => ({
+      key: `sales_northern_lights.${key}`,
+      operator: '=|',
+      value: '$__all',
+      values: ['$__all'],
+    }));
+    setTemplateSrv({
+      variables: [{ type: 'adhoc', datasource: { uid: datasource.uid }, filters: pinnedAll }],
+    });
+    expect(resolveAdHocFilters(datasource, [])).toEqual([]);
+  });
+});
+
 // Scenes rewrites a cleared dashboard-origin (pinned) filter to its match-all
 // sentinel (`=~ .*`, displayed "All") and passes it to queries. mapOperator
 // collapses =~ to equals, so forwarding it would mean `x equals '.*'` — the

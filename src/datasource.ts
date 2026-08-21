@@ -125,8 +125,8 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
     // Context time range Grafana passes to getTagValues since v10.3.
     timeRange?: TimeRange;
   }) {
-    // Scenes' match-all sentinel (`=~ .*`, a cleared pinned filter) means
-    // "restrict nothing" — drop it before scoping (issue #530).
+    // Scenes' match-all sentinels (`=| $__all` and the older `=~ .*`) mean
+    // "restrict nothing" — drop them before scoping (issue #530).
     const scopingCandidates = dropMatchAllFilters(options.filters ?? []);
 
     // Nothing to partition or scope (no scoping filters and no time range): skip
