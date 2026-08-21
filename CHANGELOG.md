@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.5](https://github.com/grafana/grafana-cube-datasource/compare/v0.6.4...v0.6.5) (2026-08-21)
+
+
+### Bug Fixes
+
+* treat scenes' all-value sentinel (=| $__all) as a no-op ([#587](https://github.com/grafana/grafana-cube-datasource/issues/587)) ([b725b1d](https://github.com/grafana/grafana-cube-datasource/commit/b725b1d2285232a6564d24af725f1b1c508f2f0c))
+
 ## [0.6.4](https://github.com/grafana/grafana-cube-datasource/compare/v0.6.3...v0.6.4) (2026-08-21)
 
 
