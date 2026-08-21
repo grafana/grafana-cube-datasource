@@ -5,6 +5,7 @@ import { mergeMap } from 'rxjs/operators';
 
 import { CubeQuery, CubeDataSourceOptions, DEFAULT_QUERY, Operator } from './types';
 import { normalizeCubeQuery } from './utils/normalizeCubeQuery';
+import { dropMatchAllFilters } from './utils/adHocFilters';
 import { buildMemberViewMap } from './utils/viewSelection';
 import type { MetadataResponse } from './queries';
 
@@ -124,9 +125,13 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
     // Context time range Grafana passes to getTagValues since v10.3.
     timeRange?: TimeRange;
   }) {
+    // Scenes' match-all sentinel (`=~ .*`, a cleared pinned filter) means
+    // "restrict nothing" — drop it before scoping (issue #530).
+    const scopingCandidates = dropMatchAllFilters(options.filters ?? []);
+
     // Nothing to partition or scope (no scoping filters and no time range): skip
     // the metadata fetch entirely — there is nothing to drop or view-check.
-    if (!options.filters?.length && !options.timeRange) {
+    if (!scopingCandidates.length && !options.timeRange) {
       return this.getResource('tag-values', {
         key: options.key,
         filters: undefined,
@@ -149,7 +154,7 @@ export class DataSource extends DataSourceWithBackend<CubeQuery, CubeDataSourceO
       }
     }
 
-    const scopingFilters = this.partitionScopingFiltersByView(options.key, options.filters, metadata);
+    const scopingFilters = this.partitionScopingFiltersByView(options.key, scopingCandidates, metadata);
     const timeDimensions = this.buildTagValueTimeDimensions(options.key, options.timeRange, metadata);
 
     return this.getResource('tag-values', {
