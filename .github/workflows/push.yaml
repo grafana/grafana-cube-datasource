@@ -62,7 +62,9 @@ jobs:
       # minimum supported minor) instead of every minor in the grafanaDependency range.
       # Recent history: 12.2.x/12.3.x/12.4.x/13.1.x all green, 13.0.4 permafailing
       # ("Wait for Grafana to start"), so the full matrix only added noise + wall-clock.
-      run-playwright-with-grafana-dependency: '~12.2.0'
+      # Now tracks the React 19 floor: the plugin requires Grafana >=13.2.0, so
+      # earlier minors can no longer resolve the externalized react/jsx-runtime.
+      run-playwright-with-grafana-dependency: '~13.2.0'
 
       # TODO: add here any other CI custom inputs you may need. You most likely also have to add the same options to publish.yaml:
       #   https://enghub.grafana-ops.net/docs/default/component/grafana-plugins-platform/plugins-ci-github-actions/010-plugins-ci-github-actions/#customizing-the-workflows-with-inputs
