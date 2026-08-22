@@ -12,6 +12,7 @@ const mockGetTemplateSrv = getTemplateSrv as jest.Mock;
 const createDatasourceStub = () => {
   return {
     name: 'Test Cube',
+    uid: 'test-uid',
     mapOperator: jest.fn((operator: string) => {
       if (operator === '!=') {
         return Operator.NotEquals;
@@ -184,5 +185,72 @@ describe('buildCubeQueryJson', () => {
     // apply once a dimension/measure is chosen) -> no misleading hint.
     expect(json).toBe('');
     expect(droppedAdHocFilters).toEqual([]);
+  });
+
+  describe('explicit request.filters precedence for the SQL preview (issue #506)', () => {
+    const query: CubeQuery = { refId: 'A', dimensions: ['orders.status'], measures: ['orders.count'] };
+    const adhocVar = (value: string) => ({
+      type: 'adhoc',
+      datasource: { uid: 'test-uid' },
+      filters: [{ key: 'orders.status', operator: '=', value }],
+    });
+
+    it('uses explicit request.filters over dashboard variables and the deprecated API', () => {
+      mockGetTemplateSrv.mockReturnValue({
+        replace: (v: string) => v,
+        getVariables: () => [adhocVar('FROM_VAR')],
+        getAdhocFilters: () => [{ key: 'orders.status', operator: '=', value: 'FROM_DEPRECATED' }],
+      });
+
+      const { json } = buildCubeQueryJson(query, createDatasourceStub(), undefined, [
+        { key: 'orders.status', operator: '=', value: 'FROM_REQUEST' },
+      ]);
+
+      expect(JSON.parse(json).filters).toEqual([
+        { member: 'orders.status', operator: 'equals', values: ['FROM_REQUEST'] },
+      ]);
+    });
+
+    it('falls back to dashboard variables when request.filters is undefined (pre-run / first open)', () => {
+      mockGetTemplateSrv.mockReturnValue({
+        replace: (v: string) => v,
+        getVariables: () => [adhocVar('FROM_VAR')],
+        getAdhocFilters: () => [{ key: 'orders.status', operator: '=', value: 'FROM_DEPRECATED' }],
+      });
+
+      const { json } = buildCubeQueryJson(query, createDatasourceStub(), undefined, undefined);
+
+      expect(JSON.parse(json).filters).toEqual([
+        { member: 'orders.status', operator: 'equals', values: ['FROM_VAR'] },
+      ]);
+    });
+
+    it('falls back to dashboard variables when request.filters is an empty array', () => {
+      mockGetTemplateSrv.mockReturnValue({
+        replace: (v: string) => v,
+        getVariables: () => [adhocVar('FROM_VAR')],
+        getAdhocFilters: () => [],
+      });
+
+      const { json } = buildCubeQueryJson(query, createDatasourceStub(), undefined, []);
+
+      expect(JSON.parse(json).filters).toEqual([
+        { member: 'orders.status', operator: 'equals', values: ['FROM_VAR'] },
+      ]);
+    });
+
+    it('falls back to the deprecated API when there is no request.filters and no variables', () => {
+      mockGetTemplateSrv.mockReturnValue({
+        replace: (v: string) => v,
+        getVariables: () => [],
+        getAdhocFilters: () => [{ key: 'orders.status', operator: '=', value: 'FROM_DEPRECATED' }],
+      });
+
+      const { json } = buildCubeQueryJson(query, createDatasourceStub(), undefined, undefined);
+
+      expect(JSON.parse(json).filters).toEqual([
+        { member: 'orders.status', operator: 'equals', values: ['FROM_DEPRECATED'] },
+      ]);
+    });
   });
 });
