@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.6](https://github.com/grafana/grafana-cube-datasource/compare/v0.6.5...v0.6.6) (2026-08-28)
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/grafana/grafana-plugin-sdk-go to v0.296.3 ([#590](https://github.com/grafana/grafana-cube-datasource/issues/590)) ([c308461](https://github.com/grafana/grafana-cube-datasource/commit/c3084613b779cb4bbf04c83871b4ca376ee349ea))
+
 ## [0.6.5](https://github.com/grafana/grafana-cube-datasource/compare/v0.6.4...v0.6.5) (2026-08-21)
 
 
