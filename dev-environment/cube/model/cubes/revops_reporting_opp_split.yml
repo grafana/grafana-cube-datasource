@@ -1,0 +1,200 @@
+cubes:
+  - name: revops_reporting_opp_split
+    sql_table: revops.revops_reporting_opp_split
+    data_source: default
+
+    measures:
+      - name: count
+        type: count
+        description: "Number of opportunity split records"
+
+      # Simple sums
+      - name: total_nacv
+        type: sum
+        sql: net_nacv_split
+        title: "Total NACV"
+        description: "Total Net New Annual Contract Value (NACV) across all opportunity splits"
+
+      - name: total_racv
+        type: sum
+        sql: net_racv_split
+        title: "Total RACV"
+        description: "Total Net Renewal Annual Contract Value (RACV) across all opportunity splits"
+
+      - name: total_tcv
+        type: sum
+        sql: net_tcv_split
+        title: "Total TCV"
+        description: "Total Net Total Contract Value (TCV) across all opportunity splits"
+
+      - name: total_services
+        type: sum
+        sql: services_split
+        description: "Total services revenue across all opportunity splits"
+
+      # Qualified Pipeline (stages 3-6)
+      - name: val_qp
+        type: sum
+        sql: "CASE WHEN {CUBE}.stage_number BETWEEN 3 AND 6 AND {CUBE}.net_nacv_ttl > 0 THEN {CUBE}.net_nacv_split ELSE 0 END"
+        title: "Qualified Pipeline NACV"
+        description: "Total Net NACV in qualified pipeline (opportunity stages 3-6 with positive NACV)"
+
+      - name: ct_qp
+        type: sum
+        sql: "CASE WHEN {CUBE}.stage_number BETWEEN 3 AND 6 AND {CUBE}.net_nacv_ttl > 0 THEN {CUBE}.split_percentage ELSE 0 END"
+        title: "Qualified Pipeline Count"
+        description: "Weighted count of opportunities in qualified pipeline (stages 3-6, using split percentage)"
+
+      # Closed Won (stage 7)
+      - name: val_cw
+        type: sum
+        sql: "CASE WHEN {CUBE}.stage_number = 7 THEN {CUBE}.net_nacv_split ELSE 0 END"
+        title: "Closed Won NACV"
+        description: "Total Net NACV from closed-won opportunities (stage 7)"
+
+      - name: ct_cw
+        type: sum
+        sql: "CASE WHEN {CUBE}.stage_number = 7 AND {CUBE}.net_nacv_ttl > 0 THEN {CUBE}.split_percentage ELSE 0 END"
+        title: "Closed Won Count"
+        description: "Weighted count of closed-won opportunities (stage 7, using split percentage)"
+
+      # Distinct account counts for dashboard stats
+      - name: count_distinct_accounts_with_qp
+        type: count_distinct
+        sql: "CASE WHEN {CUBE}.stage_number BETWEEN 3 AND 6 AND {CUBE}.net_nacv_ttl > 0 THEN {CUBE}.account_id END"
+        title: "Accounts w/ QP"
+        description: "Number of distinct accounts with at least one opportunity in qualified pipeline (stages 3-6)"
+
+      - name: count_distinct_accounts_closed_won
+        type: count_distinct
+        sql: "CASE WHEN {CUBE}.stage_number = 7 AND {CUBE}.net_nacv_ttl > 0 THEN {CUBE}.account_id END"
+        title: "Accounts Closed Won"
+        description: "Number of distinct accounts with at least one closed-won opportunity (stage 7)"
+
+      # Unfiltered distinct account count (for % w/ QP denominator)
+      - name: count_distinct_accounts
+        type: count_distinct
+        sql: "{CUBE}.account_id"
+        title: "Total Accounts"
+        description: "Number of distinct accounts across all opportunity splits (denominator for % with QP)"
+
+      # Open Renewals (stage < 7)
+      - name: val_open_renewal
+        type: sum
+        sql: "CASE WHEN {CUBE}.stage_number < 7 THEN {CUBE}.net_racv_split ELSE 0 END"
+        title: "Open Renewal RACV"
+        description: "Total Net RACV from open renewal opportunities (stages below closed-won)"
+
+      - name: ct_open_renewal
+        type: sum
+        sql: "CASE WHEN {CUBE}.stage_number < 7 AND {CUBE}.net_racv_ttl > 0 THEN {CUBE}.split_percentage ELSE 0 END"
+        title: "Open Renewal Count"
+        description: "Weighted count of open renewal opportunities (stages below 7, using split percentage)"
+
+      - name: count_distinct_open_renewal_accounts
+        type: count_distinct
+        sql: "CASE WHEN {CUBE}.stage_number < 7 AND {CUBE}.net_racv_ttl > 0 THEN {CUBE}.account_id END"
+        title: "Open Renewal Accounts"
+        description: "Number of distinct accounts with at least one open renewal opportunity"
+
+      - name: share_accounts_with_qualified_pipeline
+        title: Accounts with Qualified Pipeline (%)
+        description: "Distinct accounts with stage 3–6 opportunities and positive NACV divided by distinct accounts across opportunity splits, within the query filters. No denominator returns null."
+        type: number
+        format: percent_0
+        sql: "1.0 * {count_distinct_accounts_with_qp} / NULLIF({count_distinct_accounts}, 0)"
+
+    dimensions:
+      - name: account_id
+        sql: account_id
+        type: string
+        description: "Salesforce account ID associated with this opportunity"
+      - name: opp_id
+        sql: opp_id
+        type: string
+        primary_key: true
+        description: "Salesforce opportunity ID"
+      - name: opp_name
+        sql: opp_name
+        type: string
+        description: "Salesforce opportunity name"
+      - name: opp_type_qbr
+        sql: opp_type_qbr
+        type: string
+        title: "Opportunity Type (QBR)"
+        description: "Opportunity type for QBR (Quarterly Business Review) reporting"
+      - name: stage_name
+        sql: stage_name
+        type: string
+        description: "Current Salesforce opportunity stage name"
+      - name: stage_number
+        sql: stage_number
+        type: number
+        description: "Numeric stage of the opportunity (1-7, where 7 = Closed Won)"
+      - name: close_date
+        sql: "CAST({CUBE}.close_date AS TIMESTAMP)"
+        type: time
+        description: "Expected close date of the opportunity"
+      - name: fq_close_date
+        sql: fq_close_date
+        type: string
+        title: "Fiscal Quarter (Close)"
+        description: "Fiscal quarter of the expected close date"
+      - name: net_nacv_split
+        sql: net_nacv_split
+        type: number
+        title: "Net NACV (Split)"
+        description: "Net New Annual Contract Value attributed to this opportunity split"
+      - name: net_nacv_ttl
+        sql: net_nacv_ttl
+        type: number
+        title: "Net NACV (Total)"
+        description: "Total Net NACV for the full opportunity (before splitting)"
+      - name: net_racv_split
+        sql: net_racv_split
+        type: number
+        title: "Net RACV (Split)"
+        description: "Net Renewal Annual Contract Value attributed to this opportunity split"
+      - name: net_racv_ttl
+        sql: net_racv_ttl
+        type: number
+        title: "Net RACV (Total)"
+        description: "Total Net RACV for the full opportunity (before splitting)"
+      - name: net_tcv_split
+        sql: net_tcv_split
+        type: number
+        title: "Net TCV (Split)"
+        description: "Net Total Contract Value attributed to this opportunity split"
+      - name: services_split
+        sql: services_split
+        type: number
+        description: "Services revenue attributed to this opportunity split"
+      - name: split_percentage
+        sql: split_percentage
+        type: number
+        description: "Percentage of the opportunity attributed to this split (used as fractional count in aggregations)"
+      - name: is_cro_forecast
+        sql: is_cro_forecast
+        type: boolean
+        title: "CRO Forecast"
+        description: "Whether this opportunity is included in the CRO forecast"
+      - name: is_vp_forecast
+        sql: is_vp_forecast
+        type: boolean
+        title: "VP Forecast"
+        description: "Whether this opportunity is included in the VP forecast"
+      - name: is_rvp_forecast
+        sql: is_rvp_forecast
+        type: boolean
+        title: "RVP Forecast"
+        description: "Whether this opportunity is included in the RVP forecast"
+      - name: is_rsd_forecast
+        sql: is_rsd_forecast
+        type: boolean
+        title: "RSD Forecast"
+        description: "Whether this opportunity is included in the RSD forecast"
+      - name: is_ae_forecast
+        sql: is_ae_forecast
+        type: boolean
+        title: "AE Forecast"
+        description: "Whether this opportunity is included in the AE forecast"

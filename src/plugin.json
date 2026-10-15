@@ -20,8 +20,8 @@
     },
     "links": [
       {
-        "name": "Live Demo",
-        "url": "https://play.grafana.org/d/territory-navigator"
+        "name": "Run the demo locally",
+        "url": "https://github.com/grafana/grafana-cube-datasource/blob/main/dev-environment/README.md#revops-territory-navigator-example"
       },
       {
         "name": "GitHub",
