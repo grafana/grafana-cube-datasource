@@ -11,7 +11,7 @@ Connect Grafana to [Cube](https://cube.dev/) for semantic layer analytics. Query
 
 ![BI Dashboard with Cross-Panel Filtering](src/img/screenshot-bi-dashboard.png)
 
-**[Try it live on play.grafana.org →](https://play.grafana.org/d/territory-navigator)**
+**[Run the RevOps demo locally →](dev-environment/README.md#revops-territory-navigator-example)** - the same dashboards we showed at GrafanaCON 2026, side by side on Cube and on plain PostgreSQL.
 
 ## Why Use This Plugin?
 
@@ -196,7 +196,7 @@ This setup provides:
 
 The docker-compose setup includes Cube and Postgres with sample data, starting:
 
-- Postgres with JaffleShop sample data pre-loaded
+- Postgres with JaffleShop and RevOps Territory Navigator sample data pre-loaded
 - Cube connected to Postgres
 - Grafana with the plugin loaded
 
@@ -253,7 +253,7 @@ npm run test:ci
 # Run E2E tests (using Playwright)
 # First, spin up a Grafana instance to test against:
 npm run server
-# Optionally specify Grafana version (recommended dev target):
+# Optionally specify Grafana version (defaults to 13.2.4, which the RevOps dashboards need):
 GRAFANA_VERSION=12.3.3 npm run server
 # Validate minimum supported version compatibility:
 GRAFANA_VERSION=12.2.5 npm run server

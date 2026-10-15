@@ -1,0 +1,776 @@
+cubes:
+  - name: revops_territory_navigator_account_details
+    sql_table: revops.revops_reporting_territory_navigator_account_details
+    data_source: default
+
+    joins:
+      - name: revops_reporting_opp_split
+        sql: "{CUBE}.account_id = {revops_reporting_opp_split}.account_id"
+        relationship: one_to_many
+
+
+      - name: revops_territory_navigator_product_usage_waterfall
+        sql: "{CUBE}.account_id = {revops_territory_navigator_product_usage_waterfall}.account_id"
+        relationship: one_to_many
+
+    measures:
+      - name: count
+        type: count
+        description: "Number of accounts"
+
+      # ARR measures
+      - name: total_arr
+        type: sum
+        sql: arr_curr
+        title: "Total ARR"
+        description: "Total current committed Annual Recurring Revenue (ARR) across all product lines"
+
+      - name: total_arr_cloud
+        type: sum
+        sql: arr_cloud_curr
+        title: "Total Cloud ARR"
+        description: "Total current committed ARR from Grafana Cloud subscriptions"
+
+      - name: total_arr_enterprise
+        type: sum
+        sql: arr_enterprise_curr
+        title: "Total Enterprise ARR"
+        description: "Total current committed ARR from Grafana Enterprise (self-managed) subscriptions"
+
+      - name: total_mrr
+        type: sum
+        sql: mrr_curr
+        title: "Total MRR"
+        description: "Total current committed Monthly Recurring Revenue (MRR)"
+
+      # Consumption measures
+      - name: total_consumption_last_month
+        type: sum
+        sql: consumption_weighted_last_month
+        title: "Consumption (Last Month)"
+        description: "Total weighted consumption revenue for the prior calendar month"
+
+      - name: total_committed_mrr_last_month
+        type: sum
+        sql: committed_mrr_last_month
+        title: "Committed MRR (Last Month)"
+        description: "Total committed MRR for the prior calendar month"
+
+      - name: total_consumption_projected
+        type: sum
+        sql: consumption_weighted_projected_current_month
+        title: "Consumption (Projected)"
+        description: "Projected weighted consumption revenue for the current calendar month"
+
+      - name: total_committed_mrr_current
+        type: sum
+        sql: committed_mrr_current_month
+        title: "Committed MRR (Current)"
+        description: "Total committed MRR for the current calendar month"
+
+      # Consumption attainment - Last Month
+      - name: total_consumption_quota_last_month
+        type: sum
+        sql: consumption_weighted_quota_last_month
+        title: "Consumption Quota (Last Month)"
+        description: "Total weighted consumption quota for the prior calendar month"
+
+      - name: total_consumption_with_quota_last_month
+        type: sum
+        sql: consumption_weighted_last_month_with_quota
+        title: "Consumption w/ Quota (Last Month)"
+        description: "Total weighted consumption for the prior month, only for accounts with a quota assigned"
+
+      - name: total_consumption_with_committed_mrr_last_month
+        type: sum
+        sql: consumption_weighted_last_month_with_committed_mrr
+        title: "Consumption w/ MRR (Last Month)"
+        description: "Total weighted consumption for the prior month, only for accounts with committed MRR"
+
+      # Consumption attainment - Current Month (projected)
+      - name: total_consumption_quota_current_month
+        type: sum
+        sql: consumption_weighted_quota_current_month
+        title: "Consumption Quota (Current)"
+        description: "Total weighted consumption quota for the current calendar month"
+
+      - name: total_consumption_projected_with_quota
+        type: sum
+        sql: consumption_weighted_projected_current_month_with_quota
+        title: "Consumption w/ Quota (Projected)"
+        description: "Projected weighted consumption for the current month, only for accounts with a quota assigned"
+
+      - name: total_consumption_projected_with_committed_mrr
+        type: sum
+        sql: consumption_weighted_projected_current_month_with_committed_mrr
+        title: "Consumption w/ MRR (Projected)"
+        description: "Projected weighted consumption for the current month, only for accounts with committed MRR"
+
+      # Marketing ops measures
+      - name: total_opt_ins
+        type: sum
+        sql: ct_opt_ins_marketing_ops
+        title: "Total Opt-Ins"
+        description: "Total count of marketing opt-in contacts associated with accounts"
+
+      - name: total_contacted_l6m
+        type: sum
+        sql: ct_opt_ins_contacted_l6m_marketing_ops
+        title: "Contacted (Last 6M)"
+        description: "Total marketing opt-ins contacted by the sales team within the last 6 months"
+
+      - name: consumption_quota_attainment_last_month
+        title: Consumption Quota Attainment — Last Month
+        description: "Total last-month consumption for accounts with quota divided by total last-month quota, within the query filters. Uses the existing monthly snapshot columns. Zero quota returns null."
+        type: number
+        format: percent_0
+        sql: "1.0 * {total_consumption_with_quota_last_month} / NULLIF({total_consumption_quota_last_month}, 0)"
+
+    dimensions:
+      # Account identifiers
+      - name: account_id
+        sql: account_id
+        type: string
+        primary_key: true
+        description: "Salesforce account ID"
+      - name: account_name
+        sql: account_name
+        type: string
+        description: "Salesforce account name"
+      - name: account_org_id_sfdc
+        sql: account_org_id_sfdc
+        type: string
+        title: "Org ID"
+        description: "Grafana Cloud organization ID linked to this Salesforce account"
+      - name: account_org_slug_sfdc
+        sql: account_org_slug_sfdc
+        type: string
+        title: "Org Slug"
+        description: "Grafana Cloud organization slug linked to this Salesforce account"
+
+      # Territory parent
+      - name: account_id_territory_parent
+        sql: account_id_territory_parent
+        type: string
+        title: "Territory Parent ID"
+        description: "Salesforce account ID of the territory parent in the account hierarchy"
+      - name: account_name_territory_parent
+        sql: account_name_territory_parent
+        type: string
+        title: "Territory Parent"
+        description: "Name of the territory parent account in the account hierarchy"
+      - name: account_org_id_sfdc_territory_parent
+        sql: account_org_id_sfdc_territory_parent
+        type: string
+        title: "Parent Org ID"
+        description: "Grafana Cloud organization ID of the territory parent account"
+      - name: account_org_slug_sfdc_territory_parent
+        sql: account_org_slug_sfdc_territory_parent
+        type: string
+        title: "Parent Org Slug"
+        description: "Grafana Cloud organization slug of the territory parent account"
+      - name: is_territory_parent
+        sql: is_territory_parent
+        type: boolean
+        title: "Is Parent"
+        description: "Whether this account is the top-level parent in its territory hierarchy"
+      - name: is_territory_parent_filter
+        sql: is_territory_parent_filter
+        type: string
+        title: "Is Parent (Filter)"
+        description: "String version of is_territory_parent for use as a dashboard filter (True/False)"
+      - name: is_territory_parent_display
+        sql: is_territory_parent_display
+        type: string
+        title: "Is Parent (Display)"
+        description: "Display version of is_territory_parent (checkmark or empty string)"
+      - name: is_territory_parent_one_hot
+        sql: is_territory_parent_one_hot
+        type: number
+        title: "Is Parent (0/1)"
+        description: "Numeric encoding of is_territory_parent (1 = parent, 0 = child)"
+      - name: employee_ct_territory_parent
+        sql: employee_ct_territory_parent
+        type: number
+        title: "Parent Employee Count"
+        description: "Total employee count for the territory parent account (domestic ultimate from Salesforce)"
+
+      # Account owner
+      - name: account_owner_id
+        sql: account_owner_id
+        type: string
+        title: "Owner ID"
+        description: "Salesforce user ID of the Account Executive (AE) who owns this account"
+      - name: account_owner_region
+        sql: account_owner_region
+        type: string
+        title: "Owner Region"
+        description: "Sales region of the account owner"
+      - name: account_owner_rvp_region
+        sql: account_owner_rvp_region
+        type: string
+        title: "RVP Region"
+        description: "Regional Vice President (RVP) region of the account owner"
+      - name: account_owner_rsd_region
+        sql: account_owner_rsd_region
+        type: string
+        title: "RSD Region"
+        description: "Regional Sales Director (RSD) region of the account owner"
+      - name: account_owner_segment
+        sql: account_owner_segment
+        type: string
+        title: "Owner Segment"
+        description: "Market segment of the account owner (e.g. Enterprise, Mid-Market, Commercial)"
+      - name: account_owner_seller_type
+        sql: account_owner_seller_type
+        type: string
+        title: "Seller Type"
+        description: "Seller type classification of the account owner"
+      - name: account_owner_name
+        sql: account_owner_name
+        type: string
+        title: "Owner Name"
+        description: "Name of the Account Executive (AE) who owns this account in Salesforce"
+
+      # SDR
+      - name: account_mapped_sdr_id
+        sql: account_mapped_sdr_id
+        type: string
+        title: "SDR ID"
+        description: "Salesforce user ID of the Sales Development Representative (SDR) mapped to this account"
+      - name: account_mapped_sdr_name
+        sql: account_mapped_sdr_name
+        type: string
+        title: "SDR Name"
+        description: "Name of the SDR mapped to this account"
+
+      # Solutions Engineer
+      - name: account_solutions_engineer_id
+        sql: account_solutions_engineer_id
+        type: string
+        title: "SE ID"
+        description: "Salesforce user ID of the Solutions Engineer (SE) assigned to this account"
+      - name: account_solutions_engineer_name
+        sql: account_solutions_engineer_name
+        type: string
+        title: "SE Name"
+        description: "Name of the Solutions Engineer assigned to this account"
+
+      # Observability Architect
+      - name: account_observability_architect_id
+        sql: account_observability_architect_id
+        type: string
+        title: "OA ID"
+        description: "Salesforce user ID of the Observability Architect (OA) assigned to this account"
+      - name: account_observability_architect_name
+        sql: account_observability_architect_name
+        type: string
+        title: "OA Name"
+        description: "Name of the Observability Architect (OA) assigned to this account"
+      - name: account_observability_architect_manager_id
+        sql: account_observability_architect_manager_id
+        type: string
+        title: "OA Manager ID"
+        description: "Salesforce user ID of the Observability Architect's manager"
+      - name: account_observability_architect_manager_name
+        sql: account_observability_architect_manager_name
+        type: string
+        title: "OA Manager"
+        description: "Name of the Observability Architect's manager"
+
+      # Territory
+      - name: account_territory_name
+        sql: account_territory_name
+        type: string
+        title: "Territory"
+        description: "Salesforce territory currently assigned to this account"
+      - name: is_account_assigned_to_ae_filter
+        sql: is_account_assigned_to_ae_filter
+        type: string
+        title: "AE Assigned"
+        description: "Whether this account is assigned to a named AE territory (True/False)"
+
+      # Industry
+      - name: account_industry_zoominfo
+        sql: account_industry_zoominfo
+        type: string
+        title: "Industry"
+        description: "Primary industry classification for the account, sourced from ZoomInfo"
+      - name: account_sub_industry_zoominfo
+        sql: account_sub_industry_zoominfo
+        type: string
+        title: "Sub-Industry"
+        description: "Sub-industry classification for the account, sourced from ZoomInfo"
+
+      # Billing location
+      - name: account_billing_country
+        sql: account_billing_country
+        type: string
+        title: "Billing Country"
+        description: "Billing country from Salesforce"
+      - name: account_billing_state_province
+        sql: account_billing_state_province
+        type: string
+        title: "Billing State"
+        description: "Billing state or province from Salesforce"
+      - name: account_billing_city
+        sql: account_billing_city
+        type: string
+        title: "Billing City"
+        description: "Billing city from Salesforce"
+      - name: account_billing_postal_code
+        sql: account_billing_postal_code
+        type: string
+        title: "Postal Code"
+        description: "Billing postal code from Salesforce"
+
+      # Funnel
+      - name: account_funnel_score_number
+        sql: account_funnel_score_number
+        type: number
+        title: "Funnel Score"
+        description: "Numeric ranking of the account's funnel position (lower = further along in funnel)"
+      - name: account_funnel_score_name
+        sql: account_funnel_score_name
+        type: string
+        title: "Funnel Stage"
+        description: "Account's position in the sales funnel (e.g. Contracted, Expansion, Prospect), from the territory carving funnel score model"
+      - name: usage_type_name
+        sql: usage_type_name
+        type: string
+        title: "Usage Type (Deprecated)"
+        description: "Account usage type classification from the funnel score model (deprecated, use usage_type_name_curr)"
+      - name: usage_type_name_curr
+        sql: usage_type_name_curr
+        type: string
+        title: "Usage Type"
+        description: "Current account usage classification (e.g. Contracted, Self-Serve Pro, Free, Trial, No Usage)"
+
+      # Marketing ops signals
+      - name: company_behavior_signal_marketing_ops
+        sql: company_behavior_signal_marketing_ops
+        type: string
+        title: "Behavior Signal"
+        description: "Marketing Ops behavioral signal indicating recent marketing engagement activity (e.g. Surging, Active, Cooling)"
+      - name: company_behavior_signal_description_marketing_ops
+        sql: company_behavior_signal_description_marketing_ops
+        type: string
+        title: "Behavior Signal Detail"
+        description: "Detailed description of the company's marketing behavior signal"
+      - name: sales_activity_pulse_marketing_ops
+        sql: sales_activity_pulse_marketing_ops
+        type: string
+        title: "Sales Activity Pulse"
+        description: "Sales activity pulse from Salesforce indicating recent sales engagement level"
+      - name: sales_activity_pulse_description_marketing_ops
+        sql: sales_activity_pulse_description_marketing_ops
+        type: string
+        title: "Sales Activity Detail"
+        description: "Detailed description of the sales activity pulse"
+      - name: ct_opt_ins_marketing_ops
+        sql: ct_opt_ins_marketing_ops
+        type: number
+        title: "Opt-In Count"
+        description: "Count of marketing opt-in contacts for this account"
+      - name: ct_opt_ins_contacted_l6m_marketing_ops
+        sql: ct_opt_ins_contacted_l6m_marketing_ops
+        type: number
+        title: "Opt-Ins Contacted (6M)"
+        description: "Count of marketing opt-ins contacted in the last 6 months for this account"
+      - name: share_opt_ins_contacted_l6m_marketing_ops
+        sql: share_opt_ins_contacted_l6m_marketing_ops
+        type: number
+        title: "Opt-In Contact Rate (6M)"
+        description: "Share of marketing opt-ins that have been contacted in the last 6 months (0 to 1 ratio)"
+      - name: last_response_date_marketing_ops
+        sql: "CAST({CUBE}.last_response_date_marketing_ops AS TIMESTAMP)"
+        type: time
+        title: "Last Marketing Response"
+        description: "Date of the most recent marketing response from a contact at this account"
+      - name: ct_responses_cloud_l30d_marketing_ops
+        sql: ct_responses_cloud_l30d_marketing_ops
+        type: number
+        title: "Cloud Responses (30D)"
+        description: "Count of cloud-related marketing responses in the last 30 days"
+      - name: ct_responses_non_cloud_l30d_marketing_ops
+        sql: ct_responses_non_cloud_l30d_marketing_ops
+        type: number
+        title: "Non-Cloud Responses (30D)"
+        description: "Count of non-cloud marketing responses in the last 30 days"
+      - name: ct_unique_visitors_l30d_marketing_ops
+        sql: ct_unique_visitors_l30d_marketing_ops
+        type: number
+        title: "Unique Visitors (30D)"
+        description: "Count of unique website visitors from this account in the last 30 days"
+      - name: ct_page_views_buying_intent_l30d_marketing_ops
+        sql: ct_page_views_buying_intent_l30d_marketing_ops
+        type: number
+        title: "Buying Intent Views (30D)"
+        description: "Count of buying-intent page views from this account in the last 30 days"
+      - name: ct_community_activities_l30d_marketing_ops
+        sql: ct_community_activities_l30d_marketing_ops
+        type: number
+        title: "Community Activity (30D)"
+        description: "Count of community activities from this account in the last 30 days"
+
+      # Engagement
+      - name: has_ae_sdr_meeting
+        sql: has_ae_sdr_meeting
+        type: boolean
+        title: "AE/SDR Meeting"
+        description: "Whether the account has had an AE or SDR meeting in the last 90 days"
+      - name: has_ae_sdr_meeting_display
+        sql: has_ae_sdr_meeting_display
+        type: string
+        title: "AE/SDR Meeting (Display)"
+        description: "Display version of has_ae_sdr_meeting (checkmark or empty string)"
+      - name: has_other_ae_sdr_engagement
+        sql: has_other_ae_sdr_engagement
+        type: boolean
+        title: "Other AE/SDR Engagement"
+        description: "Whether the account has had non-meeting AE/SDR engagement (calls or messages) in the last 90 days"
+      - name: has_other_ae_sdr_engagement_display
+        sql: has_other_ae_sdr_engagement_display
+        type: string
+        title: "Other Engagement (Display)"
+        description: "Display version of has_other_ae_sdr_engagement (checkmark or empty string)"
+
+      # TAM & Warmth
+      - name: tam_category_family
+        sql: tam_category_family
+        type: string
+        title: "TAM Category"
+        description: "Total Addressable Market (TAM) category for the account family, estimated by the ML TAM model"
+      - name: warmth_rank_warmth_model
+        sql: warmth_rank_warmth_model
+        type: string
+        title: "Warmth Rank"
+        description: "Account warmth ranking (propensity to convert or expand), predicted by the ML warmth model"
+
+      # ARR / MRR
+      - name: arr_curr
+        sql: arr_curr
+        type: number
+        title: "ARR"
+        description: "Current committed ARR for this individual account"
+      - name: arr_cloud_curr
+        sql: arr_cloud_curr
+        type: number
+        title: "Cloud ARR"
+        description: "Current committed Grafana Cloud ARR for this individual account"
+      - name: arr_enterprise_curr
+        sql: arr_enterprise_curr
+        type: number
+        title: "Enterprise ARR"
+        description: "Current committed Grafana Enterprise ARR for this individual account"
+      - name: arr_curr_family
+        sql: arr_curr_family
+        type: number
+        title: "Family ARR"
+        description: "Current committed ARR aggregated across the territory parent account family"
+      - name: mrr_curr
+        sql: mrr_curr
+        type: number
+        title: "MRR"
+        description: "Current committed MRR for this individual account"
+      - name: avg_mrr_self_serve_l3m
+        sql: avg_mrr_self_serve_l3m
+        type: number
+        title: "Self-Serve MRR (3M Avg)"
+        description: "Average self-serve MRR over the last 3 months"
+
+      # Consumption - Last Month
+      - name: consumption_weighted_last_month
+        sql: consumption_weighted_last_month
+        type: number
+        title: "Consumption (Last Month)"
+        description: "Weighted consumption revenue for this account in the prior calendar month"
+      - name: consumption_weighted_quota_last_month
+        sql: consumption_weighted_quota_last_month
+        type: number
+        title: "Consumption Quota (Last Month)"
+        description: "Weighted consumption quota assigned to this account for the prior calendar month"
+      - name: committed_mrr_last_month
+        sql: committed_mrr_last_month
+        type: number
+        title: "Committed MRR (Last Month)"
+        description: "Committed MRR for this account in the prior calendar month"
+      - name: consumption_weighted_last_month_with_quota
+        sql: consumption_weighted_last_month_with_quota
+        type: number
+        title: "Consumption w/ Quota (Last Month)"
+        description: "Weighted consumption for the prior month, null if account has no quota assigned"
+      - name: consumption_weighted_last_month_with_committed_mrr
+        sql: consumption_weighted_last_month_with_committed_mrr
+        type: number
+        title: "Consumption w/ MRR (Last Month)"
+        description: "Weighted consumption for the prior month, null if account has no committed MRR"
+      - name: consumption_weighted_quota_attainment_last_month
+        sql: consumption_weighted_quota_attainment_last_month
+        type: number
+        title: "Quota Attainment (Last Month)"
+        description: "Ratio of weighted consumption to quota for the prior month (attainment percentage)"
+      - name: consumption_attainment_band_name_last_month
+        sql: consumption_attainment_band_name_last_month
+        type: string
+        title: "Quota Band (Last Month)"
+        description: "Named band for consumption vs quota attainment in the prior month"
+      - name: consumption_attainment_band_description_last_month
+        sql: consumption_attainment_band_description_last_month
+        type: string
+        title: "Quota Band Detail (Last Month)"
+        description: "Description of the consumption vs quota attainment band for the prior month"
+      - name: consumption_weighted_committed_mrr_attainment_last_month
+        sql: consumption_weighted_committed_mrr_attainment_last_month
+        type: number
+        title: "MRR Attainment (Last Month)"
+        description: "Ratio of weighted consumption to committed MRR for the prior month"
+      - name: consumption_committed_mrr_attainment_band_name_last_month
+        sql: consumption_committed_mrr_attainment_band_name_last_month
+        type: string
+        title: "MRR Band (Last Month)"
+        description: "Named band for consumption vs committed MRR attainment in the prior month"
+      - name: consumption_committed_mrr_attainment_band_number_last_month
+        sql: consumption_committed_mrr_attainment_band_number_last_month
+        type: number
+        title: "MRR Band Sort (Last Month)"
+        description: "Numeric sort order for the consumption vs committed MRR attainment band, prior month"
+      - name: cons_committed_mrr_attainment_band_description_last_month
+        sql: cons_committed_mrr_attainment_band_description_last_month
+        type: string
+        title: "MRR Band Detail (Last Month)"
+        description: "Description of the consumption vs committed MRR attainment band for the prior month"
+
+      # Consumption - Current Month
+      - name: consumption_weighted_projected_current_month
+        sql: consumption_weighted_projected_current_month
+        type: number
+        title: "Consumption (Projected)"
+        description: "Projected weighted consumption revenue for this account in the current calendar month"
+      - name: consumption_weighted_quota_current_month
+        sql: consumption_weighted_quota_current_month
+        type: number
+        title: "Consumption Quota (Current)"
+        description: "Weighted consumption quota assigned to this account for the current calendar month"
+      - name: committed_mrr_current_month
+        sql: committed_mrr_current_month
+        type: number
+        title: "Committed MRR (Current)"
+        description: "Committed MRR for this account in the current calendar month"
+      - name: consumption_weighted_projected_current_month_with_quota
+        sql: consumption_weighted_projected_current_month_with_quota
+        type: number
+        title: "Consumption w/ Quota (Projected)"
+        description: "Projected weighted consumption for the current month, null if account has no quota assigned"
+      - name: consumption_weighted_projected_current_month_with_committed_mrr
+        sql: consumption_weighted_projected_current_month_with_committed_mrr
+        type: number
+        title: "Consumption w/ MRR (Projected)"
+        description: "Projected weighted consumption for the current month, null if account has no committed MRR"
+      - name: consumption_weighted_quota_attainment_projected_current_month
+        sql: consumption_weighted_quota_attainment_projected_current_month
+        type: number
+        title: "Quota Attainment (Projected)"
+        description: "Projected ratio of weighted consumption to quota for the current month"
+      - name: consumption_attainment_band_name_projected_current_month
+        sql: consumption_attainment_band_name_projected_current_month
+        type: string
+        title: "Quota Band (Projected)"
+        description: "Named band for projected consumption vs quota attainment in the current month"
+      - name: consumption_attainment_band_description_projected_current_month
+        sql: consumption_attainment_band_description_projected_current_month
+        type: string
+        title: "Quota Band Detail (Projected)"
+        description: "Description of the projected consumption vs quota attainment band for the current month"
+      - name: consumption_weighted_projected_current_month_quota_contribution
+        sql: consumption_weighted_projected_current_month_quota_contribution
+        type: number
+        title: "Quota Gap (Projected)"
+        description: "Gap between projected weighted consumption and quota for the current month"
+      - name: cons_weighted_committed_mrr_attainment_proj_curr_month
+        sql: cons_weighted_committed_mrr_attainment_proj_curr_month
+        type: number
+        title: "MRR Attainment (Projected)"
+        description: "Projected ratio of weighted consumption to committed MRR for the current month"
+      - name: cons_committed_mrr_attainment_band_name_proj_curr_month
+        sql: cons_committed_mrr_attainment_band_name_proj_curr_month
+        type: string
+        title: "MRR Band (Projected)"
+        description: "Named band for projected consumption vs committed MRR attainment in the current month"
+      - name: cons_committed_mrr_attainment_band_number_proj_curr_month
+        sql: cons_committed_mrr_attainment_band_number_proj_curr_month
+        type: number
+        title: "MRR Band Sort (Projected)"
+        description: "Numeric sort order for the projected consumption vs committed MRR attainment band"
+      - name: cons_committed_mrr_attainment_band_description_proj_curr_month
+        sql: cons_committed_mrr_attainment_band_description_proj_curr_month
+        type: string
+        title: "MRR Band Detail (Projected)"
+        description: "Description of the projected consumption vs committed MRR attainment band for the current month"
+      - name: consumption_weighted_projected_current_month_delta_mom
+        sql: consumption_weighted_projected_current_month_delta_mom
+        type: number
+        title: "Consumption MoM Change"
+        description: "Month-over-month change in projected weighted consumption (ratio: current vs prior month, minus 1)"
+      - name: consumption_weighted_projected_current_month_delta_mom_display
+        sql: consumption_weighted_projected_current_month_delta_mom_display
+        type: string
+        title: "Consumption MoM (Display)"
+        description: "Display string for month-over-month consumption change with direction arrow (e.g. ↑15%, ↓3%)"
+      - name: consumption_weighted_projected_current_month_gap_to_current_mrr
+        sql: consumption_weighted_projected_current_month_gap_to_current_mrr
+        type: number
+        title: "Consumption vs MRR Gap"
+        description: "Gap between projected weighted consumption and committed MRR for the current month"
+
+      # Subscription
+      - name: subscription_commit_balance_bom_ttl
+        sql: subscription_commit_balance_bom_ttl
+        type: number
+        title: "Commit Balance (BOM)"
+        description: "Total Flex Spend Commit balance at beginning of month across all subscriptions"
+      - name: share_subscription_init_commit_consumed_bom_ttl
+        sql: share_subscription_init_commit_consumed_bom_ttl
+        type: number
+        title: "Commit Consumed % (BOM)"
+        description: "Share of initial Flex Spend Commit that has been consumed as of beginning of month (0 to 1 ratio)"
+      - name: subscription_details_string
+        sql: subscription_details_string
+        type: string
+        title: "Subscription Summary"
+        description: "HTML-formatted summary of subscription details including commitment balances and projected consumption gaps"
+
+      # Renewal
+      - name: close_date_next_renewal
+        sql: "CAST({CUBE}.close_date_next_renewal AS TIMESTAMP)"
+        type: time
+        title: "Next Renewal Date"
+        description: "Earliest close date among the account's open renewal opportunities"
+      - name: months_to_close_date_next_renewal
+        sql: months_to_close_date_next_renewal
+        type: number
+        title: "Months to Renewal"
+        description: "Number of months from today until the next renewal close date"
+
+      # Product usage status
+      - name: string_products_in_use_projected_current_month
+        sql: string_products_in_use_projected_current_month
+        type: string
+        title: "Products in Use"
+        description: "Comma-separated list of Grafana products currently in use by this account"
+      - name: uses_visualization_status
+        sql: uses_visualization_status
+        type: string
+        title: "Visualization"
+        description: "Adoption status for Grafana Visualization (Currently Using, Used in Last 3 Months, or Not Using)"
+      - name: uses_metrics_status
+        sql: uses_metrics_status
+        type: string
+        title: "Metrics"
+        description: "Adoption status for Grafana Metrics"
+      - name: uses_logs_status
+        sql: uses_logs_status
+        type: string
+        title: "Logs"
+        description: "Adoption status for Grafana Logs"
+      - name: uses_traces_status
+        sql: uses_traces_status
+        type: string
+        title: "Traces"
+        description: "Adoption status for Grafana Traces"
+      - name: uses_profiles_status
+        sql: uses_profiles_status
+        type: string
+        title: "Profiles"
+        description: "Adoption status for Grafana Profiles"
+      - name: uses_k6_status
+        sql: uses_k6_status
+        type: string
+        title: "k6"
+        description: "Adoption status for k6 load testing"
+      - name: uses_synthetics_status
+        sql: uses_synthetics_status
+        type: string
+        title: "Synthetics"
+        description: "Adoption status for Grafana Synthetics"
+      - name: uses_frontend_observability_status
+        sql: uses_frontend_observability_status
+        type: string
+        title: "Frontend O11y"
+        description: "Adoption status for Frontend Observability (Faro)"
+      - name: uses_application_observability_status
+        sql: uses_application_observability_status
+        type: string
+        title: "App O11y"
+        description: "Adoption status for Application Observability"
+      - name: uses_kubernetes_monitoring_status
+        sql: uses_kubernetes_monitoring_status
+        type: string
+        title: "K8s Monitoring"
+        description: "Adoption status for Kubernetes Monitoring"
+      - name: uses_irm_status
+        sql: uses_irm_status
+        type: string
+        title: "IRM"
+        description: "Adoption status for Incident Response & Management (IRM)"
+
+      # Clay / External data
+      - name: ct_employees_devops_clay
+        sql: ct_employees_devops_clay
+        type: number
+        title: "DevOps Employees"
+        description: "Number of DevOps employees at the account, sourced from Clay"
+      - name: marquee_list_clay
+        sql: marquee_list_clay
+        type: string
+        title: "Marquee List"
+      - name: marquee_list_clay_display
+        sql: marquee_list_clay_display
+        type: string
+        title: "Marquee List (Display)"
+        description: "Display version of marquee list from Clay (empty string if none)"
+      - name: latest_funding_round_clay
+        sql: latest_funding_round_clay
+        type: string
+        title: "Latest Funding Round"
+      - name: total_funding_amount_clay_family
+        sql: total_funding_amount_clay_family
+        type: number
+        title: "Family Funding Total"
+        description: "Total funding amount across the territory parent account family, sourced from Clay"
+      - name: technology_list
+        sql: technology_list
+        type: string
+        description: "List of technologies used by this account, sourced from HG Data (with intensity)"
+      - name: crossbeam_overlap_summary
+        sql: crossbeam_overlap_summary
+        type: string
+        title: "Crossbeam Overlap"
+
+      # CX / Sales scores
+      - name: cx_happiness_score
+        sql: cx_happiness_score
+        type: string
+        title: "CX Score"
+        description: "Customer Experience (CX) happiness score set by the CSE in Salesforce (Green/Yellow/Red/Churn)"
+      - name: cx_happiness_score_display
+        sql: cx_happiness_score_display
+        type: string
+        title: "CX Score (Display)"
+        description: "Emoji-prefixed display version of CX happiness score (e.g. 🟢 Green, 🔴 Red)"
+      - name: sales_happiness_score
+        sql: sales_happiness_score
+        type: string
+        title: "Sales Health"
+        description: "Sales-assessed account health score from Salesforce (Green/Yellow/Red/Churn)"
+      - name: sales_happiness_score_display
+        sql: sales_happiness_score_display
+        type: string
+        title: "Sales Health (Display)"
+        description: "Emoji-prefixed display version of sales happiness score (e.g. 🟢 Green, 🔴 Red)"
+
+      # Timestamp
+      - name: updated_timestamp
+        sql: updated_timestamp
+        type: time
+        description: "Timestamp when this account record was last updated"

@@ -6,11 +6,13 @@ services:
     container_name: 'grafana-itself'
     build:
       args:
-        grafana_version: ${GRAFANA_VERSION:-main}
+        grafana_version: ${GRAFANA_VERSION:-13.2.4}
         grafana_image: ${GRAFANA_IMAGE:-grafana}
     environment:
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/cubeds-ecom-full-data-model.json
       GF_FEATURE_TOGGLES_ENABLE: 'tableNextGen,queryLibrary,sqlExpressions,dashboardDsAdHocFiltering,adhocFiltersInTooltips,enableDashboardMigration'
+      # Panels used by the RevOps Territory Navigator dashboards
+      GF_PLUGINS_PREINSTALL: 'marcusolsson-dynamictext-panel@6.3.0,volkovlabs-table-panel@3.6.8'
     depends_on:
       - cube
 
@@ -35,6 +37,9 @@ services:
     volumes:
       - ./dev-environment/data/seeds/:/data/seeds/
       - ./dev-environment/data/migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./dev-environment/data/migrations/revops.sql:/docker-entrypoint-initdb.d/revops.sql
+      # Seed scripts only run on an empty volume, so later starts skip loading. Reset with `docker compose down -v`.
+      - postgres-data:/var/lib/postgresql
     # Enable SQL queries in the logs (minimal output)
     command:
       [
@@ -48,3 +53,6 @@ services:
         '-c',
         'log_parameter_max_length=0',
       ]
+
+volumes:
+  postgres-data:
