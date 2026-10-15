@@ -40,7 +40,7 @@ This provides a complete dataset for testing the Grafana-Cube integration.
 
 ## RevOps Territory Navigator example
 
-The RevOps dashboards we presented at GrafanaCON 2026 (previously on play.grafana.org) run against fictional sales data in the `revops` schema:
+The RevOps dashboards we presented at GrafanaCON 2026 run against fictional sales data in the `revops` schema:
 
 - `revops_reporting_territory_navigator_account_details` - one row per account (300)
 - `revops_reporting_opp_split` - open and closed opportunities (203)
