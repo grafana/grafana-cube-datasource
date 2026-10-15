@@ -4,40 +4,40 @@ account_id,net_nacv_split,net_nacv_ttl,stage_number,close_date,opp_type_qbr,spli
 001AMR00004,20,20,3,2026-03-24,Expansion,1.0,OPP000040003,Vault Vanguard - Expansion,Value Proposition,FY27-Q1,false,false,true,true,true,16,16,16,20,60,60,2,Qualified Pipeline
 001AMR00006,670,670,5,2026-03-02,New (SS → Contracted),1.0,OPP000060004,Forge Fabrication - New (SS → Contracted),Perception Analysis,FY27-Q1,false,false,true,true,true,536,536,536,670,2010,2010,67,Qualified Pipeline
 001AMR00006,2117,2117,3,2026-02-13,New (SS → Contracted),1.0,OPP000060005,Forge Fabrication - New (SS → Contracted),Value Proposition,FY27-Q1,false,false,true,true,true,1694,1694,1694,2117,6351,6351,212,Qualified Pipeline
-001AMR00007,910,910,3,2026-04-26,New (SS → Contracted),1.0,OPP000070006,Phoenix Platforms - New (SS → Contracted),Value Proposition,FY27-Q2,false,false,true,true,true,728,728,728,910,2730,2730,91,Qualified Pipeline
+001AMR00007,910,910,3,2026-04-26,New (SS → Contracted),1.0,OPP000070006,Phoenix Platforms - New (SS → Contracted),Value Proposition,FY27-Q1,false,false,true,true,true,728,728,728,910,2730,2730,91,Qualified Pipeline
 001AMR00010,630,630,4,2026-02-10,New (SS → Contracted),1.0,OPP000100007,Pulse Pharma - New (SS → Contracted),Id. Decision Makers,FY27-Q1,false,false,false,true,true,504,504,504,630,1890,1890,63,Qualified Pipeline
 001AMR00010,2697,2697,4,2026-03-08,New (New Logo),1.0,OPP000100008,Pulse Pharma - New (New Logo),Id. Decision Makers,FY27-Q1,false,false,true,true,true,2158,2158,2158,2697,8091,8091,270,Qualified Pipeline
 001AMR00012,38,38,7,2026-02-28,Expansion,1.0,OPP000120009,Ember Enterprises - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,30,30,30,38,114,114,4,Closed Won
 001AMR00012,87,87,7,2026-03-28,New (New Logo),1.0,OPP000120010,Ember Enterprises - New (New Logo),Closed Won,FY27-Q1,true,true,true,true,true,70,70,70,87,261,261,9,Closed Won
-001AMR00012,40,40,3,2026-04-09,Expansion,1.0,OPP000120011,Ember Enterprises - Expansion,Value Proposition,FY27-Q2,false,false,true,true,true,32,32,32,40,120,120,4,Qualified Pipeline
+001AMR00012,40,40,3,2026-04-09,Expansion,1.0,OPP000120011,Ember Enterprises - Expansion,Value Proposition,FY27-Q1,false,false,true,true,true,32,32,32,40,120,120,4,Qualified Pipeline
 001AMR00014,35,35,7,2026-02-13,Expansion,1.0,OPP000140012,Isle Instruments - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,28,28,28,35,105,105,4,Closed Won
-001AMR00014,26,26,7,2026-04-09,New (New Logo),1.0,OPP000140013,Isle Instruments - New (New Logo),Closed Won,FY27-Q2,true,true,true,true,true,21,21,21,26,78,78,3,Closed Won
+001AMR00014,26,26,7,2026-04-09,New (New Logo),1.0,OPP000140013,Isle Instruments - New (New Logo),Closed Won,FY27-Q1,true,true,true,true,true,21,21,21,26,78,78,3,Closed Won
 001AMR00014,17,17,4,2026-02-17,Expansion,1.0,OPP000140014,Isle Instruments - Expansion,Id. Decision Makers,FY27-Q1,false,false,true,true,true,14,14,14,17,51,51,2,Qualified Pipeline
 001AMR00016,34,34,7,2026-02-06,New (SS → Contracted),1.0,OPP000160015,Keystone Knowledge - New (SS → Contracted),Closed Won,FY27-Q1,true,true,true,true,true,27,27,27,34,102,102,3,Closed Won
-001AMR00016,20,20,3,2026-04-11,Expansion,1.0,OPP000160016,Keystone Knowledge - Expansion,Value Proposition,FY27-Q2,false,false,true,true,true,16,16,16,20,60,60,2,Qualified Pipeline
-001AMR00017,2420,2420,5,2026-04-05,New (SS → Contracted),1.0,OPP000170017,Bolt Banking - New (SS → Contracted),Perception Analysis,FY27-Q2,false,false,false,true,true,1936,1936,1936,2420,7260,7260,242,Qualified Pipeline
+001AMR00016,20,20,3,2026-04-11,Expansion,1.0,OPP000160016,Keystone Knowledge - Expansion,Value Proposition,FY27-Q1,false,false,true,true,true,16,16,16,20,60,60,2,Qualified Pipeline
+001AMR00017,2420,2420,5,2026-04-05,New (SS → Contracted),1.0,OPP000170017,Bolt Banking - New (SS → Contracted),Perception Analysis,FY27-Q1,false,false,false,true,true,1936,1936,1936,2420,7260,7260,242,Qualified Pipeline
 001AMR00020,1664,1664,5,2026-02-18,New (SS → Contracted),1.0,OPP000200018,Fern Financial - New (SS → Contracted),Perception Analysis,FY27-Q1,false,false,false,true,true,1331,1331,1331,1664,4992,4992,166,Qualified Pipeline
 001AMR00022,17,17,7,2026-02-13,Expansion,1.0,OPP000220019,Iron Industries - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,14,14,14,17,51,51,2,Closed Won
-001AMR00022,0,0,7,2026-04-12,Flat Renewal,1.0,OPP000220020,Iron Industries - Flat Renewal,Closed Won,FY27-Q2,true,true,true,true,true,0,0,0,0,0,0,0,Closed Won
+001AMR00022,0,0,7,2026-04-12,Flat Renewal,1.0,OPP000220020,Iron Industries - Flat Renewal,Closed Won,FY27-Q1,true,true,true,true,true,0,0,0,0,0,0,0,Closed Won
 001AMR00024,115,115,7,2026-02-03,Expansion,1.0,OPP000240021,North Networks - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,92,92,92,115,345,345,12,Closed Won
 001AMR00024,37,37,7,2026-02-28,Expansion,1.0,OPP000240022,North Networks - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,30,30,30,37,111,111,4,Closed Won
 001AMR00024,40,40,3,2026-02-09,Expansion,1.0,OPP000240023,North Networks - Expansion,Value Proposition,FY27-Q1,false,false,true,true,true,32,32,32,40,120,120,4,Qualified Pipeline
 001AMR00025,1070,1070,3,2026-02-10,New (New Logo),1.0,OPP000250024,Spark Solutions - New (New Logo),Value Proposition,FY27-Q1,false,false,true,true,true,856,856,856,1070,3210,3210,107,Qualified Pipeline
 001AMR00027,490,490,2,2026-03-07,New (SS → Contracted),1.0,OPP000270025,Indigo Intelligence - New (SS → Contracted),Qualification,FY27-Q1,false,false,false,true,true,392,392,392,490,1470,1470,49,Early Stage
-001AMR00027,2608,2608,2,2026-04-11,New (New Logo),1.0,OPP000270026,Indigo Intelligence - New (New Logo),Qualification,FY27-Q2,false,false,true,true,true,2086,2086,2086,2608,7824,7824,261,Early Stage
+001AMR00027,2608,2608,2,2026-04-11,New (New Logo),1.0,OPP000270026,Indigo Intelligence - New (New Logo),Qualification,FY27-Q1,false,false,true,true,true,2086,2086,2086,2608,7824,7824,261,Early Stage
 001AMR00028,636,636,4,2026-02-10,New (New Logo),1.0,OPP000280027,Cliff Commerce - New (New Logo),Id. Decision Makers,FY27-Q1,false,false,true,true,true,509,509,509,636,1908,1908,64,Qualified Pipeline
 001AMR00031,71,71,7,2026-02-15,Expansion,1.0,OPP000310028,Boulder Banking - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,57,57,57,71,213,213,7,Closed Won
 001AMR00031,24,24,4,2026-03-16,Expansion,1.0,OPP000310029,Boulder Banking - Expansion,Id. Decision Makers,FY27-Q1,false,false,true,true,true,19,19,19,24,72,72,2,Qualified Pipeline
 001AMR00038,2564,2564,5,2026-02-05,New (New Logo),1.0,OPP000380030,Gale Gaming - New (New Logo),Perception Analysis,FY27-Q1,false,false,false,true,true,2051,2051,2051,2564,7692,7692,256,Qualified Pipeline
 001AMR00039,1107,1107,2,2026-03-26,New (SS → Contracted),1.0,OPP000390031,Meridian Motors - New (SS → Contracted),Qualification,FY27-Q1,false,false,true,true,true,886,886,886,1107,3321,3321,111,Early Stage
 001AMR00042,549,549,4,2026-02-08,New (SS → Contracted),1.0,OPP000420032,Reef Robotics - New (SS → Contracted),Id. Decision Makers,FY27-Q1,false,false,true,true,true,439,439,439,549,1647,1647,55,Qualified Pipeline
-001AMR00044,2551,2551,5,2026-04-15,New (New Logo),1.0,OPP000440033,Orbit Operations - New (New Logo),Perception Analysis,FY27-Q2,false,false,false,true,true,2041,2041,2041,2551,7653,7653,255,Qualified Pipeline
+001AMR00044,2551,2551,5,2026-04-15,New (New Logo),1.0,OPP000440033,Orbit Operations - New (New Logo),Perception Analysis,FY27-Q1,false,false,false,true,true,2041,2041,2041,2551,7653,7653,255,Qualified Pipeline
 001AMR00044,658,658,4,2026-03-27,New (SS → Contracted),1.0,OPP000440034,Orbit Operations - New (SS → Contracted),Id. Decision Makers,FY27-Q1,false,false,true,true,true,526,526,526,658,1974,1974,66,Qualified Pipeline
 001AMR00045,68,68,7,2026-02-06,Expansion,1.0,OPP000450035,Junction Joineries - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,54,54,54,68,204,204,7,Closed Won
-001AMR00045,11,11,5,2026-04-22,Expansion,1.0,OPP000450036,Junction Joineries - Expansion,Perception Analysis,FY27-Q2,false,false,true,true,true,9,9,9,11,33,33,1,Qualified Pipeline
+001AMR00045,11,11,5,2026-04-22,Expansion,1.0,OPP000450036,Junction Joineries - Expansion,Perception Analysis,FY27-Q1,false,false,true,true,true,9,9,9,11,33,33,1,Qualified Pipeline
 001AMR00049,30,30,7,2026-03-12,New (New Logo),1.0,OPP000490037,Upland Utilities - New (New Logo),Closed Won,FY27-Q1,true,true,true,true,true,24,24,24,30,90,90,3,Closed Won
-001AMR00049,17,17,7,2026-04-17,New (SS → Contracted),1.0,OPP000490038,Upland Utilities - New (SS → Contracted),Closed Won,FY27-Q2,true,true,true,true,true,14,14,14,17,51,51,2,Closed Won
-001AMR00051,2449,2449,3,2026-04-28,New (SS → Contracted),1.0,OPP000510039,Zephyr Zone - New (SS → Contracted),Value Proposition,FY27-Q2,false,false,true,true,true,1959,1959,1959,2449,7347,7347,245,Qualified Pipeline
+001AMR00049,17,17,7,2026-04-17,New (SS → Contracted),1.0,OPP000490038,Upland Utilities - New (SS → Contracted),Closed Won,FY27-Q1,true,true,true,true,true,14,14,14,17,51,51,2,Closed Won
+001AMR00051,2449,2449,3,2026-04-28,New (SS → Contracted),1.0,OPP000510039,Zephyr Zone - New (SS → Contracted),Value Proposition,FY27-Q1,false,false,true,true,true,1959,1959,1959,2449,7347,7347,245,Qualified Pipeline
 001AMR00053,741,741,5,2026-03-16,New (New Logo),1.0,OPP000530040,Quill Quotient - New (New Logo),Perception Analysis,FY27-Q1,false,false,true,true,true,593,593,593,741,2223,2223,74,Qualified Pipeline
 001AMR00056,1206,1206,3,2026-03-17,New (SS → Contracted),1.0,OPP000560041,Dawn Digital - New (SS → Contracted),Value Proposition,FY27-Q1,false,false,false,true,true,965,965,965,1206,3618,3618,121,Qualified Pipeline
 001AMR00057,18,18,7,2026-02-12,New (New Logo),1.0,OPP000570042,Lynx Labs - New (New Logo),Closed Won,FY27-Q1,true,true,true,true,true,14,14,14,18,54,54,2,Closed Won
@@ -46,17 +46,17 @@ account_id,net_nacv_split,net_nacv_ttl,stage_number,close_date,opp_type_qbr,spli
 001AMR00061,367,367,3,2026-02-14,New (SS → Contracted),1.0,OPP000610045,Frost Financial - New (SS → Contracted),Value Proposition,FY27-Q1,false,false,true,true,true,294,294,294,367,1101,1101,37,Qualified Pipeline
 001AMR00063,1893,1893,2,2026-02-21,New (SS → Contracted),1.0,OPP000630046,Indigo Instruments - New (SS → Contracted),Qualification,FY27-Q1,false,false,true,true,true,1514,1514,1514,1893,5679,5679,189,Early Stage
 001AMR00064,43,43,7,2026-03-06,New (New Logo),1.0,OPP000640047,Diamond Dynamics - New (New Logo),Closed Won,FY27-Q1,true,true,true,true,true,34,34,34,43,129,129,4,Closed Won
-001AMR00064,15,15,3,2026-04-06,Expansion,1.0,OPP000640048,Diamond Dynamics - Expansion,Value Proposition,FY27-Q2,false,false,true,true,true,12,12,12,15,45,45,2,Qualified Pipeline
+001AMR00064,15,15,3,2026-04-06,Expansion,1.0,OPP000640048,Diamond Dynamics - Expansion,Value Proposition,FY27-Q1,false,false,true,true,true,12,12,12,15,45,45,2,Qualified Pipeline
 001AMR00065,793,793,5,2026-03-31,New (New Logo),1.0,OPP000650049,Linden Links - New (New Logo),Perception Analysis,FY27-Q1,false,false,false,true,true,634,634,634,793,2379,2379,79,Qualified Pipeline
 001AMR00068,1203,1203,4,2026-03-21,New (New Logo),1.0,OPP000680050,Mesa Manufacturing - New (New Logo),Id. Decision Makers,FY27-Q1,false,false,true,true,true,962,962,962,1203,3609,3609,120,Qualified Pipeline
-001AMR00068,1413,1413,4,2026-04-08,New (SS → Contracted),1.0,OPP000680051,Mesa Manufacturing - New (SS → Contracted),Id. Decision Makers,FY27-Q2,false,false,true,true,true,1130,1130,1130,1413,4239,4239,141,Qualified Pipeline
+001AMR00068,1413,1413,4,2026-04-08,New (SS → Contracted),1.0,OPP000680051,Mesa Manufacturing - New (SS → Contracted),Id. Decision Makers,FY27-Q1,false,false,true,true,true,1130,1130,1130,1413,4239,4239,141,Qualified Pipeline
 001AMR00069,799,799,3,2026-02-02,New (New Logo),1.0,OPP000690052,Opal Optics - New (New Logo),Value Proposition,FY27-Q1,false,false,true,true,true,639,639,639,799,2397,2397,80,Qualified Pipeline
 001AMR00069,437,437,3,2026-03-04,New (New Logo),1.0,OPP000690053,Opal Optics - New (New Logo),Value Proposition,FY27-Q1,false,false,true,true,true,350,350,350,437,1311,1311,44,Qualified Pipeline
 001AMR00071,6,6,7,2026-02-06,Expansion,1.0,OPP000710054,Osprey Outfitters - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,5,5,5,6,18,18,1,Closed Won
 001AMR00071,3,3,4,2026-02-26,Expansion,1.0,OPP000710055,Osprey Outfitters - Expansion,Id. Decision Makers,FY27-Q1,false,false,true,true,true,2,2,2,3,9,9,0,Qualified Pipeline
 001AMR00075,2779,2779,4,2026-03-12,New (New Logo),1.0,OPP000750056,Echo Engineering - New (New Logo),Id. Decision Makers,FY27-Q1,false,false,false,true,true,2223,2223,2223,2779,8337,8337,278,Qualified Pipeline
-001AMR00075,867,867,3,2026-04-25,New (SS → Contracted),1.0,OPP000750057,Echo Engineering - New (SS → Contracted),Value Proposition,FY27-Q2,false,false,false,true,true,694,694,694,867,2601,2601,87,Qualified Pipeline
-001AMR00077,2503,2503,5,2026-04-08,New (SS → Contracted),1.0,OPP000770058,Helm Health - New (SS → Contracted),Perception Analysis,FY27-Q2,false,false,false,true,true,2002,2002,2002,2503,7509,7509,250,Qualified Pipeline
+001AMR00075,867,867,3,2026-04-25,New (SS → Contracted),1.0,OPP000750057,Echo Engineering - New (SS → Contracted),Value Proposition,FY27-Q1,false,false,false,true,true,694,694,694,867,2601,2601,87,Qualified Pipeline
+001AMR00077,2503,2503,5,2026-04-08,New (SS → Contracted),1.0,OPP000770058,Helm Health - New (SS → Contracted),Perception Analysis,FY27-Q1,false,false,false,true,true,2002,2002,2002,2503,7509,7509,250,Qualified Pipeline
 001AMR00078,36,36,7,2026-02-20,New (New Logo),1.0,OPP000780059,Everest Engineering - New (New Logo),Closed Won,FY27-Q1,true,true,true,true,true,29,29,29,36,108,108,4,Closed Won
 001AMR00078,49,49,7,2026-02-07,Expansion,1.0,OPP000780060,Everest Engineering - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,39,39,39,49,147,147,5,Closed Won
 001AMR00078,39,39,7,2026-03-30,New (New Logo),1.0,OPP000780061,Everest Engineering - New (New Logo),Closed Won,FY27-Q1,true,true,true,true,true,31,31,31,39,117,117,4,Closed Won
@@ -65,23 +65,23 @@ account_id,net_nacv_split,net_nacv_ttl,stage_number,close_date,opp_type_qbr,spli
 001AMR00085,2456,2456,4,2026-02-19,New (New Logo),1.0,OPP000850064,Lark Links - New (New Logo),Id. Decision Makers,FY27-Q1,false,false,false,true,true,1965,1965,1965,2456,7368,7368,246,Qualified Pipeline
 001AMR00087,894,894,5,2026-03-06,New (New Logo),1.0,OPP000870065,Raven Research - New (New Logo),Perception Analysis,FY27-Q1,false,false,true,true,true,715,715,715,894,2682,2682,89,Qualified Pipeline
 001AMR00087,1864,1864,4,2026-03-30,New (SS → Contracted),1.0,OPP000870066,Raven Research - New (SS → Contracted),Id. Decision Makers,FY27-Q1,false,false,true,true,true,1491,1491,1491,1864,5592,5592,186,Qualified Pipeline
-001AMR00088,832,832,5,2026-04-19,New (SS → Contracted),1.0,OPP000880067,Phoenix Partners - New (SS → Contracted),Perception Analysis,FY27-Q2,false,false,true,true,true,666,666,666,832,2496,2496,83,Qualified Pipeline
-001AMR00091,466,466,3,2026-04-16,New (New Logo),1.0,OPP000910068,Slate Sciences - New (New Logo),Value Proposition,FY27-Q2,false,false,true,true,true,373,373,373,466,1398,1398,47,Qualified Pipeline
-001AMR00100,544,544,4,2026-04-09,New (SS → Contracted),1.0,OPP001000069,Lark Labs - New (SS → Contracted),Id. Decision Makers,FY27-Q2,false,false,true,true,true,435,435,435,544,1632,1632,54,Qualified Pipeline
+001AMR00088,832,832,5,2026-04-19,New (SS → Contracted),1.0,OPP000880067,Phoenix Partners - New (SS → Contracted),Perception Analysis,FY27-Q1,false,false,true,true,true,666,666,666,832,2496,2496,83,Qualified Pipeline
+001AMR00091,466,466,3,2026-04-16,New (New Logo),1.0,OPP000910068,Slate Sciences - New (New Logo),Value Proposition,FY27-Q1,false,false,true,true,true,373,373,373,466,1398,1398,47,Qualified Pipeline
+001AMR00100,544,544,4,2026-04-09,New (SS → Contracted),1.0,OPP001000069,Lark Labs - New (SS → Contracted),Id. Decision Makers,FY27-Q1,false,false,true,true,true,435,435,435,544,1632,1632,54,Qualified Pipeline
 001AMR00107,1010,1010,4,2026-03-06,New (SS → Contracted),1.0,OPP001070070,Acorn Architecture - New (SS → Contracted),Id. Decision Makers,FY27-Q1,false,false,false,true,true,808,808,808,1010,3030,3030,101,Qualified Pipeline
 001AMR00109,969,969,5,2026-03-06,New (New Logo),1.0,OPP001090071,Inlet Industries - New (New Logo),Perception Analysis,FY27-Q1,false,false,true,true,true,775,775,775,969,2907,2907,97,Qualified Pipeline
-001AMR00109,467,467,5,2026-04-05,New (New Logo),1.0,OPP001090072,Inlet Industries - New (New Logo),Perception Analysis,FY27-Q2,false,false,true,true,true,374,374,374,467,1401,1401,47,Qualified Pipeline
+001AMR00109,467,467,5,2026-04-05,New (New Logo),1.0,OPP001090072,Inlet Industries - New (New Logo),Perception Analysis,FY27-Q1,false,false,true,true,true,374,374,374,467,1401,1401,47,Qualified Pipeline
 001EME00111,155,155,7,2026-02-03,Expansion,1.0,OPP001110073,Crest Commerce - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,124,124,124,155,465,465,16,Closed Won
-001EME00112,1698,1698,4,2026-04-02,New (SS → Contracted),1.0,OPP001120074,Briar Biotech - New (SS → Contracted),Id. Decision Makers,FY27-Q2,false,false,false,true,true,1358,1358,1358,1698,5094,5094,170,Qualified Pipeline
+001EME00112,1698,1698,4,2026-04-02,New (SS → Contracted),1.0,OPP001120074,Briar Biotech - New (SS → Contracted),Id. Decision Makers,FY27-Q1,false,false,false,true,true,1358,1358,1358,1698,5094,5094,170,Qualified Pipeline
 001EME00116,53,53,7,2026-03-11,Expansion,1.0,OPP001160075,Vine Vision - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,42,42,42,53,159,159,5,Closed Won
-001EME00116,16,16,4,2026-04-06,Expansion,1.0,OPP001160076,Vine Vision - Expansion,Id. Decision Makers,FY27-Q2,false,false,true,true,true,13,13,13,16,48,48,2,Qualified Pipeline
-001EME00121,27,27,7,2026-04-07,Expansion,1.0,OPP001210077,Helm Holdings - Expansion,Closed Won,FY27-Q2,true,true,true,true,true,22,22,22,27,81,81,3,Closed Won
+001EME00116,16,16,4,2026-04-06,Expansion,1.0,OPP001160076,Vine Vision - Expansion,Id. Decision Makers,FY27-Q1,false,false,true,true,true,13,13,13,16,48,48,2,Qualified Pipeline
+001EME00121,27,27,7,2026-04-07,Expansion,1.0,OPP001210077,Helm Holdings - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,22,22,22,27,81,81,3,Closed Won
 001EME00121,22,22,7,2026-02-23,New (SS → Contracted),1.0,OPP001210078,Helm Holdings - New (SS → Contracted),Closed Won,FY27-Q1,true,true,true,true,true,18,18,18,22,66,66,2,Closed Won
-001EME00121,41,41,7,2026-04-30,Expansion,1.0,OPP001210079,Helm Holdings - Expansion,Closed Won,FY27-Q2,true,true,true,true,true,33,33,33,41,123,123,4,Closed Won
-001EME00121,11,11,3,2026-04-16,Expansion,1.0,OPP001210080,Helm Holdings - Expansion,Value Proposition,FY27-Q2,false,false,true,true,true,9,9,9,11,33,33,1,Qualified Pipeline
-001EME00122,1044,1044,3,2026-04-01,New (SS → Contracted),1.0,OPP001220081,Arrow Automation - New (SS → Contracted),Value Proposition,FY27-Q2,false,false,true,true,true,835,835,835,1044,3132,3132,104,Qualified Pipeline
+001EME00121,41,41,7,2026-04-30,Expansion,1.0,OPP001210079,Helm Holdings - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,33,33,33,41,123,123,4,Closed Won
+001EME00121,11,11,3,2026-04-16,Expansion,1.0,OPP001210080,Helm Holdings - Expansion,Value Proposition,FY27-Q1,false,false,true,true,true,9,9,9,11,33,33,1,Qualified Pipeline
+001EME00122,1044,1044,3,2026-04-01,New (SS → Contracted),1.0,OPP001220081,Arrow Automation - New (SS → Contracted),Value Proposition,FY27-Q1,false,false,true,true,true,835,835,835,1044,3132,3132,104,Qualified Pipeline
 001EME00123,0,0,7,2026-02-17,Flat Renewal,1.0,OPP001230082,Cliff Consulting - Flat Renewal,Closed Won,FY27-Q1,true,true,true,true,true,0,0,0,0,0,0,0,Closed Won
-001EME00123,9,9,5,2026-04-27,Expansion,1.0,OPP001230083,Cliff Consulting - Expansion,Perception Analysis,FY27-Q2,false,false,true,true,true,7,7,7,9,27,27,1,Qualified Pipeline
+001EME00123,9,9,5,2026-04-27,Expansion,1.0,OPP001230083,Cliff Consulting - Expansion,Perception Analysis,FY27-Q1,false,false,true,true,true,7,7,7,9,27,27,1,Qualified Pipeline
 001EME00128,1664,1664,3,2026-02-10,New (SS → Contracted),1.0,OPP001280084,Ridge Research - New (SS → Contracted),Value Proposition,FY27-Q1,false,false,false,true,true,1331,1331,1331,1664,4992,4992,166,Qualified Pipeline
 001EME00128,317,317,2,2026-02-25,New (SS → Contracted),1.0,OPP001280085,Ridge Research - New (SS → Contracted),Qualification,FY27-Q1,false,false,true,true,true,254,254,254,317,951,951,32,Early Stage
 001EME00129,778,778,2,2026-02-02,New (SS → Contracted),1.0,OPP001290086,Dune Data - New (SS → Contracted),Qualification,FY27-Q1,false,false,true,true,true,622,622,622,778,2334,2334,78,Early Stage
@@ -94,12 +94,12 @@ account_id,net_nacv_split,net_nacv_ttl,stage_number,close_date,opp_type_qbr,spli
 001EME00140,2315,2315,3,2026-03-28,New (New Logo),1.0,OPP001400093,Drift Design - New (New Logo),Value Proposition,FY27-Q1,false,false,true,true,true,1852,1852,1852,2315,6945,6945,232,Qualified Pipeline
 001EME00142,1857,1857,5,2026-02-07,New (SS → Contracted),1.0,OPP001420094,Linden Labs - New (SS → Contracted),Perception Analysis,FY27-Q1,false,false,true,true,true,1486,1486,1486,1857,5571,5571,186,Qualified Pipeline
 001EME00143,2702,2702,3,2026-02-06,New (New Logo),1.0,OPP001430095,Dawn Design - New (New Logo),Value Proposition,FY27-Q1,false,false,true,true,true,2162,2162,2162,2702,8106,8106,270,Qualified Pipeline
-001EME00144,1898,1898,5,2026-04-13,New (SS → Contracted),1.0,OPP001440096,Willow Wireless - New (SS → Contracted),Perception Analysis,FY27-Q2,false,false,false,true,true,1518,1518,1518,1898,5694,5694,190,Qualified Pipeline
+001EME00144,1898,1898,5,2026-04-13,New (SS → Contracted),1.0,OPP001440096,Willow Wireless - New (SS → Contracted),Perception Analysis,FY27-Q1,false,false,false,true,true,1518,1518,1518,1898,5694,5694,190,Qualified Pipeline
 001EME00144,955,955,3,2026-02-01,New (SS → Contracted),1.0,OPP001440097,Willow Wireless - New (SS → Contracted),Value Proposition,FY27-Q1,false,false,false,true,true,764,764,764,955,2865,2865,96,Qualified Pipeline
 001EME00154,37,37,7,2026-02-04,Expansion,1.0,OPP001540098,Blaze Banking - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,30,30,30,37,111,111,4,Closed Won
 001EME00154,17,17,3,2026-02-04,Expansion,1.0,OPP001540099,Blaze Banking - Expansion,Value Proposition,FY27-Q1,false,false,true,true,true,14,14,14,17,51,51,2,Qualified Pipeline
-001EME00158,2257,2257,5,2026-04-15,New (SS → Contracted),1.0,OPP001580100,Jasper Junctions - New (SS → Contracted),Perception Analysis,FY27-Q2,false,false,false,true,true,1806,1806,1806,2257,6771,6771,226,Qualified Pipeline
-001EME00160,1390,1390,3,2026-04-15,New (New Logo),1.0,OPP001600101,Mica Manufacturing - New (New Logo),Value Proposition,FY27-Q2,false,false,false,true,true,1112,1112,1112,1390,4170,4170,139,Qualified Pipeline
+001EME00158,2257,2257,5,2026-04-15,New (SS → Contracted),1.0,OPP001580100,Jasper Junctions - New (SS → Contracted),Perception Analysis,FY27-Q1,false,false,false,true,true,1806,1806,1806,2257,6771,6771,226,Qualified Pipeline
+001EME00160,1390,1390,3,2026-04-15,New (New Logo),1.0,OPP001600101,Mica Manufacturing - New (New Logo),Value Proposition,FY27-Q1,false,false,false,true,true,1112,1112,1112,1390,4170,4170,139,Qualified Pipeline
 001EME00161,485,485,2,2026-02-15,New (SS → Contracted),1.0,OPP001610102,Phoenix Pharma - New (SS → Contracted),Qualification,FY27-Q1,false,false,true,true,true,388,388,388,485,1455,1455,48,Early Stage
 001EME00161,2451,2451,3,2026-03-02,New (SS → Contracted),1.0,OPP001610103,Phoenix Pharma - New (SS → Contracted),Value Proposition,FY27-Q1,false,false,true,true,true,1961,1961,1961,2451,7353,7353,245,Qualified Pipeline
 001EME00162,1901,1901,5,2026-03-15,New (SS → Contracted),1.0,OPP001620104,Crystal Computing - New (SS → Contracted),Perception Analysis,FY27-Q1,false,false,false,true,true,1521,1521,1521,1901,5703,5703,190,Qualified Pipeline
@@ -109,19 +109,19 @@ account_id,net_nacv_split,net_nacv_ttl,stage_number,close_date,opp_type_qbr,spli
 001EME00165,527,527,2,2026-03-23,New (New Logo),1.0,OPP001650108,Drake Design - New (New Logo),Qualification,FY27-Q1,false,false,true,true,true,422,422,422,527,1581,1581,53,Early Stage
 001EME00165,1262,1262,4,2026-02-24,New (SS → Contracted),1.0,OPP001650109,Drake Design - New (SS → Contracted),Id. Decision Makers,FY27-Q1,false,false,true,true,true,1010,1010,1010,1262,3786,3786,126,Qualified Pipeline
 001EME00168,306,306,2,2026-03-11,New (SS → Contracted),1.0,OPP001680110,Flint Foundry - New (SS → Contracted),Qualification,FY27-Q1,false,false,true,true,true,245,245,245,306,918,918,31,Early Stage
-001EME00170,39,39,7,2026-04-21,Expansion,1.0,OPP001700111,Amber Architecture - Expansion,Closed Won,FY27-Q2,true,true,true,true,true,31,31,31,39,117,117,4,Closed Won
+001EME00170,39,39,7,2026-04-21,Expansion,1.0,OPP001700111,Amber Architecture - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,31,31,31,39,117,117,4,Closed Won
 001EME00170,83,83,7,2026-02-18,Expansion,1.0,OPP001700112,Amber Architecture - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,66,66,66,83,249,249,8,Closed Won
 001EME00170,53,53,7,2026-03-12,Expansion,1.0,OPP001700113,Amber Architecture - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,42,42,42,53,159,159,5,Closed Won
 001EME00170,16,16,4,2026-02-19,Expansion,1.0,OPP001700114,Amber Architecture - Expansion,Id. Decision Makers,FY27-Q1,false,false,true,true,true,13,13,13,16,48,48,2,Qualified Pipeline
-001EME00178,797,797,3,2026-04-08,New (New Logo),1.0,OPP001780115,Monarch Media - New (New Logo),Value Proposition,FY27-Q2,false,false,true,true,true,638,638,638,797,2391,2391,80,Qualified Pipeline
+001EME00178,797,797,3,2026-04-08,New (New Logo),1.0,OPP001780115,Monarch Media - New (New Logo),Value Proposition,FY27-Q1,false,false,true,true,true,638,638,638,797,2391,2391,80,Qualified Pipeline
 001EME00179,1068,1068,3,2026-03-12,New (SS → Contracted),1.0,OPP001790116,Willow Works - New (SS → Contracted),Value Proposition,FY27-Q1,false,false,true,true,true,854,854,854,1068,3204,3204,107,Qualified Pipeline
 001EME00183,1560,1560,3,2026-03-04,New (SS → Contracted),1.0,OPP001830117,Acorn Aerospace - New (SS → Contracted),Value Proposition,FY27-Q1,false,false,true,true,true,1248,1248,1248,1560,4680,4680,156,Qualified Pipeline
 001EME00184,2417,2417,3,2026-02-15,New (New Logo),1.0,OPP001840118,Sage Services - New (New Logo),Value Proposition,FY27-Q1,false,false,true,true,true,1934,1934,1934,2417,7251,7251,242,Qualified Pipeline
 001EME00185,99,99,7,2026-02-12,New (SS → Contracted),1.0,OPP001850119,North Nexus - New (SS → Contracted),Closed Won,FY27-Q1,true,true,true,true,true,79,79,79,99,297,297,10,Closed Won
 001EME00185,30,30,6,2026-03-31,Expansion,1.0,OPP001850120,North Nexus - Expansion,Proposal/Price Quote,FY27-Q1,false,false,true,true,true,24,24,24,30,90,90,3,Qualified Pipeline
 001EME00188,831,831,4,2026-03-26,New (New Logo),1.0,OPP001880121,Acorn Advisors - New (New Logo),Id. Decision Makers,FY27-Q1,false,false,true,true,true,665,665,665,831,2493,2493,83,Qualified Pipeline
-001EME00189,1740,1740,5,2026-04-21,New (New Logo),1.0,OPP001890122,Onyx Outfitters - New (New Logo),Perception Analysis,FY27-Q2,false,false,true,true,true,1392,1392,1392,1740,5220,5220,174,Qualified Pipeline
-001EME00190,1005,1005,2,2026-04-01,New (New Logo),1.0,OPP001900123,Cloud Computing - New (New Logo),Qualification,FY27-Q2,false,false,true,true,true,804,804,804,1005,3015,3015,100,Early Stage
+001EME00189,1740,1740,5,2026-04-21,New (New Logo),1.0,OPP001890122,Onyx Outfitters - New (New Logo),Perception Analysis,FY27-Q1,false,false,true,true,true,1392,1392,1392,1740,5220,5220,174,Qualified Pipeline
+001EME00190,1005,1005,2,2026-04-01,New (New Logo),1.0,OPP001900123,Cloud Computing - New (New Logo),Qualification,FY27-Q1,false,false,true,true,true,804,804,804,1005,3015,3015,100,Early Stage
 001EME00190,1980,1980,3,2026-03-26,New (SS → Contracted),1.0,OPP001900124,Cloud Computing - New (SS → Contracted),Value Proposition,FY27-Q1,false,false,true,true,true,1584,1584,1584,1980,5940,5940,198,Qualified Pipeline
 001EME00192,33,33,7,2026-02-20,Expansion,1.0,OPP001920125,Flame Foundry - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,26,26,26,33,99,99,3,Closed Won
 001EME00192,38,38,7,2026-02-19,Expansion,1.0,OPP001920126,Flame Foundry - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,30,30,30,38,114,114,4,Closed Won
@@ -131,25 +131,25 @@ account_id,net_nacv_split,net_nacv_ttl,stage_number,close_date,opp_type_qbr,spli
 001EME00197,0,0,7,2026-03-02,Flat Renewal,1.0,OPP001970130,Ember Electronics - Flat Renewal,Closed Won,FY27-Q1,true,true,true,true,true,0,0,0,0,0,0,0,Closed Won
 001EME00197,18,18,7,2026-02-28,Expansion,1.0,OPP001970131,Ember Electronics - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,14,14,14,18,54,54,2,Closed Won
 001EME00197,11,11,6,2026-03-29,Expansion,1.0,OPP001970132,Ember Electronics - Expansion,Proposal/Price Quote,FY27-Q1,false,false,true,true,true,9,9,9,11,33,33,1,Qualified Pipeline
-001EME00199,501,501,2,2026-04-15,New (SS → Contracted),1.0,OPP001990133,Drift Data - New (SS → Contracted),Qualification,FY27-Q2,false,false,true,true,true,401,401,401,501,1503,1503,50,Early Stage
+001EME00199,501,501,2,2026-04-15,New (SS → Contracted),1.0,OPP001990133,Drift Data - New (SS → Contracted),Qualification,FY27-Q1,false,false,true,true,true,401,401,401,501,1503,1503,50,Early Stage
 001EME00201,0,0,7,2026-03-26,Flat Renewal,1.0,OPP002010134,Bridge Brands - Flat Renewal,Closed Won,FY27-Q1,true,true,true,true,true,0,0,0,0,0,0,0,Closed Won
-001EME00201,9,9,7,2026-04-01,New (SS → Contracted),1.0,OPP002010135,Bridge Brands - New (SS → Contracted),Closed Won,FY27-Q2,true,true,true,true,true,7,7,7,9,27,27,1,Closed Won
+001EME00201,9,9,7,2026-04-01,New (SS → Contracted),1.0,OPP002010135,Bridge Brands - New (SS → Contracted),Closed Won,FY27-Q1,true,true,true,true,true,7,7,7,9,27,27,1,Closed Won
 001EME00201,5,5,7,2026-03-11,New (New Logo),1.0,OPP002010136,Bridge Brands - New (New Logo),Closed Won,FY27-Q1,true,true,true,true,true,4,4,4,5,15,15,0,Closed Won
 001EME00201,2,2,3,2026-03-12,Expansion,1.0,OPP002010137,Bridge Brands - Expansion,Value Proposition,FY27-Q1,false,false,true,true,true,2,2,2,2,6,6,0,Qualified Pipeline
-001EME00202,1329,1329,4,2026-04-27,New (New Logo),1.0,OPP002020138,Azure Architecture - New (New Logo),Id. Decision Makers,FY27-Q2,false,false,false,true,true,1063,1063,1063,1329,3987,3987,133,Qualified Pipeline
-001EME00202,1294,1294,5,2026-04-04,New (New Logo),1.0,OPP002020139,Azure Architecture - New (New Logo),Perception Analysis,FY27-Q2,false,false,true,true,true,1035,1035,1035,1294,3882,3882,129,Qualified Pipeline
+001EME00202,1329,1329,4,2026-04-27,New (New Logo),1.0,OPP002020138,Azure Architecture - New (New Logo),Id. Decision Makers,FY27-Q1,false,false,false,true,true,1063,1063,1063,1329,3987,3987,133,Qualified Pipeline
+001EME00202,1294,1294,5,2026-04-04,New (New Logo),1.0,OPP002020139,Azure Architecture - New (New Logo),Perception Analysis,FY27-Q1,false,false,true,true,true,1035,1035,1035,1294,3882,3882,129,Qualified Pipeline
 001EME00203,2170,2170,4,2026-02-04,New (New Logo),1.0,OPP002030140,Flux Fabrication - New (New Logo),Id. Decision Makers,FY27-Q1,false,false,true,true,true,1736,1736,1736,2170,6510,6510,217,Qualified Pipeline
 001EME00203,1318,1318,4,2026-03-18,New (New Logo),1.0,OPP002030141,Flux Fabrication - New (New Logo),Id. Decision Makers,FY27-Q1,false,false,false,true,true,1054,1054,1054,1318,3954,3954,132,Qualified Pipeline
 001APJ00212,2523,2523,5,2026-02-14,New (New Logo),1.0,OPP002120142,Delta Design - New (New Logo),Perception Analysis,FY27-Q1,false,false,true,true,true,2018,2018,2018,2523,7569,7569,252,Qualified Pipeline
-001APJ00212,1988,1988,2,2026-04-21,New (New Logo),1.0,OPP002120143,Delta Design - New (New Logo),Qualification,FY27-Q2,false,false,false,true,true,1590,1590,1590,1988,5964,5964,199,Early Stage
+001APJ00212,1988,1988,2,2026-04-21,New (New Logo),1.0,OPP002120143,Delta Design - New (New Logo),Qualification,FY27-Q1,false,false,false,true,true,1590,1590,1590,1988,5964,5964,199,Early Stage
 001APJ00217,2728,2728,3,2026-02-20,New (New Logo),1.0,OPP002170144,Trail Trading - New (New Logo),Value Proposition,FY27-Q1,false,false,false,true,true,2182,2182,2182,2728,8184,8184,273,Qualified Pipeline
 001APJ00223,0,0,7,2026-02-02,Flat Renewal,1.0,OPP002230145,Frost Foundry - Flat Renewal,Closed Won,FY27-Q1,true,true,true,true,true,0,0,0,0,0,0,0,Closed Won
 001APJ00223,15,15,4,2026-03-11,Expansion,1.0,OPP002230146,Frost Foundry - Expansion,Id. Decision Makers,FY27-Q1,false,false,true,true,true,12,12,12,15,45,45,2,Qualified Pipeline
-001APJ00226,2730,2730,2,2026-04-23,New (SS → Contracted),1.0,OPP002260147,Brook Broadcasting - New (SS → Contracted),Qualification,FY27-Q2,false,false,true,true,true,2184,2184,2184,2730,8190,8190,273,Early Stage
-001APJ00226,1609,1609,4,2026-04-05,New (New Logo),1.0,OPP002260148,Brook Broadcasting - New (New Logo),Id. Decision Makers,FY27-Q2,false,false,true,true,true,1287,1287,1287,1609,4827,4827,161,Qualified Pipeline
+001APJ00226,2730,2730,2,2026-04-23,New (SS → Contracted),1.0,OPP002260147,Brook Broadcasting - New (SS → Contracted),Qualification,FY27-Q1,false,false,true,true,true,2184,2184,2184,2730,8190,8190,273,Early Stage
+001APJ00226,1609,1609,4,2026-04-05,New (New Logo),1.0,OPP002260148,Brook Broadcasting - New (New Logo),Id. Decision Makers,FY27-Q1,false,false,true,true,true,1287,1287,1287,1609,4827,4827,161,Qualified Pipeline
 001APJ00230,1493,1493,3,2026-02-16,New (New Logo),1.0,OPP002300149,Amber Automation - New (New Logo),Value Proposition,FY27-Q1,false,false,true,true,true,1194,1194,1194,1493,4479,4479,149,Qualified Pipeline
 001APJ00231,2546,2546,4,2026-02-14,New (New Logo),1.0,OPP002310150,Wave Wireless - New (New Logo),Id. Decision Makers,FY27-Q1,false,false,false,true,true,2037,2037,2037,2546,7638,7638,255,Qualified Pipeline
-001APJ00231,2033,2033,3,2026-04-29,New (New Logo),1.0,OPP002310151,Wave Wireless - New (New Logo),Value Proposition,FY27-Q2,false,false,true,true,true,1626,1626,1626,2033,6099,6099,203,Qualified Pipeline
+001APJ00231,2033,2033,3,2026-04-29,New (New Logo),1.0,OPP002310151,Wave Wireless - New (New Logo),Value Proposition,FY27-Q1,false,false,true,true,true,1626,1626,1626,2033,6099,6099,203,Qualified Pipeline
 001APJ00232,1174,1174,3,2026-03-30,New (New Logo),1.0,OPP002320152,Wharf Wireless - New (New Logo),Value Proposition,FY27-Q1,false,false,false,true,true,939,939,939,1174,3522,3522,117,Qualified Pipeline
 001APJ00232,2112,2112,3,2026-03-29,New (SS → Contracted),1.0,OPP002320153,Wharf Wireless - New (SS → Contracted),Value Proposition,FY27-Q1,false,false,false,true,true,1690,1690,1690,2112,6336,6336,211,Qualified Pipeline
 001APJ00233,2037,2037,2,2026-03-30,New (New Logo),1.0,OPP002330154,Sage Sciences - New (New Logo),Qualification,FY27-Q1,false,false,false,true,true,1630,1630,1630,2037,6111,6111,204,Early Stage
@@ -158,47 +158,47 @@ account_id,net_nacv_split,net_nacv_ttl,stage_number,close_date,opp_type_qbr,spli
 001APJ00240,24,24,7,2026-02-26,Expansion,1.0,OPP002400157,Dawn Dynamics - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,19,19,19,24,72,72,2,Closed Won
 001APJ00240,33,33,7,2026-02-02,Expansion,1.0,OPP002400158,Dawn Dynamics - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,26,26,26,33,99,99,3,Closed Won
 001APJ00240,10,10,3,2026-03-20,Expansion,1.0,OPP002400159,Dawn Dynamics - Expansion,Value Proposition,FY27-Q1,false,false,true,true,true,8,8,8,10,30,30,1,Qualified Pipeline
-001APJ00241,384,384,2,2026-04-03,New (New Logo),1.0,OPP002410160,Torch Technologies - New (New Logo),Qualification,FY27-Q2,false,false,true,true,true,307,307,307,384,1152,1152,38,Early Stage
+001APJ00241,384,384,2,2026-04-03,New (New Logo),1.0,OPP002410160,Torch Technologies - New (New Logo),Qualification,FY27-Q1,false,false,true,true,true,307,307,307,384,1152,1152,38,Early Stage
 001APJ00242,2438,2438,3,2026-02-21,New (New Logo),1.0,OPP002420161,Meridian Manufacturing - New (New Logo),Value Proposition,FY27-Q1,false,false,true,true,true,1950,1950,1950,2438,7314,7314,244,Qualified Pipeline
-001APJ00242,1739,1739,2,2026-04-22,New (New Logo),1.0,OPP002420162,Meridian Manufacturing - New (New Logo),Qualification,FY27-Q2,false,false,false,true,true,1391,1391,1391,1739,5217,5217,174,Early Stage
+001APJ00242,1739,1739,2,2026-04-22,New (New Logo),1.0,OPP002420162,Meridian Manufacturing - New (New Logo),Qualification,FY27-Q1,false,false,false,true,true,1391,1391,1391,1739,5217,5217,174,Early Stage
 001APJ00243,9,9,7,2026-03-11,Expansion,1.0,OPP002430163,Apex Automation - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,7,7,7,9,27,27,1,Closed Won
 001APJ00243,4,4,5,2026-03-21,Expansion,1.0,OPP002430164,Apex Automation - Expansion,Perception Analysis,FY27-Q1,false,false,true,true,true,3,3,3,4,12,12,0,Qualified Pipeline
-001APJ00244,484,484,3,2026-04-15,New (SS → Contracted),1.0,OPP002440165,Amber Advisors - New (SS → Contracted),Value Proposition,FY27-Q2,false,false,true,true,true,387,387,387,484,1452,1452,48,Qualified Pipeline
+001APJ00244,484,484,3,2026-04-15,New (SS → Contracted),1.0,OPP002440165,Amber Advisors - New (SS → Contracted),Value Proposition,FY27-Q1,false,false,true,true,true,387,387,387,484,1452,1452,48,Qualified Pipeline
 001APJ00245,55,55,7,2026-03-31,Expansion,1.0,OPP002450166,Lunar Links - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,44,44,44,55,165,165,6,Closed Won
-001APJ00250,2660,2660,5,2026-04-18,New (New Logo),1.0,OPP002500167,Basalt Broadcasting - New (New Logo),Perception Analysis,FY27-Q2,false,false,true,true,true,2128,2128,2128,2660,7980,7980,266,Qualified Pipeline
-001APJ00252,30,30,7,2026-04-08,New (New Logo),1.0,OPP002520168,Echo Electronics - New (New Logo),Closed Won,FY27-Q2,true,true,true,true,true,24,24,24,30,90,90,3,Closed Won
+001APJ00250,2660,2660,5,2026-04-18,New (New Logo),1.0,OPP002500167,Basalt Broadcasting - New (New Logo),Perception Analysis,FY27-Q1,false,false,true,true,true,2128,2128,2128,2660,7980,7980,266,Qualified Pipeline
+001APJ00252,30,30,7,2026-04-08,New (New Logo),1.0,OPP002520168,Echo Electronics - New (New Logo),Closed Won,FY27-Q1,true,true,true,true,true,24,24,24,30,90,90,3,Closed Won
 001APJ00252,11,11,7,2026-03-15,Expansion,1.0,OPP002520169,Echo Electronics - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,9,9,9,11,33,33,1,Closed Won
-001APJ00252,9,9,7,2026-04-20,Expansion,1.0,OPP002520170,Echo Electronics - Expansion,Closed Won,FY27-Q2,true,true,true,true,true,7,7,7,9,27,27,1,Closed Won
+001APJ00252,9,9,7,2026-04-20,Expansion,1.0,OPP002520170,Echo Electronics - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,7,7,7,9,27,27,1,Closed Won
 001APJ00252,6,6,3,2026-02-05,Expansion,1.0,OPP002520171,Echo Electronics - Expansion,Value Proposition,FY27-Q1,false,false,true,true,true,5,5,5,6,18,18,1,Qualified Pipeline
-001APJ00253,20,20,7,2026-04-09,Expansion,1.0,OPP002530172,Titan Trading - Expansion,Closed Won,FY27-Q2,true,true,true,true,true,16,16,16,20,60,60,2,Closed Won
+001APJ00253,20,20,7,2026-04-09,Expansion,1.0,OPP002530172,Titan Trading - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,16,16,16,20,60,60,2,Closed Won
 001APJ00259,2197,2197,5,2026-02-19,New (SS → Contracted),1.0,OPP002590173,Cliff Capital - New (SS → Contracted),Perception Analysis,FY27-Q1,false,false,false,true,true,1758,1758,1758,2197,6591,6591,220,Qualified Pipeline
 001APJ00260,2259,2259,2,2026-03-31,New (New Logo),1.0,OPP002600174,Slate Services - New (New Logo),Qualification,FY27-Q1,false,false,true,true,true,1807,1807,1807,2259,6777,6777,226,Early Stage
-001APJ00266,0,0,7,2026-04-15,Flat Renewal,1.0,OPP002660175,Kindle Kinetics - Flat Renewal,Closed Won,FY27-Q2,true,true,true,true,true,0,0,0,0,0,0,0,Closed Won
+001APJ00266,0,0,7,2026-04-15,Flat Renewal,1.0,OPP002660175,Kindle Kinetics - Flat Renewal,Closed Won,FY27-Q1,true,true,true,true,true,0,0,0,0,0,0,0,Closed Won
 001APJ00266,27,27,4,2026-02-28,Expansion,1.0,OPP002660176,Kindle Kinetics - Expansion,Id. Decision Makers,FY27-Q1,false,false,true,true,true,22,22,22,27,81,81,3,Qualified Pipeline
 001APJ00269,1502,1502,3,2026-02-05,New (New Logo),1.0,OPP002690177,Oak Operations - New (New Logo),Value Proposition,FY27-Q1,false,false,false,true,true,1202,1202,1202,1502,4506,4506,150,Qualified Pipeline
 001APJ00270,45,45,7,2026-03-14,Expansion,1.0,OPP002700178,Wren Works - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,36,36,36,45,135,135,4,Closed Won
 001APJ00270,22,22,7,2026-02-17,New (New Logo),1.0,OPP002700179,Wren Works - New (New Logo),Closed Won,FY27-Q1,true,true,true,true,true,18,18,18,22,66,66,2,Closed Won
 001APJ00270,0,0,7,2026-02-10,Flat Renewal,1.0,OPP002700180,Wren Works - Flat Renewal,Closed Won,FY27-Q1,true,true,true,true,true,0,0,0,0,0,0,0,Closed Won
 001APJ00270,13,13,6,2026-02-04,Expansion,1.0,OPP002700181,Wren Works - Expansion,Proposal/Price Quote,FY27-Q1,false,false,true,true,true,10,10,10,13,39,39,1,Qualified Pipeline
-001APJ00271,353,353,2,2026-04-11,New (SS → Contracted),1.0,OPP002710182,Arrow Aerospace - New (SS → Contracted),Qualification,FY27-Q2,false,false,true,true,true,282,282,282,353,1059,1059,35,Early Stage
-001APJ00274,2628,2628,2,2026-04-16,New (SS → Contracted),1.0,OPP002740183,Pier Pharma - New (SS → Contracted),Qualification,FY27-Q2,false,false,true,true,true,2102,2102,2102,2628,7884,7884,263,Early Stage
+001APJ00271,353,353,2,2026-04-11,New (SS → Contracted),1.0,OPP002710182,Arrow Aerospace - New (SS → Contracted),Qualification,FY27-Q1,false,false,true,true,true,282,282,282,353,1059,1059,35,Early Stage
+001APJ00274,2628,2628,2,2026-04-16,New (SS → Contracted),1.0,OPP002740183,Pier Pharma - New (SS → Contracted),Qualification,FY27-Q1,false,false,true,true,true,2102,2102,2102,2628,7884,7884,263,Early Stage
 001APJ00274,574,574,4,2026-02-02,New (New Logo),1.0,OPP002740184,Pier Pharma - New (New Logo),Id. Decision Makers,FY27-Q1,false,false,true,true,true,459,459,459,574,1722,1722,57,Qualified Pipeline
 001APJ00276,2711,2711,4,2026-02-06,New (New Logo),1.0,OPP002760185,Harbor Health - New (New Logo),Id. Decision Makers,FY27-Q1,false,false,false,true,true,2169,2169,2169,2711,8133,8133,271,Qualified Pipeline
 001APJ00276,2679,2679,5,2026-02-12,New (New Logo),1.0,OPP002760186,Harbor Health - New (New Logo),Perception Analysis,FY27-Q1,false,false,true,true,true,2143,2143,2143,2679,8037,8037,268,Qualified Pipeline
 001APJ00277,0,0,7,2026-02-18,Flat Renewal,1.0,OPP002770187,Griffin Global - Flat Renewal,Closed Won,FY27-Q1,true,true,true,true,true,0,0,0,0,0,0,0,Closed Won
 001APJ00277,22,22,7,2026-03-23,Expansion,1.0,OPP002770188,Griffin Global - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,18,18,18,22,66,66,2,Closed Won
 001APJ00277,7,7,3,2026-03-29,Expansion,1.0,OPP002770189,Griffin Global - Expansion,Value Proposition,FY27-Q1,false,false,true,true,true,6,6,6,7,21,21,1,Qualified Pipeline
-001APJ00278,1921,1921,5,2026-04-16,New (New Logo),1.0,OPP002780190,Jade Junctions - New (New Logo),Perception Analysis,FY27-Q2,false,false,true,true,true,1537,1537,1537,1921,5763,5763,192,Qualified Pipeline
-001APJ00279,331,331,2,2026-04-04,New (New Logo),1.0,OPP002790191,Iron Intelligence - New (New Logo),Qualification,FY27-Q2,false,false,true,true,true,265,265,265,331,993,993,33,Early Stage
-001APJ00279,1533,1533,3,2026-04-15,New (New Logo),1.0,OPP002790192,Iron Intelligence - New (New Logo),Value Proposition,FY27-Q2,false,false,true,true,true,1226,1226,1226,1533,4599,4599,153,Qualified Pipeline
+001APJ00278,1921,1921,5,2026-04-16,New (New Logo),1.0,OPP002780190,Jade Junctions - New (New Logo),Perception Analysis,FY27-Q1,false,false,true,true,true,1537,1537,1537,1921,5763,5763,192,Qualified Pipeline
+001APJ00279,331,331,2,2026-04-04,New (New Logo),1.0,OPP002790191,Iron Intelligence - New (New Logo),Qualification,FY27-Q1,false,false,true,true,true,265,265,265,331,993,993,33,Early Stage
+001APJ00279,1533,1533,3,2026-04-15,New (New Logo),1.0,OPP002790192,Iron Intelligence - New (New Logo),Value Proposition,FY27-Q1,false,false,true,true,true,1226,1226,1226,1533,4599,4599,153,Qualified Pipeline
 001APJ00281,5,5,7,2026-03-16,New (New Logo),1.0,OPP002810193,Pulse Platforms - New (New Logo),Closed Won,FY27-Q1,true,true,true,true,true,4,4,4,5,15,15,0,Closed Won
-001APJ00281,9,9,7,2026-04-17,Expansion,1.0,OPP002810194,Pulse Platforms - Expansion,Closed Won,FY27-Q2,true,true,true,true,true,7,7,7,9,27,27,1,Closed Won
-001APJ00281,3,3,4,2026-04-01,Expansion,1.0,OPP002810195,Pulse Platforms - Expansion,Id. Decision Makers,FY27-Q2,false,false,true,true,true,2,2,2,3,9,9,0,Qualified Pipeline
-001APJ00284,2390,2390,2,2026-04-17,New (SS → Contracted),1.0,OPP002840196,Crystal Consulting - New (SS → Contracted),Qualification,FY27-Q2,false,false,false,true,true,1912,1912,1912,2390,7170,7170,239,Early Stage
+001APJ00281,9,9,7,2026-04-17,Expansion,1.0,OPP002810194,Pulse Platforms - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,7,7,7,9,27,27,1,Closed Won
+001APJ00281,3,3,4,2026-04-01,Expansion,1.0,OPP002810195,Pulse Platforms - Expansion,Id. Decision Makers,FY27-Q1,false,false,true,true,true,2,2,2,3,9,9,0,Qualified Pipeline
+001APJ00284,2390,2390,2,2026-04-17,New (SS → Contracted),1.0,OPP002840196,Crystal Consulting - New (SS → Contracted),Qualification,FY27-Q1,false,false,false,true,true,1912,1912,1912,2390,7170,7170,239,Early Stage
 001APJ00286,1786,1786,5,2026-02-24,New (SS → Contracted),1.0,OPP002860197,Silver Software - New (SS → Contracted),Perception Analysis,FY27-Q1,false,false,true,true,true,1429,1429,1429,1786,5358,5358,179,Qualified Pipeline
 001APJ00286,395,395,3,2026-03-21,New (New Logo),1.0,OPP002860198,Silver Software - New (New Logo),Value Proposition,FY27-Q1,false,false,true,true,true,316,316,316,395,1185,1185,40,Qualified Pipeline
-001APJ00291,60,60,7,2026-04-17,Expansion,1.0,OPP002910199,Dawn Data - Expansion,Closed Won,FY27-Q2,true,true,true,true,true,48,48,48,60,180,180,6,Closed Won
+001APJ00291,60,60,7,2026-04-17,Expansion,1.0,OPP002910199,Dawn Data - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,48,48,48,60,180,180,6,Closed Won
 001APJ00291,72,72,7,2026-03-02,Expansion,1.0,OPP002910200,Dawn Data - Expansion,Closed Won,FY27-Q1,true,true,true,true,true,58,58,58,72,216,216,7,Closed Won
 001APJ00291,44,44,7,2026-02-07,New (New Logo),1.0,OPP002910201,Dawn Data - New (New Logo),Closed Won,FY27-Q1,true,true,true,true,true,35,35,35,44,132,132,4,Closed Won
-001APJ00291,15,15,5,2026-04-21,Expansion,1.0,OPP002910202,Dawn Data - Expansion,Perception Analysis,FY27-Q2,false,false,true,true,true,12,12,12,15,45,45,2,Qualified Pipeline
+001APJ00291,15,15,5,2026-04-21,Expansion,1.0,OPP002910202,Dawn Data - Expansion,Perception Analysis,FY27-Q1,false,false,true,true,true,12,12,12,15,45,45,2,Qualified Pipeline
 001APJ00295,1827,1827,3,2026-03-04,New (New Logo),1.0,OPP002950203,Pier Partners - New (New Logo),Value Proposition,FY27-Q1,false,false,true,true,true,1462,1462,1462,1827,5481,5481,183,Qualified Pipeline
