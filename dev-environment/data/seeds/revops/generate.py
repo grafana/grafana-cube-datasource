@@ -632,7 +632,7 @@ def happiness_label(score):
 def fiscal_quarter(d):
     """Grafana Labs fiscal quarter string (Feb-start fiscal year)."""
     fy = (d.year % 100) + 1 if d.month >= 2 else d.year % 100
-    q = (d.month - 1) // 3 + 1
+    q = (d.month - 2) % 12 // 3 + 1
     return f"FY{fy}-Q{q}"
 
 
@@ -722,8 +722,8 @@ def gen_account(region_key, global_idx, company_name, slug,
         q_proj = round(cmrr * random.uniform(1.05, 1.28), 2)
         has_quota = random.random() > 0.08
 
-        cw_last_wq = q_last if has_quota else 0
-        cw_proj_wq = q_proj if has_quota else 0
+        cw_last_wq = cw_last if has_quota else 0
+        cw_proj_wq = cw_proj if has_quota else 0
         cw_last_wcmrr = cw_last
         cw_proj_wcmrr = cw_proj
         cw_combined = round((cw_last + cw_proj) / 2, 2)

@@ -1,10 +1,11 @@
 """Tests for Territory Navigator data generator."""
 import pytest
+from datetime import date
 from collections import Counter
 from generate import (
     ACCT_COLS, OPP_COLS, ORG_COLS,
     ACCOUNTS_PER_REGION, FUNNEL_NAMES, ARR_RANGES,
-    generate_all, generate_company_names,
+    fiscal_quarter, generate_all, generate_company_names,
 )
 
 
@@ -224,6 +225,27 @@ class TestTerritoryInvariants:
         }
         assert not offenders, (
             f"AEs spanning multiple RVP regions: {offenders}")
+
+
+# ── Fiscal calendar and quota ────────────────────────────────────────────────
+
+class TestFiscalQuarter:
+    @pytest.mark.parametrize("d, expected", [
+        (date(2026, 1, 31), "FY26-Q4"),
+        (date(2026, 2, 1), "FY27-Q1"),
+        (date(2026, 4, 30), "FY27-Q1"),
+        (date(2026, 5, 1), "FY27-Q2"),
+        (date(2026, 12, 31), "FY27-Q4"),
+    ])
+    def test_feb_start_fiscal_year(self, d, expected):
+        assert fiscal_quarter(d) == expected
+
+
+class TestQuota:
+    def test_with_quota_is_consumption_not_quota(self, accounts):
+        for a in accounts:
+            if a["has_consumption_weighted_quota"] == "true":
+                assert a["consumption_weighted_last_month_with_quota"] == a["consumption_weighted_last_month"]
 
 
 # ── Idempotency ──────────────────────────────────────────────────────────────
