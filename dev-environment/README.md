@@ -40,15 +40,14 @@ This provides a complete dataset for testing the Grafana-Cube integration.
 
 ## RevOps Territory Navigator example
 
-The RevOps dashboards we presented at GrafanaCON 2026 run against fictional sales data in the `revops` schema:
+A minimal version of the RevOps dashboards we presented at GrafanaCON 2026, running against fictional sales data in the `revops` schema:
 
-- `revops_reporting_territory_navigator_account_details` - one row per account (300)
-- `revops_reporting_opp_split` - open and closed opportunities (203)
-- `rpt_self_serve_territory_navigator_orgs` - Grafana Cloud orgs per account (190)
+- `accounts` - one row per account (300)
+- `opportunities` - open and closed opportunities (222)
 
-Two dashboards show the same content built two ways, and link to each other from their header:
+Two dashboards show the same content built two ways, and link to each other from their header. Both show account and pipeline summary stats, accounts broken down by TAM, funnel stage and engagement, and a table of open opportunities. Both filter by Region, Sub-region, Segment, Account Owner and Solutions Engineer.
 
-- **GrafanaCon2026 RevOps: Semantic Layer** (http://localhost:3000/d/territory-navigator/) - Cube queries via the `territory_navigator` view, with cross-panel filtering. Click a bar or table cell and choose "Filter for" to filter every panel.
+- **GrafanaCon2026 RevOps: Semantic Layer** (http://localhost:3000/d/territory-navigator/) - Cube queries via the `territory_navigator` view, with pinned filters and cross-panel filtering. Click a bar or table cell and choose "Filter for" to filter every panel.
 - **GrafanaCon2026 RevOps: SQL Only** (http://localhost:3000/d/territory-navigator-sql-only-version/) - the same panels written as raw PostgreSQL, filtered with dashboard variables.
 
 The Cube models are in `cube/model/cubes/revops_*.yml` and `cube/model/views/revops_territory_navigator.yml`.

@@ -1,0 +1,74 @@
+cubes:
+  - name: revops_accounts
+    sql_table: revops.accounts
+    data_source: default
+
+    joins:
+      - name: revops_opportunities
+        sql: "{CUBE}.account_id = {revops_opportunities}.account_id"
+        relationship: one_to_many
+
+    measures:
+      - name: count
+        type: count
+        description: "Number of accounts"
+
+    dimensions:
+      - name: account_id
+        sql: account_id
+        type: string
+        primary_key: true
+        description: "Account ID"
+      - name: account_name
+        sql: account_name
+        type: string
+        description: "Account (company) name"
+
+      # Territory and ownership
+      - name: region
+        sql: region
+        type: string
+        description: "Sales region (AMER, EMEA, APJ)"
+      - name: sub_region
+        sql: sub_region
+        type: string
+        title: "Sub-region"
+        description: "Sales sub-region within the region"
+      - name: segment
+        sql: segment
+        type: string
+        description: "Customer segment (Commercial or Enterprise)"
+      - name: account_owner
+        sql: account_owner
+        type: string
+        title: "Account Owner (AE)"
+        description: "Account Executive who owns the account"
+      - name: solutions_engineer
+        sql: solutions_engineer
+        type: string
+        title: "Solutions Engineer (SE)"
+        description: "Solutions Engineer assigned to the account"
+
+      # Funnel and signals
+      - name: funnel_stage_number
+        sql: funnel_stage_number
+        type: number
+        title: "Funnel Stage Number"
+        description: "Position in the account funnel (1 = Contracted, 8 = Cold)"
+      - name: funnel_stage
+        sql: funnel_stage
+        type: string
+        description: "Position in the account funnel, as a label"
+      - name: tam_category
+        sql: tam_category
+        type: string
+        title: "TAM Category"
+        description: "Total Addressable Market (TAM) size band"
+      - name: behavior_signal
+        sql: behavior_signal
+        type: string
+        description: "Level of recent engagement from the account"
+      - name: sales_activity_pulse
+        sql: sales_activity_pulse
+        type: string
+        description: "Level of recent sales activity on the account"
