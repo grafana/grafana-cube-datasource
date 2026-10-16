@@ -1,0 +1,301 @@
+account_id,account_name,region,sub_region,segment,account_owner,solutions_engineer,funnel_stage_number,funnel_stage,tam_category,behavior_signal,sales_activity_pulse
+001AMR00001,River Research,AMER,AMER-East,Enterprise,Aaron Archer,Holly Hayes,6,6. Event Activity or Web Traffic,1. Small ($0 – $50),Low,Low
+001AMR00002,Spruce Software,AMER,AMER-West,Enterprise,Alice Anderson,Grant Gibson,5,5. Free / Trial Usage,1. Small ($0 – $50),No Recent Activity,High
+001AMR00003,Eagle Energy,AMER,AMER-West,Commercial,Alice Anderson,Holly Hayes,4,4. Self-Serve Usage,1. Small ($0 – $50),Medium,Low
+001AMR00004,Vault Vanguard,AMER,AMER-International,Enterprise,Carla Cruz,Grant Gibson,1,1. Contracted,3. Large [$100 – $200),Low,Low
+001AMR00005,Frost Fabrication,AMER,AMER-International,Commercial,Carla Cruz,Grant Gibson,8,8. Cold,0. None,Low,No Activity
+001AMR00006,Forge Fabrication,AMER,AMER-West,Enterprise,Alice Anderson,Holly Hayes,3,3. Prior Pipeline,2. Medium [$50 – $100),No Recent Activity,Low
+001AMR00007,Phoenix Platforms,AMER,AMER-International,Commercial,Ben Baker,Holly Hayes,4,4. Self-Serve Usage,1. Small ($0 – $50),High,No Activity
+001AMR00008,Juniper Joineries,AMER,AMER-International,Enterprise,Carla Cruz,Holly Hayes,5,5. Free / Trial Usage,1. Small ($0 – $50),No Recent Activity,Medium
+001AMR00009,Everest Enterprises,AMER,AMER-International,Commercial,Carla Cruz,Grant Gibson,7,7. Opt-Ins,1. Small ($0 – $50),Low,Medium
+001AMR00010,Pulse Pharma,AMER,AMER-International,Enterprise,Carla Cruz,Holly Hayes,2,2. Open Pipeline,2. Medium [$50 – $100),Medium,Low
+001AMR00011,Keystone Kinetics,AMER,AMER-East,Enterprise,Aaron Archer,Holly Hayes,7,7. Opt-Ins,0. None,Low,Medium
+001AMR00012,Ember Enterprises,AMER,AMER-West,Commercial,Alice Anderson,Holly Hayes,1,1. Contracted,2. Medium [$50 – $100),Low,Low
+001AMR00013,Granite Gaming,AMER,AMER-International,Commercial,Ben Baker,Holly Hayes,8,8. Cold,0. None,Low,Low
+001AMR00014,Isle Instruments,AMER,AMER-East,Commercial,Aaron Archer,Grant Gibson,1,1. Contracted,1. Small ($0 – $50),Low,Low
+001AMR00015,Canyon Communications,AMER,AMER-West,Commercial,Alice Anderson,Holly Hayes,8,8. Cold,2. Medium [$50 – $100),Medium,No Activity
+001AMR00016,Keystone Knowledge,AMER,AMER-International,Enterprise,Ben Baker,Grant Gibson,1,1. Contracted,3. Large [$100 – $200),High,Medium
+001AMR00017,Bolt Banking,AMER,AMER-International,Commercial,Ben Baker,Holly Hayes,2,2. Open Pipeline,1. Small ($0 – $50),High,Medium
+001AMR00018,Acorn Automation,AMER,AMER-East,Enterprise,Aaron Archer,Holly Hayes,5,5. Free / Trial Usage,1. Small ($0 – $50),No Recent Activity,Medium
+001AMR00019,Griffin Gaming,AMER,AMER-West,Enterprise,Alice Anderson,Grant Gibson,5,5. Free / Trial Usage,1. Small ($0 – $50),High,High
+001AMR00020,Fern Financial,AMER,AMER-East,Enterprise,Aaron Archer,Grant Gibson,3,3. Prior Pipeline,2. Medium [$50 – $100),Low,Low
+001AMR00021,Cedar Consulting,AMER,AMER-West,Commercial,Alice Anderson,Grant Gibson,5,5. Free / Trial Usage,2. Medium [$50 – $100),No Recent Activity,Low
+001AMR00022,Iron Industries,AMER,AMER-International,Enterprise,Carla Cruz,Holly Hayes,1,1. Contracted,2. Medium [$50 – $100),Low,No Activity
+001AMR00023,Gate Gaming,AMER,AMER-International,Commercial,Ben Baker,Holly Hayes,6,6. Event Activity or Web Traffic,0. None,Low,Low
+001AMR00024,North Networks,AMER,AMER-West,Enterprise,Alice Anderson,Grant Gibson,1,1. Contracted,2. Medium [$50 – $100),Low,Low
+001AMR00025,Spark Solutions,AMER,AMER-East,Enterprise,Aaron Archer,Holly Hayes,2,2. Open Pipeline,1. Small ($0 – $50),High,High
+001AMR00026,Pine Platforms,AMER,AMER-West,Commercial,Alice Anderson,Grant Gibson,4,4. Self-Serve Usage,1. Small ($0 – $50),Low,High
+001AMR00027,Indigo Intelligence,AMER,AMER-West,Commercial,Alice Anderson,Grant Gibson,2,2. Open Pipeline,0. None,High,Low
+001AMR00028,Cliff Commerce,AMER,AMER-East,Commercial,Aaron Archer,Grant Gibson,3,3. Prior Pipeline,1. Small ($0 – $50),No Recent Activity,Low
+001AMR00029,Horizon Health,AMER,AMER-International,Commercial,Ben Baker,Grant Gibson,7,7. Opt-Ins,1. Small ($0 – $50),Low,Medium
+001AMR00030,Quartz Quantum,AMER,AMER-West,Enterprise,Alice Anderson,Grant Gibson,7,7. Opt-Ins,0. None,High,Low
+001AMR00031,Boulder Banking,AMER,AMER-International,Commercial,Carla Cruz,Holly Hayes,1,1. Contracted,1. Small ($0 – $50),Medium,Medium
+001AMR00032,Drift Digital,AMER,AMER-East,Enterprise,Aaron Archer,Grant Gibson,5,5. Free / Trial Usage,1. Small ($0 – $50),Low,No Activity
+001AMR00033,Ivy Intelligence,AMER,AMER-East,Enterprise,Aaron Archer,Holly Hayes,5,5. Free / Trial Usage,0. None,Medium,No Activity
+001AMR00034,Basalt Banking,AMER,AMER-West,Enterprise,Alice Anderson,Grant Gibson,7,7. Opt-Ins,1. Small ($0 – $50),No Recent Activity,High
+001AMR00035,Isle Industries,AMER,AMER-International,Commercial,Carla Cruz,Holly Hayes,8,8. Cold,2. Medium [$50 – $100),No Recent Activity,High
+001AMR00036,Atlas Aerospace,AMER,AMER-International,Commercial,Carla Cruz,Grant Gibson,5,5. Free / Trial Usage,1. Small ($0 – $50),High,Medium
+001AMR00037,Wolf Wireless,AMER,AMER-International,Commercial,Ben Baker,Holly Hayes,7,7. Opt-Ins,0. None,No Recent Activity,Low
+001AMR00038,Gale Gaming,AMER,AMER-International,Enterprise,Ben Baker,Holly Hayes,2,2. Open Pipeline,2. Medium [$50 – $100),Medium,Medium
+001AMR00039,Meridian Motors,AMER,AMER-West,Commercial,Alice Anderson,Grant Gibson,4,4. Self-Serve Usage,3. Large [$100 – $200),High,Medium
+001AMR00040,Flame Freight,AMER,AMER-West,Commercial,Alice Anderson,Grant Gibson,8,8. Cold,0. None,Medium,Low
+001AMR00041,Iris Instruments,AMER,AMER-East,Enterprise,Aaron Archer,Holly Hayes,7,7. Opt-Ins,1. Small ($0 – $50),Medium,Low
+001AMR00042,Reef Robotics,AMER,AMER-East,Enterprise,Aaron Archer,Grant Gibson,4,4. Self-Serve Usage,0. None,Medium,Low
+001AMR00043,Titan Therapeutics,AMER,AMER-International,Enterprise,Carla Cruz,Holly Hayes,5,5. Free / Trial Usage,1. Small ($0 – $50),Low,Low
+001AMR00044,Orbit Operations,AMER,AMER-East,Enterprise,Aaron Archer,Grant Gibson,2,2. Open Pipeline,0. None,Low,Medium
+001AMR00045,Junction Joineries,AMER,AMER-International,Enterprise,Carla Cruz,Holly Hayes,1,1. Contracted,1. Small ($0 – $50),Low,Low
+001AMR00046,Maple Media,AMER,AMER-International,Commercial,Ben Baker,Holly Hayes,6,6. Event Activity or Web Traffic,1. Small ($0 – $50),Medium,Medium
+001AMR00047,Stone Software,AMER,AMER-International,Enterprise,Ben Baker,Holly Hayes,5,5. Free / Trial Usage,1. Small ($0 – $50),No Recent Activity,Medium
+001AMR00048,Hawk Hardware,AMER,AMER-International,Commercial,Carla Cruz,Holly Hayes,8,8. Cold,0. None,Medium,Medium
+001AMR00049,Upland Utilities,AMER,AMER-International,Commercial,Carla Cruz,Holly Hayes,1,1. Contracted,1. Small ($0 – $50),No Recent Activity,Medium
+001AMR00050,Timber Transport,AMER,AMER-West,Commercial,Alice Anderson,Holly Hayes,4,4. Self-Serve Usage,0. None,No Recent Activity,Medium
+001AMR00051,Zephyr Zone,AMER,AMER-International,Enterprise,Carla Cruz,Grant Gibson,3,3. Prior Pipeline,2. Medium [$50 – $100),Medium,No Activity
+001AMR00052,Jade Joineries,AMER,AMER-East,Enterprise,Aaron Archer,Grant Gibson,6,6. Event Activity or Web Traffic,1. Small ($0 – $50),High,Low
+001AMR00053,Quill Quotient,AMER,AMER-East,Enterprise,Aaron Archer,Grant Gibson,2,2. Open Pipeline,3. Large [$100 – $200),Low,No Activity
+001AMR00054,Coral Computing,AMER,AMER-International,Enterprise,Carla Cruz,Grant Gibson,7,7. Opt-Ins,2. Medium [$50 – $100),Low,No Activity
+001AMR00055,Urban Utilities,AMER,AMER-West,Commercial,Alice Anderson,Holly Hayes,5,5. Free / Trial Usage,0. None,Medium,Low
+001AMR00056,Dawn Digital,AMER,AMER-International,Enterprise,Ben Baker,Grant Gibson,2,2. Open Pipeline,1. Small ($0 – $50),No Recent Activity,Low
+001AMR00057,Lynx Labs,AMER,AMER-International,Enterprise,Ben Baker,Grant Gibson,1,1. Contracted,3. Large [$100 – $200),Low,Low
+001AMR00058,Cobalt Commerce,AMER,AMER-International,Commercial,Carla Cruz,Holly Hayes,5,5. Free / Trial Usage,0. None,Low,Low
+001AMR00059,Canyon Consulting,AMER,AMER-International,Commercial,Carla Cruz,Grant Gibson,8,8. Cold,1. Small ($0 – $50),Low,Low
+001AMR00060,Spruce Services,AMER,AMER-International,Commercial,Carla Cruz,Holly Hayes,5,5. Free / Trial Usage,2. Medium [$50 – $100),High,Medium
+001AMR00061,Frost Financial,AMER,AMER-International,Commercial,Ben Baker,Holly Hayes,2,2. Open Pipeline,2. Medium [$50 – $100),Low,Low
+001AMR00062,Vault Ventures,AMER,AMER-International,Commercial,Carla Cruz,Grant Gibson,6,6. Event Activity or Web Traffic,0. None,Medium,Medium
+001AMR00063,Indigo Instruments,AMER,AMER-International,Enterprise,Carla Cruz,Grant Gibson,2,2. Open Pipeline,1. Small ($0 – $50),High,Low
+001AMR00064,Diamond Dynamics,AMER,AMER-International,Commercial,Carla Cruz,Holly Hayes,1,1. Contracted,1. Small ($0 – $50),Low,Medium
+001AMR00065,Linden Links,AMER,AMER-International,Enterprise,Carla Cruz,Holly Hayes,3,3. Prior Pipeline,0. None,Low,Low
+001AMR00066,Falcon Freight,AMER,AMER-International,Commercial,Carla Cruz,Grant Gibson,5,5. Free / Trial Usage,1. Small ($0 – $50),Low,High
+001AMR00067,Briar Broadcasting,AMER,AMER-International,Enterprise,Ben Baker,Holly Hayes,5,5. Free / Trial Usage,2. Medium [$50 – $100),Low,Low
+001AMR00068,Mesa Manufacturing,AMER,AMER-West,Commercial,Alice Anderson,Holly Hayes,3,3. Prior Pipeline,2. Medium [$50 – $100),Low,No Activity
+001AMR00069,Opal Optics,AMER,AMER-West,Commercial,Alice Anderson,Holly Hayes,2,2. Open Pipeline,1. Small ($0 – $50),Low,Medium
+001AMR00070,Wind Wholesale,AMER,AMER-International,Commercial,Ben Baker,Grant Gibson,8,8. Cold,0. None,Low,Low
+001AMR00071,Osprey Outfitters,AMER,AMER-West,Commercial,Alice Anderson,Holly Hayes,1,1. Contracted,3. Large [$100 – $200),Medium,Medium
+001AMR00072,Silver Services,AMER,AMER-East,Commercial,Aaron Archer,Grant Gibson,5,5. Free / Trial Usage,1. Small ($0 – $50),Low,Low
+001AMR00073,Drake Dynamics,AMER,AMER-East,Commercial,Aaron Archer,Grant Gibson,8,8. Cold,0. None,No Recent Activity,Low
+001AMR00074,Edge Engineering,AMER,AMER-International,Commercial,Ben Baker,Grant Gibson,4,4. Self-Serve Usage,1. Small ($0 – $50),Low,Low
+001AMR00075,Echo Engineering,AMER,AMER-International,Enterprise,Carla Cruz,Holly Hayes,3,3. Prior Pipeline,2. Medium [$50 – $100),High,Low
+001AMR00076,Amber Analytics,AMER,AMER-West,Commercial,Alice Anderson,Grant Gibson,8,8. Cold,1. Small ($0 – $50),Low,High
+001AMR00077,Helm Health,AMER,AMER-International,Enterprise,Carla Cruz,Holly Hayes,3,3. Prior Pipeline,1. Small ($0 – $50),Low,Low
+001AMR00078,Everest Engineering,AMER,AMER-West,Enterprise,Alice Anderson,Grant Gibson,1,1. Contracted,2. Medium [$50 – $100),Low,Medium
+001AMR00079,Canyon Capital,AMER,AMER-International,Commercial,Ben Baker,Grant Gibson,8,8. Cold,0. None,No Recent Activity,No Activity
+001AMR00080,Eagle Enterprises,AMER,AMER-International,Commercial,Carla Cruz,Grant Gibson,6,6. Event Activity or Web Traffic,1. Small ($0 – $50),Low,No Activity
+001AMR00081,Sage Solutions,AMER,AMER-International,Enterprise,Ben Baker,Holly Hayes,3,3. Prior Pipeline,2. Medium [$50 – $100),Low,Low
+001AMR00082,Timber Therapeutics,AMER,AMER-International,Commercial,Ben Baker,Holly Hayes,6,6. Event Activity or Web Traffic,0. None,No Recent Activity,No Activity
+001AMR00083,Knox Knowledge,AMER,AMER-East,Enterprise,Aaron Archer,Grant Gibson,5,5. Free / Trial Usage,2. Medium [$50 – $100),No Recent Activity,Low
+001AMR00084,Bridge Biotech,AMER,AMER-East,Enterprise,Aaron Archer,Grant Gibson,5,5. Free / Trial Usage,0. None,Low,Low
+001AMR00085,Lark Links,AMER,AMER-International,Enterprise,Carla Cruz,Holly Hayes,3,3. Prior Pipeline,1. Small ($0 – $50),Low,Low
+001AMR00086,Olive Optics,AMER,AMER-West,Commercial,Alice Anderson,Holly Hayes,6,6. Event Activity or Web Traffic,2. Medium [$50 – $100),High,Low
+001AMR00087,Raven Research,AMER,AMER-International,Enterprise,Carla Cruz,Grant Gibson,3,3. Prior Pipeline,3. Large [$100 – $200),No Recent Activity,Medium
+001AMR00088,Phoenix Partners,AMER,AMER-International,Enterprise,Carla Cruz,Holly Hayes,3,3. Prior Pipeline,1. Small ($0 – $50),Medium,Medium
+001AMR00089,Rust Robotics,AMER,AMER-International,Enterprise,Ben Baker,Holly Hayes,7,7. Opt-Ins,0. None,Medium,Medium
+001AMR00090,Silver Systems,AMER,AMER-International,Enterprise,Ben Baker,Grant Gibson,5,5. Free / Trial Usage,1. Small ($0 – $50),No Recent Activity,No Activity
+001AMR00091,Slate Sciences,AMER,AMER-East,Enterprise,Aaron Archer,Holly Hayes,2,2. Open Pipeline,2. Medium [$50 – $100),Medium,Low
+001AMR00092,Crest Consulting,AMER,AMER-West,Commercial,Alice Anderson,Holly Hayes,5,5. Free / Trial Usage,1. Small ($0 – $50),Low,High
+001AMR00093,Eclipse Energy,AMER,AMER-International,Enterprise,Carla Cruz,Holly Hayes,5,5. Free / Trial Usage,1. Small ($0 – $50),Medium,Medium
+001AMR00094,Sierra Systems,AMER,AMER-International,Enterprise,Carla Cruz,Holly Hayes,5,5. Free / Trial Usage,2. Medium [$50 – $100),Low,High
+001AMR00095,Cliff Computing,AMER,AMER-West,Commercial,Alice Anderson,Holly Hayes,5,5. Free / Trial Usage,0. None,Low,Low
+001AMR00096,Junction Junctions,AMER,AMER-West,Commercial,Alice Anderson,Grant Gibson,7,7. Opt-Ins,1. Small ($0 – $50),Low,Low
+001AMR00097,Opal Operations,AMER,AMER-East,Commercial,Aaron Archer,Holly Hayes,6,6. Event Activity or Web Traffic,0. None,High,Low
+001AMR00098,Phoenix Productions,AMER,AMER-West,Commercial,Alice Anderson,Holly Hayes,5,5. Free / Trial Usage,1. Small ($0 – $50),Medium,Low
+001AMR00099,Knox Kinetics,AMER,AMER-International,Commercial,Ben Baker,Grant Gibson,7,7. Opt-Ins,0. None,Low,Low
+001AMR00100,Lark Labs,AMER,AMER-International,Enterprise,Carla Cruz,Grant Gibson,4,4. Self-Serve Usage,1. Small ($0 – $50),Low,No Activity
+001AMR00101,Everest Electronics,AMER,AMER-West,Enterprise,Alice Anderson,Holly Hayes,6,6. Event Activity or Web Traffic,1. Small ($0 – $50),Low,Low
+001AMR00102,Apex Architecture,AMER,AMER-International,Commercial,Ben Baker,Holly Hayes,5,5. Free / Trial Usage,2. Medium [$50 – $100),No Recent Activity,Medium
+001AMR00103,Delta Dynamics,AMER,AMER-International,Commercial,Carla Cruz,Holly Hayes,5,5. Free / Trial Usage,0. None,No Recent Activity,High
+001AMR00104,Basalt Biotech,AMER,AMER-International,Commercial,Carla Cruz,Grant Gibson,6,6. Event Activity or Web Traffic,1. Small ($0 – $50),Medium,High
+001AMR00105,Atlas Automation,AMER,AMER-International,Commercial,Carla Cruz,Holly Hayes,5,5. Free / Trial Usage,0. None,Medium,Low
+001AMR00106,Eagle Electronics,AMER,AMER-West,Commercial,Alice Anderson,Holly Hayes,8,8. Cold,0. None,Medium,Medium
+001AMR00107,Acorn Architecture,AMER,AMER-East,Enterprise,Aaron Archer,Holly Hayes,2,2. Open Pipeline,1. Small ($0 – $50),Low,No Activity
+001AMR00108,Edge Energy,AMER,AMER-International,Enterprise,Ben Baker,Grant Gibson,5,5. Free / Trial Usage,1. Small ($0 – $50),High,Low
+001AMR00109,Inlet Industries,AMER,AMER-East,Enterprise,Aaron Archer,Holly Hayes,2,2. Open Pipeline,1. Small ($0 – $50),Low,High
+001AMR00110,Crown Capital,AMER,AMER-International,Enterprise,Carla Cruz,Grant Gibson,8,8. Cold,0. None,Low,Low
+001EME00111,Crest Commerce,EMEA,EMEA-North,Enterprise,Julia Jensen,Rachel Ross,7,7. Opt-Ins,1. Small ($0 – $50),No Recent Activity,Medium
+001EME00112,Briar Biotech,EMEA,EMEA-North,Enterprise,Laura Lane,Rachel Ross,8,8. Cold,0. None,Medium,Medium
+001EME00113,Slate Solutions,EMEA,EMEA-South,Commercial,Mark Mitchell,Rachel Ross,2,2. Open Pipeline,0. None,Medium,High
+001EME00114,Needle Nexus,EMEA,EMEA-North,Commercial,Laura Lane,Rachel Ross,8,8. Cold,1. Small ($0 – $50),Medium,Low
+001EME00115,Peak Pharma,EMEA,EMEA-North,Enterprise,Laura Lane,Rachel Ross,6,6. Event Activity or Web Traffic,0. None,No Recent Activity,High
+001EME00116,Vine Vision,EMEA,EMEA-North,Enterprise,Julia Jensen,Rachel Ross,5,5. Free / Trial Usage,1. Small ($0 – $50),No Recent Activity,Low
+001EME00117,Harbor Hardware,EMEA,EMEA-North,Commercial,Laura Lane,Quinn Quincy,6,6. Event Activity or Web Traffic,1. Small ($0 – $50),No Recent Activity,Low
+001EME00118,Kodiak Kinetics,EMEA,EMEA-South,Enterprise,Mark Mitchell,Quinn Quincy,2,2. Open Pipeline,2. Medium [$50 – $100),High,Low
+001EME00119,Alpine Advisors,EMEA,EMEA-North,Commercial,Julia Jensen,Quinn Quincy,1,1. Contracted,2. Medium [$50 – $100),Medium,Low
+001EME00120,Pulse Partners,EMEA,EMEA-South,Enterprise,Mark Mitchell,Quinn Quincy,4,4. Self-Serve Usage,2. Medium [$50 – $100),No Recent Activity,Low
+001EME00121,Helm Holdings,EMEA,EMEA-South,Enterprise,Mark Mitchell,Rachel Ross,1,1. Contracted,1. Small ($0 – $50),High,Medium
+001EME00122,Arrow Automation,EMEA,EMEA-North,Enterprise,Julia Jensen,Quinn Quincy,5,5. Free / Trial Usage,1. Small ($0 – $50),Low,Low
+001EME00123,Cliff Consulting,EMEA,EMEA-North,Enterprise,Laura Lane,Rachel Ross,8,8. Cold,1. Small ($0 – $50),Medium,High
+001EME00124,Summit Services,EMEA,EMEA-North,Enterprise,Kevin Knight,Quinn Quincy,5,5. Free / Trial Usage,1. Small ($0 – $50),Medium,Low
+001EME00125,Unity Utilities,EMEA,EMEA-North,Commercial,Kevin Knight,Rachel Ross,4,4. Self-Serve Usage,3. Large [$100 – $200),No Recent Activity,Low
+001EME00126,Moss Motors,EMEA,EMEA-South,Commercial,Mark Mitchell,Quinn Quincy,8,8. Cold,0. None,Low,Low
+001EME00127,Raven Robotics,EMEA,EMEA-South,Enterprise,Mark Mitchell,Rachel Ross,8,8. Cold,1. Small ($0 – $50),Low,Low
+001EME00128,Ridge Research,EMEA,EMEA-North,Commercial,Kevin Knight,Quinn Quincy,2,2. Open Pipeline,2. Medium [$50 – $100),Low,Medium
+001EME00129,Dune Data,EMEA,EMEA-North,Commercial,Julia Jensen,Rachel Ross,1,1. Contracted,2. Medium [$50 – $100),Low,No Activity
+001EME00130,Mint Motors,EMEA,EMEA-North,Commercial,Kevin Knight,Rachel Ross,5,5. Free / Trial Usage,1. Small ($0 – $50),Low,Low
+001EME00131,Gleam Group,EMEA,EMEA-South,Enterprise,Mark Mitchell,Rachel Ross,7,7. Opt-Ins,0. None,Low,No Activity
+001EME00132,Beacon Banking,EMEA,EMEA-North,Commercial,Kevin Knight,Quinn Quincy,3,3. Prior Pipeline,0. None,Low,Low
+001EME00133,Vine Ventures,EMEA,EMEA-North,Enterprise,Laura Lane,Quinn Quincy,4,4. Self-Serve Usage,1. Small ($0 – $50),Low,No Activity
+001EME00134,Heath Hardware,EMEA,EMEA-North,Commercial,Laura Lane,Rachel Ross,3,3. Prior Pipeline,0. None,No Recent Activity,Low
+001EME00135,Torch Trading,EMEA,EMEA-North,Commercial,Julia Jensen,Rachel Ross,6,6. Event Activity or Web Traffic,0. None,Medium,Low
+001EME00136,Ivy Instruments,EMEA,EMEA-North,Commercial,Laura Lane,Rachel Ross,7,7. Opt-Ins,0. None,Low,High
+001EME00137,Nova Navigation,EMEA,EMEA-North,Enterprise,Kevin Knight,Rachel Ross,4,4. Self-Serve Usage,2. Medium [$50 – $100),High,Low
+001EME00138,Orbit Outfitters,EMEA,EMEA-North,Enterprise,Laura Lane,Rachel Ross,1,1. Contracted,3. Large [$100 – $200),No Recent Activity,High
+001EME00139,Bridge Broadcasting,EMEA,EMEA-South,Enterprise,Mark Mitchell,Rachel Ross,7,7. Opt-Ins,0. None,High,Low
+001EME00140,Drift Design,EMEA,EMEA-North,Enterprise,Julia Jensen,Rachel Ross,3,3. Prior Pipeline,2. Medium [$50 – $100),Low,Low
+001EME00141,Inlet Innovations,EMEA,EMEA-North,Commercial,Julia Jensen,Quinn Quincy,5,5. Free / Trial Usage,1. Small ($0 – $50),Low,Low
+001EME00142,Linden Labs,EMEA,EMEA-North,Enterprise,Laura Lane,Rachel Ross,5,5. Free / Trial Usage,1. Small ($0 – $50),No Recent Activity,Low
+001EME00143,Dawn Design,EMEA,EMEA-North,Commercial,Laura Lane,Quinn Quincy,5,5. Free / Trial Usage,0. None,Medium,Medium
+001EME00144,Willow Wireless,EMEA,EMEA-North,Commercial,Julia Jensen,Rachel Ross,7,7. Opt-Ins,1. Small ($0 – $50),No Recent Activity,Medium
+001EME00145,Crest Computing,EMEA,EMEA-North,Commercial,Laura Lane,Rachel Ross,7,7. Opt-Ins,0. None,High,Medium
+001EME00146,Alder Analytics,EMEA,EMEA-North,Commercial,Kevin Knight,Rachel Ross,3,3. Prior Pipeline,1. Small ($0 – $50),Low,Medium
+001EME00147,Eagle Engineering,EMEA,EMEA-South,Commercial,Mark Mitchell,Rachel Ross,6,6. Event Activity or Web Traffic,1. Small ($0 – $50),Low,Low
+001EME00148,Boulder Broadcasting,EMEA,EMEA-South,Enterprise,Mark Mitchell,Rachel Ross,5,5. Free / Trial Usage,0. None,No Recent Activity,Low
+001EME00149,Fern Foundry,EMEA,EMEA-North,Enterprise,Laura Lane,Rachel Ross,1,1. Contracted,2. Medium [$50 – $100),High,Low
+001EME00150,Sierra Services,EMEA,EMEA-North,Commercial,Julia Jensen,Quinn Quincy,8,8. Cold,1. Small ($0 – $50),Low,Low
+001EME00151,Elm Engineering,EMEA,EMEA-North,Commercial,Kevin Knight,Quinn Quincy,5,5. Free / Trial Usage,1. Small ($0 – $50),Low,Low
+001EME00152,Cobalt Computing,EMEA,EMEA-North,Commercial,Laura Lane,Rachel Ross,3,3. Prior Pipeline,1. Small ($0 – $50),Low,High
+001EME00153,Icon Intelligence,EMEA,EMEA-North,Enterprise,Kevin Knight,Rachel Ross,6,6. Event Activity or Web Traffic,0. None,Low,Low
+001EME00154,Blaze Banking,EMEA,EMEA-South,Commercial,Mark Mitchell,Rachel Ross,5,5. Free / Trial Usage,0. None,Low,Low
+001EME00155,Reef Resources,EMEA,EMEA-North,Commercial,Laura Lane,Quinn Quincy,2,2. Open Pipeline,1. Small ($0 – $50),Medium,Low
+001EME00156,Pebble Pharma,EMEA,EMEA-North,Enterprise,Kevin Knight,Quinn Quincy,4,4. Self-Serve Usage,1. Small ($0 – $50),Medium,Low
+001EME00157,Gleam Global,EMEA,EMEA-North,Enterprise,Julia Jensen,Quinn Quincy,2,2. Open Pipeline,1. Small ($0 – $50),Low,Low
+001EME00158,Jasper Junctions,EMEA,EMEA-North,Enterprise,Julia Jensen,Quinn Quincy,5,5. Free / Trial Usage,0. None,Low,Low
+001EME00159,Prism Platforms,EMEA,EMEA-North,Commercial,Julia Jensen,Quinn Quincy,1,1. Contracted,1. Small ($0 – $50),No Recent Activity,Medium
+001EME00160,Mica Manufacturing,EMEA,EMEA-South,Enterprise,Mark Mitchell,Quinn Quincy,5,5. Free / Trial Usage,1. Small ($0 – $50),Low,No Activity
+001EME00161,Phoenix Pharma,EMEA,EMEA-South,Enterprise,Mark Mitchell,Quinn Quincy,5,5. Free / Trial Usage,0. None,Low,Medium
+001EME00162,Crystal Computing,EMEA,EMEA-North,Enterprise,Kevin Knight,Quinn Quincy,1,1. Contracted,2. Medium [$50 – $100),Low,Low
+001EME00163,Azure Automation,EMEA,EMEA-North,Commercial,Kevin Knight,Quinn Quincy,3,3. Prior Pipeline,1. Small ($0 – $50),Low,Low
+001EME00164,Quest Quantum,EMEA,EMEA-North,Commercial,Julia Jensen,Rachel Ross,8,8. Cold,0. None,Low,Medium
+001EME00165,Drake Design,EMEA,EMEA-North,Enterprise,Julia Jensen,Rachel Ross,5,5. Free / Trial Usage,1. Small ($0 – $50),Medium,Medium
+001EME00166,Prism Productions,EMEA,EMEA-North,Enterprise,Laura Lane,Rachel Ross,8,8. Cold,0. None,Low,Low
+001EME00167,Olive Operations,EMEA,EMEA-North,Commercial,Kevin Knight,Quinn Quincy,1,1. Contracted,2. Medium [$50 – $100),Low,Medium
+001EME00168,Flint Foundry,EMEA,EMEA-North,Enterprise,Julia Jensen,Quinn Quincy,2,2. Open Pipeline,1. Small ($0 – $50),Low,Low
+001EME00169,Juniper Junctions,EMEA,EMEA-North,Enterprise,Laura Lane,Rachel Ross,6,6. Event Activity or Web Traffic,1. Small ($0 – $50),No Recent Activity,Low
+001EME00170,Amber Architecture,EMEA,EMEA-North,Commercial,Kevin Knight,Quinn Quincy,5,5. Free / Trial Usage,0. None,Low,Low
+001EME00171,Arctic Advisors,EMEA,EMEA-South,Commercial,Mark Mitchell,Quinn Quincy,5,5. Free / Trial Usage,1. Small ($0 – $50),High,No Activity
+001EME00172,Pulse Productions,EMEA,EMEA-South,Enterprise,Mark Mitchell,Quinn Quincy,2,2. Open Pipeline,1. Small ($0 – $50),No Recent Activity,Medium
+001EME00173,Delta Digital,EMEA,EMEA-North,Enterprise,Julia Jensen,Rachel Ross,4,4. Self-Serve Usage,0. None,Low,High
+001EME00174,Sierra Solutions,EMEA,EMEA-North,Commercial,Kevin Knight,Rachel Ross,3,3. Prior Pipeline,1. Small ($0 – $50),Medium,Low
+001EME00175,Slate Systems,EMEA,EMEA-North,Commercial,Kevin Knight,Quinn Quincy,7,7. Opt-Ins,1. Small ($0 – $50),Low,No Activity
+001EME00176,Crystal Capital,EMEA,EMEA-North,Enterprise,Julia Jensen,Rachel Ross,6,6. Event Activity or Web Traffic,0. None,No Recent Activity,Low
+001EME00177,Hawk Health,EMEA,EMEA-North,Commercial,Julia Jensen,Quinn Quincy,3,3. Prior Pipeline,1. Small ($0 – $50),High,Medium
+001EME00178,Monarch Media,EMEA,EMEA-South,Enterprise,Mark Mitchell,Quinn Quincy,2,2. Open Pipeline,1. Small ($0 – $50),No Recent Activity,Low
+001EME00179,Willow Works,EMEA,EMEA-South,Commercial,Mark Mitchell,Rachel Ross,8,8. Cold,1. Small ($0 – $50),No Recent Activity,Low
+001EME00180,Isle Innovations,EMEA,EMEA-North,Commercial,Laura Lane,Rachel Ross,5,5. Free / Trial Usage,0. None,Low,High
+001EME00181,Icon Innovations,EMEA,EMEA-North,Commercial,Laura Lane,Quinn Quincy,5,5. Free / Trial Usage,2. Medium [$50 – $100),High,Low
+001EME00182,Pine Pharma,EMEA,EMEA-North,Enterprise,Laura Lane,Quinn Quincy,2,2. Open Pipeline,0. None,Low,Low
+001EME00183,Acorn Aerospace,EMEA,EMEA-North,Enterprise,Julia Jensen,Quinn Quincy,1,1. Contracted,1. Small ($0 – $50),Medium,Low
+001EME00184,Sage Services,EMEA,EMEA-North,Commercial,Laura Lane,Quinn Quincy,2,2. Open Pipeline,2. Medium [$50 – $100),Low,Low
+001EME00185,North Nexus,EMEA,EMEA-North,Enterprise,Laura Lane,Quinn Quincy,3,3. Prior Pipeline,2. Medium [$50 – $100),Medium,Medium
+001EME00186,Griffin Group,EMEA,EMEA-South,Commercial,Mark Mitchell,Rachel Ross,3,3. Prior Pipeline,0. None,Low,Low
+001EME00187,Atlas Advisors,EMEA,EMEA-North,Enterprise,Kevin Knight,Rachel Ross,4,4. Self-Serve Usage,0. None,Medium,Medium
+001EME00188,Acorn Advisors,EMEA,EMEA-North,Commercial,Julia Jensen,Rachel Ross,5,5. Free / Trial Usage,1. Small ($0 – $50),Low,No Activity
+001EME00189,Onyx Outfitters,EMEA,EMEA-South,Commercial,Mark Mitchell,Rachel Ross,8,8. Cold,1. Small ($0 – $50),Low,No Activity
+001EME00190,Cloud Computing,EMEA,EMEA-North,Enterprise,Julia Jensen,Rachel Ross,5,5. Free / Trial Usage,1. Small ($0 – $50),High,Low
+001EME00191,Silver Solutions,EMEA,EMEA-South,Commercial,Mark Mitchell,Rachel Ross,2,2. Open Pipeline,1. Small ($0 – $50),High,No Activity
+001EME00192,Flame Foundry,EMEA,EMEA-North,Enterprise,Julia Jensen,Quinn Quincy,6,6. Event Activity or Web Traffic,1. Small ($0 – $50),Low,No Activity
+001EME00193,Dove Data,EMEA,EMEA-North,Enterprise,Laura Lane,Rachel Ross,1,1. Contracted,1. Small ($0 – $50),No Recent Activity,Low
+001EME00194,Trail Therapeutics,EMEA,EMEA-South,Enterprise,Mark Mitchell,Rachel Ross,5,5. Free / Trial Usage,1. Small ($0 – $50),No Recent Activity,Low
+001EME00195,Beacon Broadcasting,EMEA,EMEA-North,Commercial,Julia Jensen,Rachel Ross,7,7. Opt-Ins,1. Small ($0 – $50),Low,Low
+001EME00196,Briar Banking,EMEA,EMEA-North,Commercial,Kevin Knight,Rachel Ross,5,5. Free / Trial Usage,0. None,Low,Medium
+001EME00197,Ember Electronics,EMEA,EMEA-North,Commercial,Julia Jensen,Rachel Ross,5,5. Free / Trial Usage,1. Small ($0 – $50),High,No Activity
+001EME00198,Beacon Brands,EMEA,EMEA-North,Commercial,Julia Jensen,Quinn Quincy,7,7. Opt-Ins,1. Small ($0 – $50),Low,Low
+001EME00199,Drift Data,EMEA,EMEA-North,Enterprise,Kevin Knight,Quinn Quincy,2,2. Open Pipeline,2. Medium [$50 – $100),No Recent Activity,Medium
+001EME00200,Yield Yards,EMEA,EMEA-North,Enterprise,Laura Lane,Quinn Quincy,6,6. Event Activity or Web Traffic,1. Small ($0 – $50),Medium,Low
+001EME00201,Bridge Brands,EMEA,EMEA-North,Commercial,Kevin Knight,Quinn Quincy,8,8. Cold,1. Small ($0 – $50),Low,Low
+001EME00202,Azure Architecture,EMEA,EMEA-North,Commercial,Laura Lane,Rachel Ross,6,6. Event Activity or Web Traffic,0. None,High,Medium
+001EME00203,Flux Fabrication,EMEA,EMEA-South,Commercial,Mark Mitchell,Quinn Quincy,5,5. Free / Trial Usage,1. Small ($0 – $50),Medium,No Activity
+001EME00204,Edge Enterprises,EMEA,EMEA-North,Enterprise,Laura Lane,Rachel Ross,8,8. Cold,1. Small ($0 – $50),Low,Medium
+001EME00205,Silver Sciences,EMEA,EMEA-South,Enterprise,Mark Mitchell,Rachel Ross,5,5. Free / Trial Usage,0. None,Medium,Low
+001EME00206,Onyx Optics,EMEA,EMEA-North,Commercial,Julia Jensen,Quinn Quincy,7,7. Opt-Ins,2. Medium [$50 – $100),Medium,Low
+001EME00207,Umber Unlimited,EMEA,EMEA-North,Commercial,Laura Lane,Quinn Quincy,3,3. Prior Pipeline,2. Medium [$50 – $100),Medium,Low
+001EME00208,Heath Hosting,EMEA,EMEA-North,Enterprise,Kevin Knight,Rachel Ross,1,1. Contracted,4. Very Large ($200+),Low,Medium
+001EME00209,Arctic Aerospace,EMEA,EMEA-North,Commercial,Julia Jensen,Quinn Quincy,2,2. Open Pipeline,1. Small ($0 – $50),Medium,Low
+001EME00210,Sierra Sciences,EMEA,EMEA-North,Enterprise,Laura Lane,Rachel Ross,1,1. Contracted,3. Large [$100 – $200),Low,Low
+001APJ00211,Spark Systems,APJ,APJ-North,Enterprise,Sarah Stone,Simon Scott,6,6. Event Activity or Web Traffic,0. None,No Recent Activity,Medium
+001APJ00212,Delta Design,APJ,APJ-South,Enterprise,Tom Torres,Tina Tran,6,6. Event Activity or Web Traffic,1. Small ($0 – $50),No Recent Activity,No Activity
+001APJ00213,Flux Foundry,APJ,APJ-South,Enterprise,Tom Torres,Simon Scott,3,3. Prior Pipeline,0. None,Low,High
+001APJ00214,Echo Enterprises,APJ,APJ-South,Commercial,Tom Torres,Simon Scott,8,8. Cold,2. Medium [$50 – $100),High,Low
+001APJ00215,Ledge Links,APJ,APJ-South,Commercial,Uma Uddin,Tina Tran,1,1. Contracted,4. Very Large ($200+),No Recent Activity,Low
+001APJ00216,Nova Networks,APJ,APJ-North,Commercial,Sarah Stone,Simon Scott,2,2. Open Pipeline,2. Medium [$50 – $100),No Recent Activity,No Activity
+001APJ00217,Trail Trading,APJ,APJ-South,Commercial,Uma Uddin,Tina Tran,6,6. Event Activity or Web Traffic,0. None,Medium,Low
+001APJ00218,Heath Health,APJ,APJ-South,Enterprise,Uma Uddin,Simon Scott,5,5. Free / Trial Usage,2. Medium [$50 – $100),Low,Low
+001APJ00219,Dune Dynamics,APJ,APJ-South,Enterprise,Tom Torres,Simon Scott,3,3. Prior Pipeline,2. Medium [$50 – $100),Medium,High
+001APJ00220,Basalt Brands,APJ,APJ-South,Commercial,Tom Torres,Tina Tran,6,6. Event Activity or Web Traffic,0. None,Low,Medium
+001APJ00221,Ember Engineering,APJ,APJ-South,Enterprise,Tom Torres,Tina Tran,8,8. Cold,1. Small ($0 – $50),No Recent Activity,No Activity
+001APJ00222,Crown Communications,APJ,APJ-North,Enterprise,Sarah Stone,Simon Scott,7,7. Opt-Ins,1. Small ($0 – $50),Low,Low
+001APJ00223,Frost Foundry,APJ,APJ-South,Enterprise,Victor Vega,Simon Scott,5,5. Free / Trial Usage,2. Medium [$50 – $100),Medium,High
+001APJ00224,Meridian Materials,APJ,APJ-North,Enterprise,Sarah Stone,Tina Tran,2,2. Open Pipeline,1. Small ($0 – $50),Low,Low
+001APJ00225,Orbit Optics,APJ,APJ-South,Enterprise,Victor Vega,Simon Scott,6,6. Event Activity or Web Traffic,1. Small ($0 – $50),Low,Low
+001APJ00226,Brook Broadcasting,APJ,APJ-South,Enterprise,Uma Uddin,Simon Scott,8,8. Cold,1. Small ($0 – $50),No Recent Activity,Medium
+001APJ00227,Vale Vision,APJ,APJ-North,Enterprise,Sarah Stone,Tina Tran,2,2. Open Pipeline,2. Medium [$50 – $100),High,Low
+001APJ00228,Blaze Biotech,APJ,APJ-North,Enterprise,Sarah Stone,Tina Tran,5,5. Free / Trial Usage,1. Small ($0 – $50),Low,Medium
+001APJ00229,Grove Genetics,APJ,APJ-North,Enterprise,Sarah Stone,Tina Tran,8,8. Cold,1. Small ($0 – $50),No Recent Activity,High
+001APJ00230,Amber Automation,APJ,APJ-South,Commercial,Victor Vega,Tina Tran,5,5. Free / Trial Usage,2. Medium [$50 – $100),Low,High
+001APJ00231,Wave Wireless,APJ,APJ-South,Commercial,Tom Torres,Simon Scott,1,1. Contracted,2. Medium [$50 – $100),Medium,Low
+001APJ00232,Wharf Wireless,APJ,APJ-South,Commercial,Tom Torres,Tina Tran,1,1. Contracted,1. Small ($0 – $50),No Recent Activity,Low
+001APJ00233,Sage Sciences,APJ,APJ-South,Commercial,Victor Vega,Tina Tran,2,2. Open Pipeline,1. Small ($0 – $50),No Recent Activity,High
+001APJ00234,Horizon Hardware,APJ,APJ-North,Enterprise,Sarah Stone,Simon Scott,1,1. Contracted,2. Medium [$50 – $100),Low,No Activity
+001APJ00235,Cloud Communications,APJ,APJ-North,Commercial,Sarah Stone,Tina Tran,5,5. Free / Trial Usage,0. None,No Recent Activity,High
+001APJ00236,Wave Wholesale,APJ,APJ-South,Enterprise,Uma Uddin,Simon Scott,2,2. Open Pipeline,1. Small ($0 – $50),Low,Medium
+001APJ00237,Titan Transport,APJ,APJ-South,Commercial,Uma Uddin,Simon Scott,8,8. Cold,0. None,High,Medium
+001APJ00238,Onyx Operations,APJ,APJ-South,Commercial,Victor Vega,Simon Scott,2,2. Open Pipeline,1. Small ($0 – $50),No Recent Activity,Medium
+001APJ00239,Vertex Vision,APJ,APJ-South,Commercial,Victor Vega,Simon Scott,5,5. Free / Trial Usage,0. None,High,Low
+001APJ00240,Dawn Dynamics,APJ,APJ-South,Commercial,Tom Torres,Tina Tran,3,3. Prior Pipeline,2. Medium [$50 – $100),Low,Low
+001APJ00241,Torch Technologies,APJ,APJ-North,Enterprise,Sarah Stone,Simon Scott,2,2. Open Pipeline,2. Medium [$50 – $100),Medium,Medium
+001APJ00242,Meridian Manufacturing,APJ,APJ-South,Enterprise,Victor Vega,Tina Tran,5,5. Free / Trial Usage,1. Small ($0 – $50),High,Medium
+001APJ00243,Apex Automation,APJ,APJ-South,Commercial,Victor Vega,Simon Scott,1,1. Contracted,4. Very Large ($200+),No Recent Activity,Low
+001APJ00244,Amber Advisors,APJ,APJ-South,Commercial,Tom Torres,Tina Tran,8,8. Cold,0. None,Medium,High
+001APJ00245,Lunar Links,APJ,APJ-South,Commercial,Tom Torres,Tina Tran,3,3. Prior Pipeline,1. Small ($0 – $50),Low,High
+001APJ00246,Eclipse Engineering,APJ,APJ-South,Commercial,Uma Uddin,Simon Scott,3,3. Prior Pipeline,2. Medium [$50 – $100),Low,High
+001APJ00247,Glacier Group,APJ,APJ-South,Commercial,Victor Vega,Simon Scott,5,5. Free / Trial Usage,1. Small ($0 – $50),No Recent Activity,Low
+001APJ00248,Terra Trading,APJ,APJ-South,Commercial,Tom Torres,Simon Scott,5,5. Free / Trial Usage,1. Small ($0 – $50),No Recent Activity,Low
+001APJ00249,Mesa Motors,APJ,APJ-North,Enterprise,Sarah Stone,Tina Tran,4,4. Self-Serve Usage,1. Small ($0 – $50),No Recent Activity,No Activity
+001APJ00250,Basalt Broadcasting,APJ,APJ-South,Commercial,Uma Uddin,Tina Tran,5,5. Free / Trial Usage,0. None,High,No Activity
+001APJ00251,Pine Partners,APJ,APJ-North,Enterprise,Sarah Stone,Simon Scott,3,3. Prior Pipeline,1. Small ($0 – $50),No Recent Activity,No Activity
+001APJ00252,Echo Electronics,APJ,APJ-North,Enterprise,Sarah Stone,Tina Tran,3,3. Prior Pipeline,0. None,Low,Medium
+001APJ00253,Titan Trading,APJ,APJ-South,Commercial,Uma Uddin,Simon Scott,5,5. Free / Trial Usage,0. None,Medium,Low
+001APJ00254,Prism Pharma,APJ,APJ-South,Enterprise,Victor Vega,Simon Scott,2,2. Open Pipeline,2. Medium [$50 – $100),Low,No Activity
+001APJ00255,Viper Ventures,APJ,APJ-South,Commercial,Tom Torres,Tina Tran,1,1. Contracted,2. Medium [$50 – $100),Low,Low
+001APJ00256,Opal Outfitters,APJ,APJ-South,Commercial,Uma Uddin,Simon Scott,8,8. Cold,1. Small ($0 – $50),Low,Low
+001APJ00257,Holly Hosting,APJ,APJ-South,Enterprise,Victor Vega,Simon Scott,6,6. Event Activity or Web Traffic,1. Small ($0 – $50),Medium,Low
+001APJ00258,Vale Vanguard,APJ,APJ-South,Enterprise,Uma Uddin,Simon Scott,7,7. Opt-Ins,2. Medium [$50 – $100),Medium,High
+001APJ00259,Cliff Capital,APJ,APJ-South,Commercial,Tom Torres,Tina Tran,5,5. Free / Trial Usage,1. Small ($0 – $50),No Recent Activity,Low
+001APJ00260,Slate Services,APJ,APJ-South,Commercial,Uma Uddin,Simon Scott,6,6. Event Activity or Web Traffic,2. Medium [$50 – $100),Low,Medium
+001APJ00261,Terra Transport,APJ,APJ-South,Enterprise,Victor Vega,Simon Scott,8,8. Cold,2. Medium [$50 – $100),Low,Medium
+001APJ00262,Tide Therapeutics,APJ,APJ-South,Enterprise,Tom Torres,Simon Scott,1,1. Contracted,2. Medium [$50 – $100),Low,No Activity
+001APJ00263,Atlas Analytics,APJ,APJ-South,Enterprise,Uma Uddin,Tina Tran,7,7. Opt-Ins,2. Medium [$50 – $100),Low,Low
+001APJ00264,Urban Unlimited,APJ,APJ-North,Enterprise,Sarah Stone,Tina Tran,5,5. Free / Trial Usage,1. Small ($0 – $50),Medium,Medium
+001APJ00265,Mint Media,APJ,APJ-North,Commercial,Sarah Stone,Tina Tran,5,5. Free / Trial Usage,0. None,Low,Medium
+001APJ00266,Kindle Kinetics,APJ,APJ-South,Commercial,Tom Torres,Tina Tran,1,1. Contracted,4. Very Large ($200+),Low,High
+001APJ00267,Cipher Computing,APJ,APJ-North,Commercial,Sarah Stone,Simon Scott,1,1. Contracted,3. Large [$100 – $200),Low,Low
+001APJ00268,Mesa Media,APJ,APJ-North,Commercial,Sarah Stone,Tina Tran,5,5. Free / Trial Usage,2. Medium [$50 – $100),Low,High
+001APJ00269,Oak Operations,APJ,APJ-South,Commercial,Tom Torres,Tina Tran,5,5. Free / Trial Usage,0. None,Low,No Activity
+001APJ00270,Wren Works,APJ,APJ-South,Commercial,Victor Vega,Tina Tran,8,8. Cold,1. Small ($0 – $50),Low,No Activity
+001APJ00271,Arrow Aerospace,APJ,APJ-South,Commercial,Tom Torres,Tina Tran,3,3. Prior Pipeline,0. None,Low,No Activity
+001APJ00272,Sage Software,APJ,APJ-South,Commercial,Victor Vega,Simon Scott,7,7. Opt-Ins,1. Small ($0 – $50),High,High
+001APJ00273,Holly Hardware,APJ,APJ-South,Commercial,Uma Uddin,Simon Scott,5,5. Free / Trial Usage,0. None,Low,Medium
+001APJ00274,Pier Pharma,APJ,APJ-South,Enterprise,Uma Uddin,Tina Tran,4,4. Self-Serve Usage,2. Medium [$50 – $100),Low,No Activity
+001APJ00275,Pine Productions,APJ,APJ-South,Commercial,Victor Vega,Tina Tran,6,6. Event Activity or Web Traffic,0. None,No Recent Activity,Medium
+001APJ00276,Harbor Health,APJ,APJ-North,Enterprise,Sarah Stone,Tina Tran,4,4. Self-Serve Usage,1. Small ($0 – $50),High,Medium
+001APJ00277,Griffin Global,APJ,APJ-South,Commercial,Victor Vega,Tina Tran,5,5. Free / Trial Usage,0. None,Low,Medium
+001APJ00278,Jade Junctions,APJ,APJ-South,Enterprise,Tom Torres,Simon Scott,7,7. Opt-Ins,0. None,Low,No Activity
+001APJ00279,Iron Intelligence,APJ,APJ-South,Commercial,Uma Uddin,Simon Scott,7,7. Opt-Ins,1. Small ($0 – $50),Low,Medium
+001APJ00280,Dove Dynamics,APJ,APJ-South,Commercial,Victor Vega,Tina Tran,4,4. Self-Serve Usage,1. Small ($0 – $50),Low,No Activity
+001APJ00281,Pulse Platforms,APJ,APJ-South,Enterprise,Tom Torres,Simon Scott,6,6. Event Activity or Web Traffic,0. None,Low,Low
+001APJ00282,Holly Health,APJ,APJ-North,Commercial,Sarah Stone,Simon Scott,7,7. Opt-Ins,0. None,Low,Low
+001APJ00283,Osprey Optics,APJ,APJ-South,Commercial,Tom Torres,Simon Scott,1,1. Contracted,1. Small ($0 – $50),Low,Medium
+001APJ00284,Crystal Consulting,APJ,APJ-South,Commercial,Victor Vega,Simon Scott,7,7. Opt-Ins,1. Small ($0 – $50),High,Low
+001APJ00285,Drake Digital,APJ,APJ-South,Commercial,Uma Uddin,Tina Tran,8,8. Cold,0. None,Low,Medium
+001APJ00286,Silver Software,APJ,APJ-South,Enterprise,Victor Vega,Simon Scott,2,2. Open Pipeline,1. Small ($0 – $50),Low,Medium
+001APJ00287,Bay Banking,APJ,APJ-South,Commercial,Uma Uddin,Tina Tran,2,2. Open Pipeline,0. None,Low,Low
+001APJ00288,Gate Group,APJ,APJ-South,Enterprise,Tom Torres,Tina Tran,5,5. Free / Trial Usage,1. Small ($0 – $50),Low,Low
+001APJ00289,Timber Technologies,APJ,APJ-South,Commercial,Tom Torres,Simon Scott,8,8. Cold,1. Small ($0 – $50),Low,Low
+001APJ00290,Jasper Joineries,APJ,APJ-South,Commercial,Tom Torres,Tina Tran,7,7. Opt-Ins,1. Small ($0 – $50),No Recent Activity,Low
+001APJ00291,Dawn Data,APJ,APJ-South,Enterprise,Uma Uddin,Simon Scott,3,3. Prior Pipeline,2. Medium [$50 – $100),High,No Activity
+001APJ00292,Pier Platforms,APJ,APJ-South,Commercial,Tom Torres,Simon Scott,3,3. Prior Pipeline,2. Medium [$50 – $100),Low,Medium
+001APJ00293,Peak Partners,APJ,APJ-South,Commercial,Uma Uddin,Simon Scott,2,2. Open Pipeline,0. None,Medium,Medium
+001APJ00294,Falcon Fabrication,APJ,APJ-South,Enterprise,Uma Uddin,Tina Tran,5,5. Free / Trial Usage,0. None,No Recent Activity,Low
+001APJ00295,Pier Partners,APJ,APJ-North,Commercial,Sarah Stone,Simon Scott,2,2. Open Pipeline,0. None,No Recent Activity,Low
+001APJ00296,Eclipse Enterprises,APJ,APJ-North,Enterprise,Sarah Stone,Tina Tran,5,5. Free / Trial Usage,1. Small ($0 – $50),Low,Medium
+001APJ00297,Peak Productions,APJ,APJ-North,Enterprise,Sarah Stone,Simon Scott,4,4. Self-Serve Usage,2. Medium [$50 – $100),Low,Low
+001APJ00298,Moss Materials,APJ,APJ-South,Commercial,Victor Vega,Simon Scott,5,5. Free / Trial Usage,2. Medium [$50 – $100),No Recent Activity,Medium
+001APJ00299,Forge Foundry,APJ,APJ-North,Enterprise,Sarah Stone,Tina Tran,1,1. Contracted,3. Large [$100 – $200),Medium,Low
+001APJ00300,Lattice Labs,APJ,APJ-North,Commercial,Sarah Stone,Simon Scott,4,4. Self-Serve Usage,2. Medium [$50 – $100),Medium,No Activity

@@ -1,10 +1,9 @@
-"""Tests for Territory Navigator data generator."""
+"""Tests for the RevOps demo data generator."""
 import pytest
 from datetime import date
-from collections import Counter
+from collections import Counter, defaultdict
 from generate import (
-    ACCT_COLS, OPP_COLS, ORG_COLS,
-    ACCOUNTS_PER_REGION, FUNNEL_NAMES, ARR_RANGES,
+    ACCT_COLS, OPP_COLS, ACCOUNTS_PER_REGION,
     fiscal_quarter, generate_all, generate_company_names,
 )
 
@@ -12,8 +11,7 @@ from generate import (
 @pytest.fixture(scope="module")
 def dataset():
     """Generate the full dataset once for all tests."""
-    accounts, opps, orgs = generate_all()
-    return accounts, opps, orgs
+    return generate_all()
 
 
 @pytest.fixture(scope="module")
@@ -26,130 +24,81 @@ def opps(dataset):
     return dataset[1]
 
 
-@pytest.fixture(scope="module")
-def orgs(dataset):
-    return dataset[2]
-
-
 # ── Name generation ──────────────────────────────────────────────────────────
 
 class TestNameGeneration:
     def test_generates_requested_count(self):
-        names = generate_company_names(300)
-        assert len(names) == 300
+        assert len(generate_company_names(300)) == 300
 
     def test_names_are_unique(self):
-        names = generate_company_names(300)
-        name_strs = [n[0] for n in names]
-        assert len(set(name_strs)) == 300
+        assert len(set(generate_company_names(300))) == 300
 
     def test_names_are_alliterative(self):
-        names = generate_company_names(300)
-        for name, slug in names:
+        for name in generate_company_names(300):
             words = name.split()
             assert len(words) == 2
-            assert words[0][0] == words[1][0], (
-                f"Not alliterative: {name}")
-
-    def test_slugs_are_lowercase_hyphenated(self):
-        names = generate_company_names(100)
-        for name, slug in names:
-            assert slug == name.lower().replace(" ", "-")
-
-    def test_pool_large_enough_for_scaling(self):
-        names = generate_company_names(500)
-        assert len(names) == 500
+            assert words[0][0] == words[1][0], f"Not alliterative: {name}"
 
 
 # ── Volume and structure ─────────────────────────────────────────────────────
 
 class TestVolume:
     def test_total_account_count(self, accounts):
-        expected = sum(ACCOUNTS_PER_REGION.values())
-        assert len(accounts) == expected
+        assert len(accounts) == sum(ACCOUNTS_PER_REGION.values())
 
     def test_region_counts(self, accounts):
-        by_region = Counter(a["account_owner_region"] for a in accounts)
+        by_region = Counter(a["region"] for a in accounts)
         for region, expected in ACCOUNTS_PER_REGION.items():
             assert by_region[region] == expected
 
     def test_opps_not_empty(self, opps):
         assert len(opps) > 0
 
-    def test_orgs_not_empty(self, orgs):
-        assert len(orgs) > 0
-
-
-# ── Schema ───────────────────────────────────────────────────────────────────
 
 class TestSchema:
     def test_account_columns(self, accounts):
-        for acct in accounts[:5]:
+        for acct in accounts:
             assert set(acct.keys()) == set(ACCT_COLS)
 
     def test_opp_columns(self, opps):
-        for opp in opps[:5]:
+        for opp in opps:
             assert set(opp.keys()) == set(OPP_COLS)
-
-    def test_org_columns(self, orgs):
-        for org in orgs[:5]:
-            assert set(org.keys()) == set(ORG_COLS)
 
 
 # ── Distribution ─────────────────────────────────────────────────────────────
 
 class TestDistribution:
     def test_all_funnel_stages_present(self, accounts):
-        stages = {a["account_funnel_score_number"] for a in accounts}
-        for s in range(1, 9):
-            assert s in stages, f"Funnel stage {s} missing"
+        stages = {a["funnel_stage_number"] for a in accounts}
+        assert stages == set(range(1, 9))
 
-    def test_all_regions_have_sellers(self, accounts):
+    def test_all_regions_have_several_owners(self, accounts):
         for region in ACCOUNTS_PER_REGION:
-            region_accounts = [
-                a for a in accounts if a["account_owner_region"] == region
-            ]
-            ae_names = {a["account_owner_name"] for a in region_accounts}
-            assert len(ae_names) >= 2, (
-                f"Region {region} has too few AEs: {ae_names}")
+            owners = {a["account_owner"] for a in accounts
+                      if a["region"] == region}
+            assert len(owners) >= 2, f"Region {region} has too few AEs"
 
     def test_tam_categories_present(self, accounts):
-        tams = {a["tam_category_family"] for a in accounts}
-        assert len(tams) >= 3
+        assert len({a["tam_category"] for a in accounts}) >= 3
 
     def test_behavior_signals_present(self, accounts):
-        signals = {a["company_behavior_signal_marketing_ops"]
-                   for a in accounts}
-        assert "High" in signals
-        assert "Low" in signals
+        signals = {a["behavior_signal"] for a in accounts}
+        assert {"High", "Low"} <= signals
 
-    def test_attainment_bands_present(self, accounts):
-        contracted = [a for a in accounts
-                      if a["account_funnel_score_number"] == 1]
-        bands = {a["consumption_committed_mrr_attainment_band_name_last_month"]
-                 for a in contracted}
-        assert len(bands) >= 3
+    def test_open_and_closed_opps_present(self, opps):
+        stages = {o["stage_number"] for o in opps}
+        assert 7 in stages
+        assert stages & {3, 4, 5, 6}
 
 
-# ── Referential integrity ────────────────────────────────────────────────────
+# ── Referential integrity and uniqueness ─────────────────────────────────────
 
-class TestReferentialIntegrity:
+class TestIntegrity:
     def test_opp_account_ids_exist(self, accounts, opps):
         acct_ids = {a["account_id"] for a in accounts}
         for opp in opps:
-            assert opp["account_id"] in acct_ids, (
-                f"Opp references missing account {opp['account_id']}")
+            assert opp["account_id"] in acct_ids
 
-    def test_org_account_ids_exist(self, accounts, orgs):
-        acct_ids = {a["account_id"] for a in accounts}
-        for org in orgs:
-            assert org["sfdc_account_id"] in acct_ids, (
-                f"Org references missing account {org['sfdc_account_id']}")
-
-
-# ── Uniqueness ───────────────────────────────────────────────────────────────
-
-class TestUniqueness:
     def test_account_ids_unique(self, accounts):
         ids = [a["account_id"] for a in accounts]
         assert len(set(ids)) == len(ids)
@@ -158,76 +107,20 @@ class TestUniqueness:
         ids = [o["opp_id"] for o in opps]
         assert len(set(ids)) == len(ids)
 
-
-# ── Revenue sanity ───────────────────────────────────────────────────────────
-
-class TestRevenue:
-    def test_contracted_have_positive_arr(self, accounts):
-        contracted = [a for a in accounts
-                      if a["account_funnel_score_number"] == 1]
-        assert len(contracted) > 0
-        for a in contracted:
-            if a["tam_category_family"] != "0. None":
-                assert a["arr_curr"] > 0, (
-                    f"Contracted account {a['account_id']} has zero ARR")
-
-    def test_non_contracted_have_zero_arr(self, accounts):
-        non_contracted = [a for a in accounts
-                          if a["account_funnel_score_number"] > 1]
-        for a in non_contracted:
-            assert a["arr_curr"] == 0, (
-                f"Non-contracted {a['account_id']} has ARR={a['arr_curr']}")
-
-    def test_arr_in_tam_range(self, accounts):
-        contracted = [a for a in accounts
-                      if a["account_funnel_score_number"] == 1]
-        for a in contracted:
-            tam = a["tam_category_family"]
-            arr = a["arr_curr"]
-            if tam in ARR_RANGES:
-                lo, hi = ARR_RANGES[tam]
-                assert lo <= arr <= hi, (
-                    f"ARR {arr} out of range [{lo},{hi}] for TAM {tam}")
-
-
-# ── Territory invariants ─────────────────────────────────────────────────────
-
-class TestTerritoryInvariants:
-    """Regression tests for the production invariant that each AE is tied to
-    exactly one L3 territory (and therefore exactly one RVP region).
-
-    The SQL dashboard's `filter_account_owner_id` template cascade relies on
-    this invariant; violating it causes per-territory account counts to be
-    over-reported because the cascade pulls in every account owned by an AE
-    who touches the selected territory.
-    """
-
-    def test_ae_does_not_span_multiple_l3(self, accounts):
-        from collections import defaultdict
+    def test_ae_works_in_one_sub_region(self, accounts):
+        """Filtering by AE and by sub-region must agree on account counts."""
         by_ae = defaultdict(set)
         for a in accounts:
-            by_ae[a["account_owner_id"]].add(
-                a["account_owner_l3_territory"])
-        offenders = {
-            ae: sorted(ls) for ae, ls in by_ae.items() if len(ls) > 1
-        }
-        assert not offenders, (
-            f"AEs spanning multiple L3 territories: {offenders}")
+            by_ae[a["account_owner"]].add(a["sub_region"])
+        offenders = {ae: s for ae, s in by_ae.items() if len(s) > 1}
+        assert not offenders
 
-    def test_ae_does_not_span_multiple_rvp_region(self, accounts):
-        from collections import defaultdict
-        by_ae = defaultdict(set)
+    def test_sub_region_belongs_to_region(self, accounts):
         for a in accounts:
-            by_ae[a["account_owner_id"]].add(
-                a["account_owner_rvp_region"])
-        offenders = {
-            ae: sorted(rs) for ae, rs in by_ae.items() if len(rs) > 1
-        }
-        assert not offenders, (
-            f"AEs spanning multiple RVP regions: {offenders}")
+            assert a["sub_region"].startswith(a["region"] + "-")
 
 
-# ── Fiscal calendar and quota ────────────────────────────────────────────────
+# ── Fiscal calendar ──────────────────────────────────────────────────────────
 
 class TestFiscalQuarter:
     @pytest.mark.parametrize("d, expected", [
@@ -241,25 +134,8 @@ class TestFiscalQuarter:
         assert fiscal_quarter(d) == expected
 
 
-class TestQuota:
-    def test_with_quota_is_consumption_not_quota(self, accounts):
-        for a in accounts:
-            if a["has_consumption_weighted_quota"] == "true":
-                assert a["consumption_weighted_last_month_with_quota"] == a["consumption_weighted_last_month"]
-
-
 # ── Idempotency ──────────────────────────────────────────────────────────────
 
 class TestIdempotency:
     def test_deterministic_output(self):
-        a1, o1, r1 = generate_all()
-        a2, o2, r2 = generate_all()
-        assert len(a1) == len(a2)
-        assert len(o1) == len(o2)
-        assert len(r1) == len(r2)
-        for x, y in zip(a1, a2):
-            assert x == y
-        for x, y in zip(o1, o2):
-            assert x == y
-        for x, y in zip(r1, r2):
-            assert x == y
+        assert generate_all() == generate_all()

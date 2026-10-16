@@ -1,0 +1,74 @@
+cubes:
+  - name: revops_opportunities
+    sql_table: revops.opportunities
+    data_source: default
+
+    measures:
+      - name: count
+        type: count
+        description: "Number of opportunities"
+
+      - name: total_nacv
+        type: sum
+        sql: net_nacv
+        title: "Total NACV"
+        description: "Total Net New Annual Contract Value (NACV)"
+
+      # Qualified Pipeline (stages 3-6)
+      - name: val_qp
+        type: sum
+        sql: "CASE WHEN {CUBE}.stage_number BETWEEN 3 AND 6 AND {CUBE}.net_nacv > 0 THEN {CUBE}.net_nacv ELSE 0 END"
+        title: "Qualified Pipeline NACV"
+        description: "Total Net NACV in qualified pipeline (stages 3-6 with positive NACV)"
+
+      - name: count_distinct_accounts_with_qp
+        type: count_distinct
+        sql: "CASE WHEN {CUBE}.stage_number BETWEEN 3 AND 6 AND {CUBE}.net_nacv > 0 THEN {CUBE}.account_id END"
+        title: "Accounts w/ QP"
+        description: "Number of distinct accounts with at least one opportunity in qualified pipeline"
+
+      - name: count_distinct_accounts
+        type: count_distinct
+        sql: "{CUBE}.account_id"
+        title: "Accounts with Opportunities"
+        description: "Number of distinct accounts with any opportunity (denominator for % w/ QP)"
+
+      - name: share_accounts_with_qualified_pipeline
+        title: Accounts with Qualified Pipeline (%)
+        description: "Accounts with qualified pipeline divided by accounts with any opportunity, within the query filters. No denominator returns null."
+        type: number
+        format: percent_0
+        sql: "1.0 * {count_distinct_accounts_with_qp} / NULLIF({count_distinct_accounts}, 0)"
+
+    dimensions:
+      - name: opp_id
+        sql: opp_id
+        type: string
+        primary_key: true
+        description: "Opportunity ID"
+      - name: account_id
+        sql: account_id
+        type: string
+        description: "Account ID the opportunity belongs to"
+      - name: opp_type
+        sql: opp_type
+        type: string
+        title: "Opportunity Type"
+        description: "New business, expansion or renewal"
+      - name: stage_name
+        sql: stage_name
+        type: string
+        description: "Opportunity stage name"
+      - name: stage_number
+        sql: stage_number
+        type: number
+        description: "Numeric opportunity stage (2-7, where 7 = Closed Won)"
+      - name: close_date
+        sql: "CAST({CUBE}.close_date AS TIMESTAMP)"
+        type: time
+        description: "Expected (or actual) close date"
+      - name: fiscal_quarter
+        sql: fiscal_quarter
+        type: string
+        title: "Fiscal Quarter"
+        description: "Fiscal quarter of the close date"
