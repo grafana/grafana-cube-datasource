@@ -37,9 +37,13 @@ services:
     volumes:
       - ./dev-environment/data/seeds/:/data/seeds/
       - ./dev-environment/data/migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./dev-environment/data/migrations/revops.sql:/docker-entrypoint-initdb.d/revops.sql
-      # Seed scripts only run on an empty volume, so later starts skip loading. Reset with `docker compose down -v`.
+      # init.sql only runs on an empty volume, so later starts skip loading. Reset with `docker compose down -v`.
       - postgres-data:/var/lib/postgresql
+    # Checked over TCP: the entrypoint's temporary init server only listens on the socket.
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-h', '127.0.0.1', '-U', 'user', '-d', 'jaffle_shop']
+      interval: 2s
+      start_period: 120s
     # Enable SQL queries in the logs (minimal output)
     command:
       [
@@ -53,6 +57,18 @@ services:
         '-c',
         'log_parameter_max_length=0',
       ]
+
+  # Drops and reloads the RevOps tables on every `docker compose up`, then exits.
+  revops-seed:
+    image: postgres:18@sha256:06cad38a5d9f5d24b4d83d86def30795d5e4b757fedbf5281172b576dedcd941
+    environment:
+      PGPASSWORD: password
+    volumes:
+      - ./dev-environment/data/migrations/revops.sql:/revops.sql:ro
+    command: ['psql', '-h', 'postgres', '-U', 'user', '-d', 'jaffle_shop', '-v', 'ON_ERROR_STOP=1', '--single-transaction', '-f', '/revops.sql']
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres-data:

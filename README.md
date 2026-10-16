@@ -11,7 +11,7 @@ Connect Grafana to [Cube](https://cube.dev/) for semantic layer analytics. Query
 
 ![BI Dashboard with Cross-Panel Filtering](src/img/screenshot-bi-dashboard.png)
 
-**[Run the RevOps demo locally →](dev-environment/README.md#revops-territory-navigator-example)** - the same dashboards we showed at GrafanaCON 2026, side by side on Cube and on plain PostgreSQL.
+**[Run the RevOps demo locally →](dev-environment/README.md#revops-territory-navigator-example)** - a cut-down version of the dashboards we showed at GrafanaCON 2026, side by side on Cube and on plain PostgreSQL.
 
 ## Why Use This Plugin?
 

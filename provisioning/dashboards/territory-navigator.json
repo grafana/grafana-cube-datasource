@@ -2139,16 +2139,12 @@
               "key": "territory_navigator.region",
               "keyLabel": "Region",
               "operator": "=|",
-              "value": "AMER",
+              "value": "$__all",
               "values": [
-                "AMER",
-                "APJ",
-                "EMEA"
+                "$__all"
               ],
               "valueLabels": [
-                "AMER",
-                "APJ",
-                "EMEA"
+                "All"
               ],
               "origin": "dashboard"
             },
@@ -2156,24 +2152,12 @@
               "key": "territory_navigator.sub_region",
               "keyLabel": "Sub-region",
               "operator": "=|",
-              "value": "AMER-East",
+              "value": "$__all",
               "values": [
-                "AMER-East",
-                "AMER-International",
-                "AMER-West",
-                "APJ-North",
-                "APJ-South",
-                "EMEA-North",
-                "EMEA-South"
+                "$__all"
               ],
               "valueLabels": [
-                "AMER-East",
-                "AMER-International",
-                "AMER-West",
-                "APJ-North",
-                "APJ-South",
-                "EMEA-North",
-                "EMEA-South"
+                "All"
               ],
               "origin": "dashboard"
             },
@@ -2181,14 +2165,12 @@
               "key": "territory_navigator.segment",
               "keyLabel": "Segment",
               "operator": "=|",
-              "value": "Commercial",
+              "value": "$__all",
               "values": [
-                "Commercial",
-                "Enterprise"
+                "$__all"
               ],
               "valueLabels": [
-                "Commercial",
-                "Enterprise"
+                "All"
               ],
               "origin": "dashboard"
             },
@@ -2196,34 +2178,12 @@
               "key": "territory_navigator.account_owner",
               "keyLabel": "Account Owner (AE)",
               "operator": "=|",
-              "value": "Aaron Archer",
+              "value": "$__all",
               "values": [
-                "Aaron Archer",
-                "Alice Anderson",
-                "Ben Baker",
-                "Carla Cruz",
-                "Julia Jensen",
-                "Kevin Knight",
-                "Laura Lane",
-                "Mark Mitchell",
-                "Sarah Stone",
-                "Tom Torres",
-                "Uma Uddin",
-                "Victor Vega"
+                "$__all"
               ],
               "valueLabels": [
-                "Aaron Archer",
-                "Alice Anderson",
-                "Ben Baker",
-                "Carla Cruz",
-                "Julia Jensen",
-                "Kevin Knight",
-                "Laura Lane",
-                "Mark Mitchell",
-                "Sarah Stone",
-                "Tom Torres",
-                "Uma Uddin",
-                "Victor Vega"
+                "All"
               ],
               "origin": "dashboard"
             },
@@ -2231,22 +2191,12 @@
               "key": "territory_navigator.solutions_engineer",
               "keyLabel": "Solutions Engineer (SE)",
               "operator": "=|",
-              "value": "Grant Gibson",
+              "value": "$__all",
               "values": [
-                "Grant Gibson",
-                "Holly Hayes",
-                "Quinn Quincy",
-                "Rachel Ross",
-                "Simon Scott",
-                "Tina Tran"
+                "$__all"
               ],
               "valueLabels": [
-                "Grant Gibson",
-                "Holly Hayes",
-                "Quinn Quincy",
-                "Rachel Ross",
-                "Simon Scott",
-                "Tina Tran"
+                "All"
               ],
               "origin": "dashboard"
             }

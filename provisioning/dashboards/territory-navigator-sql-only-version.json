@@ -75,11 +75,8 @@
                       "includeByName": {},
                       "indexByName": {},
                       "renameByName": {
-                        "ct_accts": "Accts w/ Qualified Pipeline",
                         "ct_accts_qp": "w/ QP",
-                        "ct_opps": "Opportunities in Qualified Pipeline",
-                        "share_accts_qp": "% w/ QP",
-                        "val_opps": "Net NACV + Services in Qualified Pipeline"
+                        "share_accts_qp": "% w/ QP"
                       }
                     }
                   }
@@ -739,11 +736,9 @@
                       "includeByName": {},
                       "indexByName": {
                         "High": 0,
-                        "Low": 2,
                         "Medium": 1,
-                        "No Recent Activity": 4,
-                        "Value": 5,
-                        "Very Low": 3
+                        "Low": 2,
+                        "No Recent Activity": 3
                       },
                       "renameByName": {}
                     }
@@ -831,21 +826,6 @@
                         "id": "color",
                         "value": {
                           "fixedColor": "#9282e9",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "Very Low"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "#5f7fde",
                           "mode": "fixed"
                         }
                       }
@@ -1159,7 +1139,7 @@
                         "editorMode": "code",
                         "rawQuery": true,
                         "format": "table",
-                        "rawSql": "with account_filter_cte as (\n  select account_id\n\n  from revops.accounts\n\n  where region in (${region:singlequote})\n    and sub_region in (${sub_region:singlequote})\n    and segment in (${segment:singlequote})\n    and account_owner in (${account_owner:singlequote})\n    and solutions_engineer in (${solutions_engineer:singlequote})\n)\n\nselect sum(net_nacv) as val\n\nfrom revops.opportunities as o\n\ninner join account_filter_cte on account_filter_cte.account_id = o.account_id\n\nwhere stage_number between 3 and 6\n  and net_nacv > 0"
+                        "rawSql": "with account_filter_cte as (\n  select account_id\n\n  from revops.accounts\n\n  where region in (${region:singlequote})\n    and sub_region in (${sub_region:singlequote})\n    and segment in (${segment:singlequote})\n    and account_owner in (${account_owner:singlequote})\n    and solutions_engineer in (${solutions_engineer:singlequote})\n)\n\nselect coalesce(sum(net_nacv), 0) as val\n\nfrom revops.opportunities as o\n\ninner join account_filter_cte on account_filter_cte.account_id = o.account_id\n\nwhere stage_number between 3 and 6\n  and net_nacv > 0"
                       }
                     },
                     "refId": "A",
@@ -1656,7 +1636,6 @@
                       "includeByName": {},
                       "indexByName": {},
                       "renameByName": {
-                        "ct_cold": "Cold Accounts",
                         "ct_contracted": "Customers",
                         "ct_prospect": "Prospects"
                       }
@@ -1737,21 +1716,6 @@
                         "id": "color",
                         "value": {
                           "fixedColor": "#9282e9",
-                          "mode": "fixed"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "ct_cold"
-                    },
-                    "properties": [
-                      {
-                        "id": "color",
-                        "value": {
-                          "fixedColor": "#5c5c6f",
                           "mode": "fixed"
                         }
                       }

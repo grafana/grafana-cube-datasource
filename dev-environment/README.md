@@ -64,7 +64,9 @@ python3 -m pytest        # or: uvx pytest
 
 ## Resetting the data
 
-Postgres keeps its data in the `postgres-data` volume, so the seed scripts only run on the very first start and later starts boot straight away. To reload after changing a seed or migration:
+The RevOps tables are dropped and reloaded from the CSVs on every `docker compose up`, by the one-shot `revops-seed` service.
+
+The ecommerce data in `init.sql` is kept in the `postgres-data` volume, so it only loads on the very first start and later starts boot straight away. To reload it after changing a seed or migration:
 
 ```bash
 docker compose down -v
