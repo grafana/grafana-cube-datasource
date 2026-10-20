@@ -47,6 +47,7 @@ jobs:
       contents: read
       id-token: write
     with:
+      golangci-lint-version: '2.14.0'
       plugin-version-suffix: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
       # PoC: run plugin-validator only on pushes to main, not on every PR.
       # The validator (docker pull + osv-scanner + analyzers) adds ~1.5 min to the
