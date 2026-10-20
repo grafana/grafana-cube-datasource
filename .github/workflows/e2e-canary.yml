@@ -1,0 +1,36 @@
+# Scheduled e2e canary: runs Playwright against the FULL supported Grafana version
+# range (from plugin.json's grafanaDependency) PLUS the grafana-nightly image.
+#
+# PR CI (push.yaml) intentionally tests a single Grafana version to keep the
+# iteration loop fast. This canary is the early-warning counterpart: it catches
+# breakage in new/upcoming Grafana versions without blocking anyone's PR.
+# Failures notify the last committer of this file via GitHub's scheduled-workflow
+# failure notifications.
+#
+# Runs on a schedule (not on PRs), and can be triggered manually for debugging.
+
+name: e2e canary (full Grafana matrix + nightly)
+
+on:
+  schedule:
+    # Weekdays at 05:17 UTC, before the working day starts.
+    - cron: '17 5 * * 1-5'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ci:
+    name: CI
+    uses: grafana/plugin-ci-workflows/.github/workflows/ci.yml@ci-cd-workflows/v10.2.0
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      # No grafana-dependency override: the version resolver reads
+      # plugin.json's grafanaDependency and expands to every supported minor.
+      # No skip-grafana-nightly-image: the nightly image IS included here
+      # (unlike push.yaml/publish.yaml) - that's the point of the canary.
+      # plugin-validator is deliberately not enabled: CVE/validator signal
+      # belongs to the main push and CD runs, not the version canary.
+      run-playwright-with-version-resolver-type: plugin-grafana-dependency
