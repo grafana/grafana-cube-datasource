@@ -1,0 +1,50 @@
+{
+  "uid": "demo-cross-view-adhoc",
+  "title": "Demo: cross-view AdHoc filters (#498)",
+  "editable": true,
+  "schemaVersion": 41,
+  "time": { "from": "2017-01-01T00:00:00.000Z", "to": "2017-05-01T00:00:00.000Z" },
+  "templating": {
+    "list": [
+      {
+        "name": "adhocFilters",
+        "label": "Filters",
+        "type": "adhoc",
+        "datasource": { "type": "grafana-cube-datasource", "uid": "grafana-cube-datasource" },
+        "filters": []
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "table",
+      "title": "View A: customer_directory - customers by segment",
+      "datasource": { "type": "grafana-cube-datasource", "uid": "grafana-cube-datasource" },
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "datasource": { "type": "grafana-cube-datasource", "uid": "grafana-cube-datasource" },
+          "dimensions": ["customer_directory.customer_segment"],
+          "measures": ["customer_directory.count"],
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] }
+    },
+    {
+      "type": "table",
+      "title": "View B: payments_overview - amount by payment method",
+      "datasource": { "type": "grafana-cube-datasource", "uid": "grafana-cube-datasource" },
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "datasource": { "type": "grafana-cube-datasource", "uid": "grafana-cube-datasource" },
+          "dimensions": ["payments_overview.payment_method"],
+          "measures": ["payments_overview.total_amount"],
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": { "defaults": { "custom": {} }, "overrides": [] }
+    }
+  ]
+}
