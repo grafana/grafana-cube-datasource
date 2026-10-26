@@ -1,11 +1,5 @@
 # Changelog
 
-## [0.6.6](https://github.com/grafana/grafana-cube-datasource/compare/v0.6.5...v0.6.6) (2026-10-20)
-
-### Miscellaneous Chores
-
-* pin golangci-lint to 2.15.0 in development dependencies and CI/CD pipelines
-
 ## [0.6.5](https://github.com/grafana/grafana-cube-datasource/compare/v0.6.4...v0.6.5) (2026-08-21)
 
 
