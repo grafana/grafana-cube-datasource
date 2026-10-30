@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.6.6](https://github.com/grafana/grafana-cube-datasource/compare/v0.6.5...v0.6.6) (2026-10-30)
+
+
+### Features
+
+* **dev-env:** add the RevOps Territory Navigator demo on PostgreSQL ([#614](https://github.com/grafana/grafana-cube-datasource/issues/614)) ([63f26a2](https://github.com/grafana/grafana-cube-datasource/commit/63f26a283d439724768a7088e7fb042616ef2a63))
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/grafana/grafana-plugin-sdk-go to v0.296.3 ([#590](https://github.com/grafana/grafana-cube-datasource/issues/590)) ([c308461](https://github.com/grafana/grafana-cube-datasource/commit/c3084613b779cb4bbf04c83871b4ca376ee349ea))
+* gRPC deadlock that freezes the plugin connection under load ([#620](https://github.com/grafana/grafana-cube-datasource/issues/620)) ([0d36714](https://github.com/grafana/grafana-cube-datasource/commit/0d36714aa4a5a9ae0e5a9cbdcd957cd544183426))
+* **security/high/:** update dependency brace-expansion to v5.0.12 [security] ([5ae77cb](https://github.com/grafana/grafana-cube-datasource/commit/5ae77cb24ac23cd8307af481ca1f47d006ec5664))
+* **security/high/:** update dependency brace-expansion to v5.0.12 [security] ([dd455f3](https://github.com/grafana/grafana-cube-datasource/commit/dd455f3e45f05bbf2d6b85ff9a910f2b2b6bb611))
+* **security/medium/:** update dependency qs to v6.16.1 [security] ([49c7ce9](https://github.com/grafana/grafana-cube-datasource/commit/49c7ce9a9a50c3f4c2320babf0c2fcb6b37a2131))
+* **security/medium/:** update dependency qs to v6.16.1 [security] ([c6827b0](https://github.com/grafana/grafana-cube-datasource/commit/c6827b0c34a5d5154e34483a2d67bf9c8ff20a33))
+
 ## [0.6.5](https://github.com/grafana/grafana-cube-datasource/compare/v0.6.4...v0.6.5) (2026-08-21)
 
 
