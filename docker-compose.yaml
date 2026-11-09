@@ -27,7 +27,7 @@ services:
       - postgres
 
   postgres:
-    image: postgres:18@sha256:06cad38a5d9f5d24b4d83d86def30795d5e4b757fedbf5281172b576dedcd941
+    image: postgres:18@sha256:e3d24f6906d0760bf4da0dae872415391ededefad23fd471c47dc53b0ddf3c42
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
@@ -60,7 +60,7 @@ services:
 
   # Drops and reloads the RevOps tables on every `docker compose up`, then exits.
   revops-seed:
-    image: postgres:18@sha256:06cad38a5d9f5d24b4d83d86def30795d5e4b757fedbf5281172b576dedcd941
+    image: postgres:18@sha256:e3d24f6906d0760bf4da0dae872415391ededefad23fd471c47dc53b0ddf3c42
     environment:
       PGPASSWORD: password
     volumes:
