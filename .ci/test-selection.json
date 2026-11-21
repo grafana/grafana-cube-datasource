@@ -1,0 +1,58 @@
+{
+  "description": "Change-based test selection policy. Maps changed-file globs to test domains. Consumed by scripts/select-tests.mjs (see docs/selective-ci.md). Rules are evaluated top-down, first match wins; files matching no rule run the FULL suite (fail-safe). Domains: none (no test impact), frontend (feed file to jest --findRelatedTests), frontend-full (run entire jest suite), backend (run go test ./pkg/...), e2e (Playwright-affected; report-only while in shadow mode), full (run everything).",
+  "version": 1,
+  "rules": [
+    {
+      "reason": "Changes to the selection machinery itself must never be able to skip the tests that would catch a bad selector",
+      "match": [".ci/**", "scripts/**", ".github/**"],
+      "domains": ["full"]
+    },
+    {
+      "reason": "Documentation, images and repo metadata cannot change test outcomes",
+      "match": [
+        "docs/**",
+        "**/*.md",
+        "LICENSE",
+        "src/img/**",
+        ".gitignore",
+        ".vscode/**",
+        ".cursor/**",
+        "renovate.json",
+        "release-please-config.json",
+        ".release-please-manifest.json",
+        ".plugin-validator.yaml"
+      ],
+      "domains": ["none"]
+    },
+    {
+      "reason": "Frontend source: jest traces the dependency graph itself via --findRelatedTests; UI changes can also affect Playwright flows",
+      "match": ["src/**"],
+      "domains": ["frontend", "e2e"]
+    },
+    {
+      "reason": "Go backend: the whole suite builds and runs in seconds, so any backend change runs all of it; backend behavior is also exercised by e2e",
+      "match": ["pkg/**", "go.mod", "go.sum", "Magefile.go"],
+      "domains": ["backend", "e2e"]
+    },
+    {
+      "reason": "E2E-only surfaces: specs, Playwright config, and the provisioned test environment",
+      "match": ["tests/**", "playwright.config.ts", "provisioning/**", "docker-compose.yaml", "dev-environment/**"],
+      "domains": ["e2e"]
+    },
+    {
+      "reason": "Frontend toolchain/config: invalidates the jest dependency graph, so run the full frontend suite",
+      "match": [
+        "jest.config.js",
+        "jest-setup.js",
+        "tsconfig.json",
+        ".config/**",
+        "package.json",
+        "package-lock.json",
+        ".npmrc",
+        ".nvmrc",
+        "eslint.config.mjs"
+      ],
+      "domains": ["frontend-full", "e2e"]
+    }
+  ]
+}

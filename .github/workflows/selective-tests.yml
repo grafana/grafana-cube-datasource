@@ -1,0 +1,68 @@
+# Selective Tests — shadow-mode prototype of change-based test selection.
+#
+# Runs on every PR *alongside* the full "Plugins - CI" pipeline, and runs
+# only the tests the diff can plausibly affect, as decided deterministically
+# by scripts/select-tests.mjs from the policy in .ci/test-selection.json.
+#
+# While in shadow mode this check is intentionally NOT a required check:
+# its job is to produce (a) a fast signal for developers and (b) evidence —
+# every run's job summary records what was selected, what was skipped, and
+# why, so selective results can be compared against the full suite before
+# anyone trusts selection as a merge gate.
+#
+# The full model, fail-safe rules, and rollout plan: docs/selective-ci.md
+name: Selective Tests (shadow)
+
+on:
+  pull_request:
+
+permissions: {}
+
+jobs:
+  selective-tests:
+    name: Selective tests (experimental, non-blocking)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # Full history so the merge-base diff against the PR base is exact.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Self-test the selection engine
+        # The selector guards every other suite, so its own tests always run.
+        run: node --test scripts/select-tests.test.mjs
+
+      - name: Compute test plan from changed files
+        id: plan
+        run: node scripts/select-tests.mjs --base "origin/${GITHUB_BASE_REF}"
+
+      - name: Install npm dependencies
+        if: steps.plan.outputs.frontend != 'skip'
+        run: npm ci
+
+      - name: Frontend unit tests (related to changed files)
+        if: steps.plan.outputs.frontend == 'related'
+        run: tr '\n' '\0' < "${{ steps.plan.outputs.frontend_files_list }}" | xargs -0 npx jest --passWithNoTests --maxWorkers 4 --findRelatedTests
+
+      - name: Frontend unit tests (full suite)
+        if: steps.plan.outputs.frontend == 'full'
+        run: npm run test:ci
+
+      - name: Backend tests (full go suite)
+        if: steps.plan.outputs.backend == 'run'
+        # No setup-go: the preinstalled toolchain auto-downloads the version
+        # pinned in go.mod (GOTOOLCHAIN=auto). The whole backend suite builds
+        # and runs in seconds, so per-package selection isn't worth it here.
+        # Scoped to ./pkg/... so vendored Go files under node_modules are
+        # never swept in when npm ci ran earlier in the job.
+        run: go test ./pkg/...
