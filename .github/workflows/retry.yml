@@ -1,0 +1,82 @@
+# Comment-triggered retry of failed workflow runs on Renovate PRs.
+#
+# Posting a comment that starts with "/retry" on a Renovate-authored PR
+# re-runs the FAILED jobs of that PR's failed workflow runs, on the same
+# commit. Because the commit does not change, an existing review approval
+# stays valid (a rebase-retry would invalidate it under the org ruleset).
+#
+# Security properties:
+# - issue_comment workflows always execute the workflow file from the
+#   default branch, so a PR cannot alter this workflow's behaviour.
+# - Only the 2h-yono automation app may trigger it; humans use the
+#   re-run button in the GitHub UI instead.
+# - The target PR's author must be the Renovate app; this cannot be used
+#   to re-run workflows on arbitrary PRs.
+# - The comment body is never interpolated into shell; it is only
+#   compared against the "/retry" prefix in the job condition.
+# - GITHUB_TOKEN is granted actions:write for this job only, scoped to
+#   this repository, and is used for exactly one endpoint:
+#   rerun-failed-jobs.
+# - Runs already at attempt 3 or higher are skipped, capping retry loops.
+name: Retry failed checks
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions: {}
+
+jobs:
+  retry:
+    name: Re-run failed jobs on a Renovate PR
+    if: >-
+      github.event.issue.pull_request != null &&
+      startsWith(github.event.comment.body, '/retry') &&
+      github.event.comment.user.login == '2h-yono[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      pull-requests: read
+    steps:
+      - name: Re-run failed jobs for the PR head commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+
+          pr=$(gh api "repos/$REPO/pulls/$PR_NUMBER")
+          author=$(jq -r '.user.login' <<<"$pr")
+          head_sha=$(jq -r '.head.sha' <<<"$pr")
+          state=$(jq -r '.state' <<<"$pr")
+
+          if [ "$author" != "renovate-sh-app[bot]" ]; then
+            echo "::notice::PR #$PR_NUMBER author is '$author', not Renovate - nothing to do."
+            exit 0
+          fi
+          if [ "$state" != "open" ]; then
+            echo "::notice::PR #$PR_NUMBER is $state - nothing to do."
+            exit 0
+          fi
+
+          failed_runs=$(gh api "repos/$REPO/actions/runs?head_sha=$head_sha&per_page=50" \
+            --jq '[.workflow_runs[] | select(.conclusion == "failure") | {id, name, run_attempt}]')
+
+          if [ "$(jq length <<<"$failed_runs")" -eq 0 ]; then
+            echo "::notice::No failed workflow runs for $head_sha - nothing to do."
+            exit 0
+          fi
+
+          jq -c '.[]' <<<"$failed_runs" | while read -r run; do
+            run_id=$(jq -r '.id' <<<"$run")
+            run_name=$(jq -r '.name' <<<"$run")
+            attempt=$(jq -r '.run_attempt' <<<"$run")
+            if [ "$attempt" -ge 3 ]; then
+              echo "::warning::'$run_name' (run $run_id) is already at attempt $attempt - skipping; this failure looks persistent, not flaky."
+              continue
+            fi
+            echo "Re-running failed jobs of '$run_name' (run $run_id, attempt $attempt)."
+            gh api -X POST "repos/$REPO/actions/runs/$run_id/rerun-failed-jobs" \
+              || echo "::warning::Could not re-run $run_id (it may already be in progress)."
+          done
