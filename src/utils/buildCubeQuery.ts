@@ -3,6 +3,7 @@ import { DataSource } from '../datasource';
 import { CubeFilter, CubeFilterItem, CubeQuery, UNARY_OPERATORS, isCubeFilter, isCubeAndFilter, isCubeOrFilter } from '../types';
 import { normalizeCubeQuery } from './normalizeCubeQuery';
 import type { ViewSelectionMetadata } from './viewSelection';
+import type { AdHocFilter } from './adHocFilters';
 
 export interface BuiltCubeQuery {
   /** The Cube query JSON, or '' when the query has no dimensions/measures. */
@@ -27,13 +28,20 @@ export function buildCubeQueryJson(
   // Optional explicit view metadata. Callers (e.g. the SQL preview) pass the
   // reactive useMetadataQuery result so the "skipped N" hint updates when
   // metadata loads; falls back to the datasource cache otherwise (issue #307).
-  metadata?: ViewSelectionMetadata
+  metadata?: ViewSelectionMetadata,
+  // Optional explicit AdHoc filters. The SQL preview passes the editor's
+  // props.data.request.filters (the filters the last query actually ran with)
+  // as the primary source; resolveAdHocFilters falls back to dashboard AdHoc
+  // variables / deprecated getAdhocFilters when this is empty/undefined
+  // (issue #506). Omitted -> resolved from variables as before.
+  adHocFilters?: AdHocFilter[] | null
 ): BuiltCubeQuery {
   const normalizedQuery = normalizeCubeQuery(query, {
     datasourceName: datasource.name,
     datasourceUid: datasource.uid,
     mapOperator: (operator) => datasource.mapOperator(operator),
     metadata: metadata ?? datasource.getCachedMetadata() ?? undefined,
+    adHocFilters,
   });
 
   const droppedAdHocFilters = normalizedQuery.droppedAdHocFilters ?? [];
