@@ -1,0 +1,41 @@
+{
+  "uid": "demo-cross-view-timedim",
+  "title": "Demo: cross-view $cubeTimeDimension in value lookups (#498 / #35)",
+  "editable": true,
+  "schemaVersion": 41,
+  "time": { "from": "2017-01-01T00:00:00.000Z", "to": "2017-05-01T00:00:00.000Z" },
+  "templating": {
+    "list": [
+      {
+        "allowCustomValue": false,
+        "current": { "text": "customer_directory.created_at", "value": "customer_directory.created_at" },
+        "description": "This field will have the Dashboard Time-range applied to it as a filter",
+        "label": "Time-range filtering field",
+        "name": "cubeTimeDimension",
+        "options": [
+          { "selected": true, "text": "customer_directory.created_at", "value": "customer_directory.created_at" }
+        ],
+        "query": "customer_directory.created_at",
+        "type": "custom"
+      },
+      {
+        "name": "adhocFilters",
+        "label": "Filters",
+        "type": "adhoc",
+        "datasource": { "type": "grafana-cube-datasource", "uid": "grafana-cube-datasource" },
+        "filters": []
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "text",
+      "title": "Scenario",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+      "options": {
+        "mode": "markdown",
+        "content": "The dashboard time dimension is **customer_directory.created_at** (view A).\n\nOpen the **Filters** bar and pick the key **payments_overview.payment_method** (view B), then open its value dropdown.\n\nThere are no other ad-hoc filters set: the only thing the value lookup can send to Cube is the dashboard time range on a dimension from a *different* view."
+      }
+    }
+  ]
+}
